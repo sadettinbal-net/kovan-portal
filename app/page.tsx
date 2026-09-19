@@ -4,10 +4,11 @@ import { supabase } from '@/lib/supabase';
 
 export default function Home() {
   const [secim, setSecim] = useState({ il: '', ilce: '', mahalle: '', sokak: '', site: '' });
-  const [veriler, setVeriler] = useState({ iller: [], ilceler: [], mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] });
+  const [veriler, setVeriler] = useState({ iller: [], ilceler: [], mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [], kategoriler: [], altKategoriler: [] });
   const [hata, setHata] = useState('');
   const [aramaMetni, setAramaMetni] = useState('');
-  const [seciliKategori, setSeciliKategori] = useState('');
+  const [seciliKategori, setSeciliKategori] = useState(0);
+  const [seciliAltKategori, setSeciliAltKategori] = useState(0);
   const [istatistikler, setIstatistikler] = useState({ toplamSite: 0, toplamDukkan: 0, toplamKategori: 0 });
 
   useEffect(() => {
@@ -16,15 +17,24 @@ export default function Home() {
       if (error) setHata("Bağlantı Hatası: " + error.message);
       else setVeriler(prev => ({ ...prev, iller: data || [] }));
 
+      // Kategorileri yükle
+      const { data: katData } = await supabase.from('kategoriler').select('*').order('id');
+      const { data: altKatData } = await supabase.from('alt_kategoriler').select('*').order('id');
+
+      setVeriler(prev => ({
+        ...prev,
+        kategoriler: katData || [],
+        altKategoriler: altKatData || []
+      }));
+
       // İstatistikleri yükle
       const { data: siteData } = await supabase.from('sanayi_siteleri').select('id');
-      const { data: dukkanData } = await supabase.from('dukkanlar').select('id, kategori');
-      const kategoriler = new Set(dukkanData?.map((d: any) => d.kategori) || []);
+      const { data: dukkanData } = await supabase.from('dukkanlar').select('id');
 
       setIstatistikler({
         toplamSite: siteData?.length || 0,
         toplamDukkan: dukkanData?.length || 0,
-        toplamKategori: kategoriler.size
+        toplamKategori: katData?.length || 0
       });
     }
     ilkYukleme();
@@ -83,10 +93,27 @@ export default function Home() {
 
   const siteSec = async (id: string) => {
     setSecim(prev => ({ ...prev, site: id }));
-    const { data } = await supabase.from('dukkanlar').select('*').eq('site_id', parseInt(id));
+    const { data } = await supabase
+      .from('dukkanlar')
+      .select(`
+        *,
+        alt_kategoriler (
+          id,
+          alt_kategori_adi,
+          kategori_id,
+          kategoriler (
+            id,
+            kategori_adi,
+            icon,
+            renk
+          )
+        )
+      `)
+      .eq('site_id', parseInt(id));
     setVeriler(prev => ({ ...prev, dukkanlar: data || [] }));
     setAramaMetni('');
-    setSeciliKategori('');
+    setSeciliKategori(0);
+    setSeciliAltKategori(0);
   };
 
   // Filtrelenmiş dükkanlar
@@ -98,23 +125,48 @@ export default function Home() {
       sonuc = sonuc.filter((d: any) =>
         d.dukkan_adi.toLowerCase().includes(aramaMetni.toLowerCase()) ||
         d.usta_adi.toLowerCase().includes(aramaMetni.toLowerCase()) ||
-        d.kategori.toLowerCase().includes(aramaMetni.toLowerCase())
+        d.alt_kategoriler?.alt_kategori_adi.toLowerCase().includes(aramaMetni.toLowerCase()) ||
+        d.alt_kategoriler?.kategoriler?.kategori_adi.toLowerCase().includes(aramaMetni.toLowerCase())
       );
     }
 
-    // Kategori filtresi
-    if (seciliKategori) {
-      sonuc = sonuc.filter((d: any) => d.kategori === seciliKategori);
+    // Ana kategori filtresi
+    if (seciliKategori > 0) {
+      sonuc = sonuc.filter((d: any) => d.alt_kategoriler?.kategori_id === seciliKategori);
+    }
+
+    // Alt kategori filtresi
+    if (seciliAltKategori > 0) {
+      sonuc = sonuc.filter((d: any) => d.alt_kategori_id === seciliAltKategori);
     }
 
     return sonuc;
-  }, [veriler.dukkanlar, aramaMetni, seciliKategori]);
+  }, [veriler.dukkanlar, aramaMetni, seciliKategori, seciliAltKategori]);
 
-  // Mevcut kategoriler
-  const kategoriler = useMemo(() => {
-    const cats = new Set(veriler.dukkanlar.map((d: any) => d.kategori));
-    return Array.from(cats).sort();
-  }, [veriler.dukkanlar]);
+  // Dükkanların sahip olduğu kategoriler
+  const mevcutKategoriler = useMemo(() => {
+    const kategoriIds = new Set(
+      veriler.dukkanlar
+        .filter((d: any) => d.alt_kategoriler?.kategoriler)
+        .map((d: any) => d.alt_kategoriler.kategoriler.id)
+    );
+    return veriler.kategoriler.filter((k: any) => kategoriIds.has(k.id));
+  }, [veriler.dukkanlar, veriler.kategoriler]);
+
+  // Seçili kategoriye göre alt kategoriler
+  const mevcutAltKategoriler = useMemo(() => {
+    if (seciliKategori === 0) return [];
+
+    const altKatIds = new Set(
+      veriler.dukkanlar
+        .filter((d: any) => d.alt_kategoriler?.kategori_id === seciliKategori)
+        .map((d: any) => d.alt_kategori_id)
+    );
+
+    return veriler.altKategoriler.filter((ak: any) =>
+      ak.kategori_id === seciliKategori && altKatIds.has(ak.id)
+    );
+  }, [veriler.dukkanlar, veriler.altKategoriler, seciliKategori]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 p-4 font-sans">
@@ -250,34 +302,78 @@ export default function Home() {
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl">🔍</div>
             </div>
 
-            {kategoriler.length > 0 && (
-              <div className="bg-white/80 backdrop-blur-xl p-5 rounded-2xl shadow-lg border border-gray-200/50">
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Kategoriler</div>
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => setSeciliKategori('')}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                      !seciliKategori
-                        ? 'bg-gradient-to-r from-yellow-400 to-amber-400 text-gray-900 shadow-lg scale-105'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Tümü
-                  </button>
-                  {kategoriler.map((kat: string) => (
+            {mevcutKategoriler.length > 0 && (
+              <div className="space-y-4">
+                <div className="bg-white/80 backdrop-blur-xl p-5 rounded-2xl shadow-lg border border-gray-200/50">
+                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Ana Kategoriler</div>
+                  <div className="flex gap-2 flex-wrap">
                     <button
-                      key={kat}
-                      onClick={() => setSeciliKategori(kat)}
+                      onClick={() => {
+                        setSeciliKategori(0);
+                        setSeciliAltKategori(0);
+                      }}
                       className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                        seciliKategori === kat
+                        seciliKategori === 0
                           ? 'bg-gradient-to-r from-yellow-400 to-amber-400 text-gray-900 shadow-lg scale-105'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                       }`}
                     >
-                      {kat}
+                      Tümü
                     </button>
-                  ))}
+                    {mevcutKategoriler.map((kat: any) => (
+                      <button
+                        key={kat.id}
+                        onClick={() => {
+                          setSeciliKategori(kat.id);
+                          setSeciliAltKategori(0);
+                        }}
+                        style={{
+                          backgroundColor: seciliKategori === kat.id ? kat.renk : undefined,
+                          borderColor: seciliKategori === kat.id ? kat.renk : undefined
+                        }}
+                        className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
+                          seciliKategori === kat.id
+                            ? 'text-white shadow-lg scale-105 border-2'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        <span>{kat.icon}</span>
+                        <span>{kat.kategori_adi}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
+
+                {mevcutAltKategoriler.length > 0 && (
+                  <div className="bg-white/80 backdrop-blur-xl p-5 rounded-2xl shadow-lg border border-gray-200/50">
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Alt Kategoriler</div>
+                    <div className="flex gap-2 flex-wrap">
+                      <button
+                        onClick={() => setSeciliAltKategori(0)}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                          seciliAltKategori === 0
+                            ? 'bg-gradient-to-r from-yellow-400 to-amber-400 text-gray-900 shadow-lg scale-105'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        Tümü
+                      </button>
+                      {mevcutAltKategoriler.map((altKat: any) => (
+                        <button
+                          key={altKat.id}
+                          onClick={() => setSeciliAltKategori(altKat.id)}
+                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                            seciliAltKategori === altKat.id
+                              ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg scale-105'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {altKat.alt_kategori_adi}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -299,9 +395,22 @@ export default function Home() {
               >
                 <div className="flex justify-between items-start mb-3">
                   <h2 className="text-lg font-black text-gray-800 uppercase leading-tight">{dukkan.dukkan_adi}</h2>
-                  <span className="bg-gradient-to-r from-yellow-400 to-amber-400 text-gray-900 text-xs px-3 py-1.5 rounded-xl font-black uppercase shadow-md whitespace-nowrap">
-                    {dukkan.kategori}
-                  </span>
+                  <div className="flex flex-col gap-1.5 items-end">
+                    {dukkan.alt_kategoriler?.kategoriler && (
+                      <span
+                        style={{ backgroundColor: dukkan.alt_kategoriler.kategoriler.renk }}
+                        className="text-white text-xs px-3 py-1.5 rounded-xl font-black uppercase shadow-md whitespace-nowrap flex items-center gap-1.5"
+                      >
+                        <span>{dukkan.alt_kategoriler.kategoriler.icon}</span>
+                        <span>{dukkan.alt_kategoriler.kategoriler.kategori_adi}</span>
+                      </span>
+                    )}
+                    {dukkan.alt_kategoriler?.alt_kategori_adi && (
+                      <span className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-lg font-bold whitespace-nowrap">
+                        {dukkan.alt_kategoriler.alt_kategori_adi}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 mb-4 text-gray-600">
                   <span className="text-lg">👤</span>
@@ -324,7 +433,8 @@ export default function Home() {
               <button
                 onClick={() => {
                   setAramaMetni('');
-                  setSeciliKategori('');
+                  setSeciliKategori(0);
+                  setSeciliAltKategori(0);
                 }}
                 className="px-8 py-3 bg-gradient-to-r from-yellow-400 to-amber-400 text-gray-900 rounded-2xl font-bold hover:from-yellow-500 hover:to-amber-500 transition-all shadow-lg hover:shadow-xl"
               >
