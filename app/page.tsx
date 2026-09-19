@@ -34,11 +34,15 @@ export default function Home() {
     setSecim({ il: ilAdi, ilce: '', mahalle: '', sokak: '', site: '' });
 
     // İlçeleri mahalleler tablosundan alalım (unique ilce_adi)
-    // Case-insensitive search: ILIKE
+    // Mahalleler tablosunda il_adi tamamı büyük harf (İSTANBUL, İZMİR, ANKARA)
+    // İller tablosunda küçük harfle başlıyor (İstanbul, İzmir, Ankara)
+    // Türkçe karakterler için toLocaleUpperCase('tr-TR') kullanıyoruz
+    const ilAdiUpper = ilAdi.toLocaleUpperCase('tr-TR');
+
     const { data: mahallelerData } = await supabase
       .from('mahalleler')
       .select('ilce_adi')
-      .ilike('il_adi', ilAdi);
+      .eq('il_adi', ilAdiUpper);
 
     // Unique ilçe adlarını al
     const uniqueIlceler = [...new Set(mahallelerData?.map((m: any) => m.ilce_adi) || [])];
