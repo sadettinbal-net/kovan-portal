@@ -50,13 +50,25 @@ export default function Home() {
   const ilceSec = async (ilceAdi: string) => {
     setSecim(prev => ({ ...prev, ilce: ilceAdi, mahalle: '', sokak: '', site: '' }));
     const { data } = await supabase.from('mahalleler').select('*').eq('ilce_adi', ilceAdi).order('mahalle_adi');
-    setVeriler(prev => ({ ...prev, mahalleler: data || [], sokaklar: [], siteler: [], dukkanlar: [] }));
+
+    // Unique mahalle_id bazında filtrele (duplicate kayıtlar olabilir)
+    const uniqueMahalleler = data ? Array.from(
+      new Map(data.map(m => [m.mahalle_id, m])).values()
+    ) : [];
+
+    setVeriler(prev => ({ ...prev, mahalleler: uniqueMahalleler, sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
   const mahalleSec = async (mahalle_id: string) => {
     setSecim(prev => ({ ...prev, mahalle: mahalle_id, sokak: '', site: '' }));
     const { data } = await supabase.from('sokaklar').select('*').eq('mahalle_id', parseInt(mahalle_id)).order('sokak_adi');
-    setVeriler(prev => ({ ...prev, sokaklar: data || [], siteler: [], dukkanlar: [] }));
+
+    // Unique sokak_id bazında filtrele (duplicate kayıtlar olabilir)
+    const uniqueSokaklar = data ? Array.from(
+      new Map(data.map(s => [s.sokak_id, s])).values()
+    ) : [];
+
+    setVeriler(prev => ({ ...prev, sokaklar: uniqueSokaklar, siteler: [], dukkanlar: [] }));
   };
 
   const sokakSec = async (id: string) => {
