@@ -63,14 +63,14 @@ export default function Home() {
 
   const ilceSec = async (ilceAdi: string) => {
     setSecim(prev => ({ ...prev, ilce: ilceAdi, mahalle: '', sokak: '', site: '' }));
+    const { data } = await supabase.from('mahalleler').select('*').eq('ilce_adi', ilceAdi).order('mahalle_adi');
 
-    // Tüm sanayi sitelerini yükle (geçici - ilçe eşleştirmesi yapılmamış)
-    const { data: sitelerData } = await supabase
-      .from('sanayi_siteleri')
-      .select('*')
-      .order('site_adi');
+    // Unique mahalle_id bazında filtrele (duplicate kayıtlar olabilir)
+    const uniqueMahalleler = data ? Array.from(
+      new Map(data.map(m => [m.mahalle_id, m])).values()
+    ) : [];
 
-    setVeriler(prev => ({ ...prev, mahalleler: [], sokaklar: [], siteler: sitelerData || [], dukkanlar: [] }));
+    setVeriler(prev => ({ ...prev, mahalleler: uniqueMahalleler, sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
   const mahalleSec = async (mahalle_id: string) => {
@@ -82,7 +82,56 @@ export default function Home() {
       new Map(data.map(s => [s.sokak_id, s])).values()
     ) : [];
 
-    setVeriler(prev => ({ ...prev, sokaklar: uniqueSokaklar, dukkanlar: [] }));
+    setVeriler(prev => ({ ...prev, sokaklar: uniqueSokaklar, siteler: [], dukkanlar: [] }));
+  };
+
+  const sokakSec = async (sokak_id: string) => {
+    setSecim(prev => ({ ...prev, sokak: sokak_id, site: '' }));
+
+    // Bu sokaktaki sanayi sitelerini bul (şimdilik tümünü göster - sonra sokak_id ekleyeceğiz)
+    const { data: sitelerData } = await supabase
+      .from('sanayi_siteleri')
+      .select('*')
+      .order('site_adi');
+
+    // Bu sokaktaki direkt işletmeleri bul (site_id NULL olanlar)
+    const { data: sokakDukkanlar } = await supabase
+      .from('dukkanlar')
+      .select('*')
+      .eq('sokak_id', parseInt(sokak_id))
+      .is('site_id', null);
+
+    // Sokak işletmelerine de kategori bilgisi ekle
+    const dukkanlarWithKategoriler = await Promise.all(
+      (sokakDukkanlar || []).map(async (dukkan) => {
+        if (dukkan.alt_kategori_id) {
+          const { data: altKat } = await supabase
+            .from('alt_kategoriler')
+            .select('id, alt_kategori_adi, kategori_id')
+            .eq('id', dukkan.alt_kategori_id)
+            .single();
+
+          if (altKat) {
+            const { data: anaKat } = await supabase
+              .from('kategoriler')
+              .select('id, kategori_adi, icon, renk')
+              .eq('id', altKat.kategori_id)
+              .single();
+
+            return {
+              ...dukkan,
+              alt_kategoriler: {
+                ...altKat,
+                kategoriler: anaKat
+              }
+            };
+          }
+        }
+        return dukkan;
+      })
+    );
+
+    setVeriler(prev => ({ ...prev, siteler: sitelerData || [], dukkanlar: dukkanlarWithKategoriler }));
   };
 
   const siteSec = async (id: string) => {
@@ -265,13 +314,37 @@ export default function Home() {
             </div>
 
             <div className="relative">
-              <label className="block text-sm font-bold text-gray-700 mb-2">🏭 Sanayi Sitesi Seçin</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">🏘️ Mahalle Seçin</label>
+              <select
+                className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
+                onChange={(e) => mahalleSec(e.target.value)}
+                disabled={!secim.ilce}
+              >
+                <option value="">Mahalle Seç</option>
+                {veriler.mahalleler.map((mahalle: any) => <option key={mahalle.mahalle_id} value={mahalle.mahalle_id}>{mahalle.mahalle_adi}</option>)}
+              </select>
+            </div>
+
+            <div className="relative">
+              <label className="block text-sm font-bold text-gray-700 mb-2">🛣️ Sokak Seçin</label>
+              <select
+                className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
+                onChange={(e) => sokakSec(e.target.value)}
+                disabled={!secim.mahalle}
+              >
+                <option value="">Sokak Seç</option>
+                {veriler.sokaklar.map((sokak: any) => <option key={sokak.sokak_id} value={sokak.sokak_id}>{sokak.sokak_adi}</option>)}
+              </select>
+            </div>
+
+            <div className="relative">
+              <label className="block text-sm font-bold text-gray-700 mb-2">🏭 Sanayi Sitesi Seçin (Opsiyonel)</label>
               <select
                 className="w-full p-4 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-2xl border-2 border-yellow-500 font-black text-gray-900 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:from-yellow-500 hover:to-amber-500 focus:shadow-xl appearance-none cursor-pointer"
                 onChange={(e) => siteSec(e.target.value)}
-                disabled={!secim.ilce}
+                disabled={!secim.sokak}
               >
-                <option value="">{veriler.siteler.length > 0 ? "Sanayi Sitesi Seç" : "Kayıt Bulunamadı"}</option>
+                <option value="">{veriler.siteler.length > 0 ? "Sokaktaki İşletmeleri Gör" : "Bu sokakta sanayi sitesi yok"}</option>
                 {veriler.siteler.map((s: any) => <option key={s.id} value={s.id}>{s.site_adi}</option>)}
               </select>
             </div>
