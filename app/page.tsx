@@ -30,21 +30,32 @@ export default function Home() {
     ilkYukleme();
   }, []);
 
-  const ilSec = async (id: string) => {
-    setSecim({ il: id, ilce: '', mahalle: '', sokak: '', site: '' });
-    const { data } = await supabase.from('ilceler').select('*').eq('sehir_id', id).order('ilce_adi');
-    setVeriler(prev => ({ ...prev, ilceler: data || [], mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
+  const ilSec = async (ilAdi: string) => {
+    setSecim({ il: ilAdi, ilce: '', mahalle: '', sokak: '', site: '' });
+
+    // İlçeleri mahalleler tablosundan alalım (unique ilce_adi)
+    // Case-insensitive search: ILIKE
+    const { data: mahallelerData } = await supabase
+      .from('mahalleler')
+      .select('ilce_adi')
+      .ilike('il_adi', ilAdi);
+
+    // Unique ilçe adlarını al
+    const uniqueIlceler = [...new Set(mahallelerData?.map((m: any) => m.ilce_adi) || [])];
+    const ilcelerArray = uniqueIlceler.map((ilce, idx) => ({ id: idx, ilce_adi: ilce })).sort((a, b) => a.ilce_adi.localeCompare(b.ilce_adi));
+
+    setVeriler(prev => ({ ...prev, ilceler: ilcelerArray, mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
-  const ilceSec = async (id: string) => {
-    setSecim(prev => ({ ...prev, ilce: id, mahalle: '', sokak: '', site: '' }));
-    const { data } = await supabase.from('mahalleler').select('*').eq('ilce_id', parseInt(id)).order('mahalle_adi');
+  const ilceSec = async (ilceAdi: string) => {
+    setSecim(prev => ({ ...prev, ilce: ilceAdi, mahalle: '', sokak: '', site: '' }));
+    const { data } = await supabase.from('mahalleler').select('*').eq('ilce_adi', ilceAdi).order('mahalle_adi');
     setVeriler(prev => ({ ...prev, mahalleler: data || [], sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
-  const mahalleSec = async (id: string) => {
-    setSecim(prev => ({ ...prev, mahalle: id, sokak: '', site: '' }));
-    const { data } = await supabase.from('sokaklar').select('*').eq('mahalle_id', parseInt(id)).order('sokak_adi');
+  const mahalleSec = async (mahalle_id: string) => {
+    setSecim(prev => ({ ...prev, mahalle: mahalle_id, sokak: '', site: '' }));
+    const { data } = await supabase.from('sokaklar').select('*').eq('mahalle_id', parseInt(mahalle_id)).order('sokak_adi');
     setVeriler(prev => ({ ...prev, sokaklar: data || [], siteler: [], dukkanlar: [] }));
   };
 
@@ -155,7 +166,7 @@ export default function Home() {
                 onChange={(e) => ilSec(e.target.value)}
               >
                 <option value="">Şehir Seç</option>
-                {veriler.iller.map((il: any) => <option key={il.id} value={il.id}>{il.sehir_adi}</option>)}
+                {veriler.iller.map((il: any) => <option key={il.id} value={il.sehir_adi}>{il.sehir_adi}</option>)}
               </select>
             </div>
 
@@ -167,7 +178,7 @@ export default function Home() {
                 disabled={!secim.il}
               >
                 <option value="">İlçe Seç</option>
-                {veriler.ilceler.map((ilce: any) => <option key={ilce.id} value={ilce.id}>{ilce.ilce_adi}</option>)}
+                {veriler.ilceler.map((ilce: any) => <option key={ilce.id} value={ilce.ilce_adi}>{ilce.ilce_adi}</option>)}
               </select>
             </div>
 
@@ -179,7 +190,7 @@ export default function Home() {
                 disabled={!secim.ilce}
               >
                 <option value="">Mahalle Seç</option>
-                {veriler.mahalleler.map((mahalle: any) => <option key={mahalle.id} value={mahalle.id}>{mahalle.mahalle_adi}</option>)}
+                {veriler.mahalleler.map((mahalle: any) => <option key={mahalle.mahalle_id} value={mahalle.mahalle_id}>{mahalle.mahalle_adi}</option>)}
               </select>
             </div>
 
@@ -191,7 +202,7 @@ export default function Home() {
                 disabled={!secim.mahalle}
               >
                 <option value="">Sokak Seç</option>
-                {veriler.sokaklar.map((sokak: any) => <option key={sokak.id} value={sokak.id}>{sokak.sokak_adi}</option>)}
+                {veriler.sokaklar.map((sokak: any) => <option key={sokak.sokak_id} value={sokak.sokak_id}>{sokak.sokak_adi}</option>)}
               </select>
             </div>
 
