@@ -65,26 +65,15 @@ export default function Home() {
   const ilceSec = async (ilceAdi: string) => {
     setSecim(prev => ({ ...prev, ilce: ilceAdi, mahalle: '', sokak: '', site: '' }));
 
-    if (aramaTipi === 'sanayi') {
-      // SANAYİ SİTESİ AKIŞI: İlçe → Sanayi Sitesi
-      const { data: sitelerData } = await supabase
-        .from('sanayi_siteleri')
-        .select('*')
-        .eq('ilce_adi', ilceAdi)
-        .order('site_adi');
+    // Her zaman mahalleleri yükle (konum seçimi için)
+    const { data } = await supabase.from('mahalleler').select('*').eq('ilce_adi', ilceAdi).order('mahalle_adi');
 
-      setVeriler(prev => ({ ...prev, siteler: sitelerData || [], mahalleler: [], sokaklar: [], dukkanlar: [] }));
-    } else {
-      // MAHALLE İŞLETMESİ AKIŞI: İlçe → Mahalle
-      const { data } = await supabase.from('mahalleler').select('*').eq('ilce_adi', ilceAdi).order('mahalle_adi');
+    // Unique mahalle_id bazında filtrele (duplicate kayıtlar olabilir)
+    const uniqueMahalleler = data ? Array.from(
+      new Map(data.map(m => [m.mahalle_id, m])).values()
+    ) : [];
 
-      // Unique mahalle_id bazında filtrele (duplicate kayıtlar olabilir)
-      const uniqueMahalleler = data ? Array.from(
-        new Map(data.map(m => [m.mahalle_id, m])).values()
-      ) : [];
-
-      setVeriler(prev => ({ ...prev, mahalleler: uniqueMahalleler, sokaklar: [], siteler: [], dukkanlar: [] }));
-    }
+    setVeriler(prev => ({ ...prev, mahalleler: uniqueMahalleler, sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
   const mahalleSec = async (mahalle_id: string) => {
@@ -101,45 +90,69 @@ export default function Home() {
 
   const sokakSec = async (sokak_id: string) => {
     setSecim(prev => ({ ...prev, sokak: sokak_id, site: '' }));
+    setAramaTipi(''); // Arama tipini sıfırla
 
-    // MAHALLE İŞLETMESİ AKIŞI: Sokaktaki işletmeleri göster
-    const { data: sokakDukkanlar } = await supabase
-      .from('dukkanlar')
-      .select('*')
-      .eq('sokak_id', parseInt(sokak_id))
-      .is('site_id', null);
+    // Arama tipi seçilmeden sadece sokak seçimi yapılıyor
+    // Dükkan göstermeyi aramaTipi seçimine bırak
+    setVeriler(prev => ({ ...prev, dukkanlar: [] }));
+  };
 
-    // Sokak işletmelerine kategori bilgisi ekle
-    const dukkanlarWithKategoriler = await Promise.all(
-      (sokakDukkanlar || []).map(async (dukkan) => {
-        if (dukkan.alt_kategori_id) {
-          const { data: altKat } = await supabase
-            .from('alt_kategoriler')
-            .select('id, alt_kategori_adi, kategori_id')
-            .eq('id', dukkan.alt_kategori_id)
-            .single();
+  const aramaTipiSec = async (tip: 'sanayi' | 'mahalle') => {
+    setAramaTipi(tip);
 
-          if (altKat) {
-            const { data: anaKat } = await supabase
-              .from('kategoriler')
-              .select('id, kategori_adi, icon, renk')
-              .eq('id', altKat.kategori_id)
-              .single();
+    if (tip === 'sanayi') {
+      // SANAYİ SİTESİ: Bu ilçedeki sanayi sitelerini yükle
+      if (secim.ilce) {
+        const { data: sitelerData } = await supabase
+          .from('sanayi_siteleri')
+          .select('*')
+          .eq('ilce_adi', secim.ilce)
+          .order('site_adi');
 
-            return {
-              ...dukkan,
-              alt_kategoriler: {
-                ...altKat,
-                kategoriler: anaKat
+        setVeriler(prev => ({ ...prev, siteler: sitelerData || [] }));
+      }
+    } else {
+      // MAHALLE İŞLETMESİ: Bu sokaktaki işletmeleri yükle
+      if (secim.sokak) {
+        const { data: sokakDukkanlar } = await supabase
+          .from('dukkanlar')
+          .select('*')
+          .eq('sokak_id', parseInt(secim.sokak))
+          .is('site_id', null);
+
+        // Sokak işletmelerine kategori bilgisi ekle
+        const dukkanlarWithKategoriler = await Promise.all(
+          (sokakDukkanlar || []).map(async (dukkan) => {
+            if (dukkan.alt_kategori_id) {
+              const { data: altKat } = await supabase
+                .from('alt_kategoriler')
+                .select('id, alt_kategori_adi, kategori_id')
+                .eq('id', dukkan.alt_kategori_id)
+                .single();
+
+              if (altKat) {
+                const { data: anaKat } = await supabase
+                  .from('kategoriler')
+                  .select('id, kategori_adi, icon, renk')
+                  .eq('id', altKat.kategori_id)
+                  .single();
+
+                return {
+                  ...dukkan,
+                  alt_kategoriler: {
+                    ...altKat,
+                    kategoriler: anaKat
+                  }
+                };
               }
-            };
-          }
-        }
-        return dukkan;
-      })
-    );
+            }
+            return dukkan;
+          })
+        );
 
-    setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
+        setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
+      }
+    }
   };
 
   const siteSec = async (id: string) => {
@@ -295,79 +308,15 @@ export default function Home() {
           </div>
         )}
 
-        {/* Arama Tipi Seçimi */}
-        {!aramaTipi && (
-          <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-black text-gray-800 mb-2">Ne Arıyorsunuz?</h2>
-              <p className="text-sm text-gray-600">Arama tipini seçerek başlayın</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <button
-                onClick={() => setAramaTipi('sanayi')}
-                className="group relative overflow-hidden bg-gradient-to-br from-yellow-400 via-amber-400 to-orange-400 p-8 rounded-3xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl"
-              >
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative text-center">
-                  <div className="text-6xl mb-4">🏭</div>
-                  <div className="text-2xl font-black text-gray-900 mb-2">Sanayi Sitesi</div>
-                  <div className="text-sm text-gray-700 font-medium mb-4">Organize sanayi bölgelerindeki işletmeler</div>
-                  <div className="text-xs text-gray-600 bg-white/50 rounded-xl px-4 py-2">
-                    İl → İlçe → Sanayi Sitesi → Dükkanlar
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => setAramaTipi('mahalle')}
-                className="group relative overflow-hidden bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400 p-8 rounded-3xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl"
-              >
-                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative text-center">
-                  <div className="text-6xl mb-4">🏪</div>
-                  <div className="text-2xl font-black text-white mb-2">Mahalle İşletmesi</div>
-                  <div className="text-sm text-white font-medium mb-4">Eczane, market, kuaför, dişçi vb.</div>
-                  <div className="text-xs text-white bg-white/20 rounded-xl px-4 py-2">
-                    İl → İlçe → Mahalle → Sokak → İşletmeler
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Seçim Paneli */}
-        {aramaTipi && (
-          <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{aramaTipi === 'sanayi' ? '🏭' : '🏪'}</span>
-                <div>
-                  <h3 className="text-lg font-black text-gray-800">
-                    {aramaTipi === 'sanayi' ? 'Sanayi Sitesi Ara' : 'Mahalle İşletmesi Ara'}
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    {aramaTipi === 'sanayi' ? 'Organize sanayi bölgelerindeki dükkanlar' : 'Mahalle ve sokak bazında işletmeler'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => {
-                  setAramaTipi('');
-                  setSecim({ il: '', ilce: '', mahalle: '', sokak: '', site: '' });
-                  setVeriler(prev => ({ ...prev, ilceler: [], mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
-                }}
-                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-xl text-sm font-bold text-gray-700 transition-all"
-              >
-                ← Geri
-              </button>
-            </div>
-            <div className="space-y-5">
+        {/* Konum Seçim Paneli - HER ZAMAN GÖRÜNÜR */}
+        <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="space-y-5">
             <div className="relative">
               <label className="block text-sm font-bold text-gray-700 mb-2">📍 Şehir Seçin</label>
               <select
                 className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
                 onChange={(e) => ilSec(e.target.value)}
+                value={secim.il}
               >
                 <option value="">Şehir Seç</option>
                 {veriler.iller.map((il: any) => <option key={il.id} value={il.sehir_adi}>{il.sehir_adi}</option>)}
@@ -380,56 +329,90 @@ export default function Home() {
                 className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
                 onChange={(e) => ilceSec(e.target.value)}
                 disabled={!secim.il}
+                value={secim.ilce}
               >
                 <option value="">İlçe Seç</option>
                 {veriler.ilceler.map((ilce: any) => <option key={ilce.id} value={ilce.ilce_adi}>{ilce.ilce_adi}</option>)}
               </select>
             </div>
 
-            {/* MAHALLE İŞLETMESİ AKIŞI - Mahalle ve Sokak */}
-            {aramaTipi === 'mahalle' && (
-              <>
-                <div className="relative">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">🏘️ Mahalle Seçin</label>
-                  <select
-                    className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
-                    onChange={(e) => mahalleSec(e.target.value)}
-                    disabled={!secim.ilce}
-                  >
-                    <option value="">Mahalle Seç</option>
-                    {veriler.mahalleler.map((mahalle: any) => <option key={mahalle.mahalle_id} value={mahalle.mahalle_id}>{mahalle.mahalle_adi}</option>)}
-                  </select>
-                </div>
+            <div className="relative">
+              <label className="block text-sm font-bold text-gray-700 mb-2">🏘️ Mahalle Seçin</label>
+              <select
+                className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
+                onChange={(e) => mahalleSec(e.target.value)}
+                disabled={!secim.ilce}
+                value={secim.mahalle}
+              >
+                <option value="">Mahalle Seç</option>
+                {veriler.mahalleler.map((mahalle: any) => <option key={mahalle.mahalle_id} value={mahalle.mahalle_id}>{mahalle.mahalle_adi}</option>)}
+              </select>
+            </div>
 
-                <div className="relative">
-                  <label className="block text-sm font-bold text-gray-700 mb-2">🛣️ Sokak Seçin</label>
-                  <select
-                    className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
-                    onChange={(e) => sokakSec(e.target.value)}
-                    disabled={!secim.mahalle}
-                  >
-                    <option value="">Sokak Seç</option>
-                    {veriler.sokaklar.map((sokak: any) => <option key={sokak.sokak_id} value={sokak.sokak_id}>{sokak.sokak_adi}</option>)}
-                  </select>
-                </div>
-              </>
-            )}
-
-            {/* SANAYİ SİTESİ AKIŞI - Sanayi Sitesi Seçimi */}
-            {aramaTipi === 'sanayi' && (
-              <div className="relative">
-                <label className="block text-sm font-bold text-gray-700 mb-2">🏭 Sanayi Sitesi Seçin</label>
-                <select
-                  className="w-full p-4 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-2xl border-2 border-yellow-500 font-black text-gray-900 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:from-yellow-500 hover:to-amber-500 focus:shadow-xl appearance-none cursor-pointer"
-                  onChange={(e) => siteSec(e.target.value)}
-                  disabled={!secim.ilce}
-                >
-                  <option value="">{veriler.siteler.length > 0 ? "Sanayi Sitesi Seç" : "Bu ilçede sanayi sitesi yok"}</option>
-                  {veriler.siteler.map((s: any) => <option key={s.id} value={s.id}>{s.site_adi}</option>)}
-                </select>
-              </div>
-            )}
+            <div className="relative">
+              <label className="block text-sm font-bold text-gray-700 mb-2">🛣️ Sokak Seçin</label>
+              <select
+                className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
+                onChange={(e) => sokakSec(e.target.value)}
+                disabled={!secim.mahalle}
+                value={secim.sokak}
+              >
+                <option value="">Sokak Seç</option>
+                {veriler.sokaklar.map((sokak: any) => <option key={sokak.sokak_id} value={sokak.sokak_id}>{sokak.sokak_adi}</option>)}
+              </select>
+            </div>
           </div>
+        </div>
+
+        {/* Ne Arıyorsunuz? - Konum seçildikten sonra */}
+        {secim.sokak && !aramaTipi && (
+          <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-black text-gray-800 mb-2">Ne Arıyorsunuz?</h2>
+              <p className="text-sm text-gray-600">Bu konumda hangi tür işletme arıyorsunuz?</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <button
+                onClick={() => aramaTipiSec('sanayi')}
+                className="group relative overflow-hidden p-8 rounded-3xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl bg-gradient-to-br from-yellow-400 via-amber-400 to-orange-400"
+              >
+                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative text-center">
+                  <div className="text-6xl mb-4">🏭</div>
+                  <div className="text-2xl font-black text-gray-900 mb-2">Sanayi Sitesi</div>
+                  <div className="text-sm text-gray-700 font-medium">Organize sanayi bölgelerindeki işletmeler</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => aramaTipiSec('mahalle')}
+                className="group relative overflow-hidden p-8 rounded-3xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl bg-gradient-to-br from-blue-400 via-indigo-400 to-purple-400"
+              >
+                <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative text-center">
+                  <div className="text-6xl mb-4">🏪</div>
+                  <div className="text-2xl font-black text-white mb-2">Mahalle İşletmesi</div>
+                  <div className="text-sm text-white font-medium">Eczane, market, kuaför, dişçi vb.</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Sanayi Sitesi Seçimi - Sanayi tipi seçildiğinde */}
+        {aramaTipi === 'sanayi' && veriler.siteler.length > 0 && (
+          <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="relative">
+              <label className="block text-sm font-bold text-gray-700 mb-2">🏭 Sanayi Sitesi Seçin</label>
+              <select
+                className="w-full p-4 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-2xl border-2 border-yellow-500 font-black text-gray-900 outline-none transition-all hover:from-yellow-500 hover:to-amber-500 focus:shadow-xl appearance-none cursor-pointer"
+                onChange={(e) => siteSec(e.target.value)}
+                value={secim.site}
+              >
+                <option value="">Sanayi Sitesi Seç</option>
+                {veriler.siteler.map((s: any) => <option key={s.id} value={s.id}>{s.site_adi}</option>)}
+              </select>
+            </div>
           </div>
         )}
 
