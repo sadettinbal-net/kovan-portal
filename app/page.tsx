@@ -3,8 +3,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function Home() {
-  const [secim, setSecim] = useState({ il: '', ilce: '', site: '' });
-  const [veriler, setVeriler] = useState({ iller: [], ilceler: [], siteler: [], dukkanlar: [] });
+  const [secim, setSecim] = useState({ il: '', ilce: '', mahalle: '', sokak: '', site: '' });
+  const [veriler, setVeriler] = useState({ iller: [], ilceler: [], mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] });
   const [hata, setHata] = useState('');
   const [aramaMetni, setAramaMetni] = useState('');
   const [seciliKategori, setSeciliKategori] = useState('');
@@ -31,14 +31,26 @@ export default function Home() {
   }, []);
 
   const ilSec = async (id: string) => {
-    setSecim({ il: id, ilce: '', site: '' });
+    setSecim({ il: id, ilce: '', mahalle: '', sokak: '', site: '' });
     const { data } = await supabase.from('ilceler').select('*').eq('sehir_id', id).order('ilce_adi');
-    setVeriler(prev => ({ ...prev, ilceler: data || [], siteler: [], dukkanlar: [] }));
+    setVeriler(prev => ({ ...prev, ilceler: data || [], mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
   const ilceSec = async (id: string) => {
-    setSecim(prev => ({ ...prev, ilce: id, site: '' }));
-    const { data } = await supabase.from('sanayi_siteleri').select('*').eq('ilce_id', parseInt(id));
+    setSecim(prev => ({ ...prev, ilce: id, mahalle: '', sokak: '', site: '' }));
+    const { data } = await supabase.from('mahalleler').select('*').eq('ilce_id', parseInt(id)).order('mahalle_adi');
+    setVeriler(prev => ({ ...prev, mahalleler: data || [], sokaklar: [], siteler: [], dukkanlar: [] }));
+  };
+
+  const mahalleSec = async (id: string) => {
+    setSecim(prev => ({ ...prev, mahalle: id, sokak: '', site: '' }));
+    const { data } = await supabase.from('sokaklar').select('*').eq('mahalle_id', parseInt(id)).order('sokak_adi');
+    setVeriler(prev => ({ ...prev, sokaklar: data || [], siteler: [], dukkanlar: [] }));
+  };
+
+  const sokakSec = async (id: string) => {
+    setSecim(prev => ({ ...prev, sokak: id, site: '' }));
+    const { data } = await supabase.from('sanayi_siteleri').select('*').eq('sokak_id', parseInt(id));
     setVeriler(prev => ({ ...prev, siteler: data || [], dukkanlar: [] }));
   };
 
@@ -160,11 +172,35 @@ export default function Home() {
             </div>
 
             <div className="relative">
+              <label className="block text-sm font-bold text-gray-700 mb-2">🏘️ Mahalle Seçin</label>
+              <select
+                className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
+                onChange={(e) => mahalleSec(e.target.value)}
+                disabled={!secim.ilce}
+              >
+                <option value="">Mahalle Seç</option>
+                {veriler.mahalleler.map((mahalle: any) => <option key={mahalle.id} value={mahalle.id}>{mahalle.mahalle_adi}</option>)}
+              </select>
+            </div>
+
+            <div className="relative">
+              <label className="block text-sm font-bold text-gray-700 mb-2">🛣️ Sokak Seçin</label>
+              <select
+                className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
+                onChange={(e) => sokakSec(e.target.value)}
+                disabled={!secim.mahalle}
+              >
+                <option value="">Sokak Seç</option>
+                {veriler.sokaklar.map((sokak: any) => <option key={sokak.id} value={sokak.id}>{sokak.sokak_adi}</option>)}
+              </select>
+            </div>
+
+            <div className="relative">
               <label className="block text-sm font-bold text-gray-700 mb-2">🏭 Sanayi Sitesi Seçin</label>
               <select
                 className="w-full p-4 bg-gradient-to-r from-yellow-400 to-amber-400 rounded-2xl border-2 border-yellow-500 font-black text-gray-900 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:from-yellow-500 hover:to-amber-500 focus:shadow-xl appearance-none cursor-pointer"
                 onChange={(e) => siteSec(e.target.value)}
-                disabled={!secim.ilce}
+                disabled={!secim.sokak}
               >
                 <option value="">{veriler.siteler.length > 0 ? "Sanayi Sitesi Seç" : "Kayıt Bulunamadı"}</option>
                 {veriler.siteler.map((s: any) => <option key={s.id} value={s.id}>{s.site_adi}</option>)}
