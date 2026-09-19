@@ -364,8 +364,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Ne Arıyorsunuz? - Konum seçildikten sonra */}
-        {secim.sokak && !aramaTipi && (
+        {/* Ne Arıyorsunuz? - İlçe seçildikten sonra */}
+        {secim.ilce && !aramaTipi && (
           <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-black text-gray-800 mb-2">Ne Arıyorsunuz?</h2>
