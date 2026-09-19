@@ -43,6 +43,7 @@ export default function Home() {
 
   const ilSec = async (ilAdi: string) => {
     setSecim({ il: ilAdi, ilce: '', mahalle: '', sokak: '', site: '' });
+    setAramaTipi(''); // Arama tipini sıfırla
 
     // İlçeleri mahalleler tablosundan alalım (unique ilce_adi)
     // Mahalleler tablosunda il_adi tamamı büyük harf (İSTANBUL, İZMİR, ANKARA)
@@ -64,6 +65,7 @@ export default function Home() {
 
   const ilceSec = async (ilceAdi: string) => {
     setSecim(prev => ({ ...prev, ilce: ilceAdi, mahalle: '', sokak: '', site: '' }));
+    setAramaTipi(''); // Arama tipini sıfırla
 
     // Her zaman mahalleleri yükle (konum seçimi için)
     const { data } = await supabase.from('mahalleler').select('*').eq('ilce_adi', ilceAdi).order('mahalle_adi');
@@ -78,6 +80,7 @@ export default function Home() {
 
   const mahalleSec = async (mahalle_id: string) => {
     setSecim(prev => ({ ...prev, mahalle: mahalle_id, sokak: '', site: '' }));
+    setAramaTipi(''); // Arama tipini sıfırla
     const { data } = await supabase.from('sokaklar').select('*').eq('mahalle_id', parseInt(mahalle_id)).order('sokak_adi');
 
     // Unique sokak_id bazında filtrele (duplicate kayıtlar olabilir)
@@ -101,13 +104,21 @@ export default function Home() {
     setAramaTipi(tip);
 
     if (tip === 'sanayi') {
-      // SANAYİ SİTESİ: Bu ilçedeki sanayi sitelerini yükle
-      if (secim.ilce) {
-        const { data: sitelerData } = await supabase
+      // SANAYİ SİTESİ: İlçe seçiliyse o ilçenin, yoksa tüm ilin OSB'lerini yükle
+      if (secim.il) {
+        const ilAdiUpper = secim.il.toLocaleUpperCase('tr-TR');
+
+        let query = supabase
           .from('sanayi_siteleri')
           .select('*')
-          .eq('ilce_adi', secim.ilce)
-          .order('site_adi');
+          .eq('il_adi', ilAdiUpper);
+
+        // Eğer ilçe de seçiliyse, ilçeye göre filtrele
+        if (secim.ilce) {
+          query = query.eq('ilce_adi', secim.ilce);
+        }
+
+        const { data: sitelerData } = await query.order('site_adi');
 
         setVeriler(prev => ({ ...prev, siteler: sitelerData || [] }));
       }
@@ -364,8 +375,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Ne Arıyorsunuz? - İlçe seçildikten sonra */}
-        {secim.ilce && !aramaTipi && (
+        {/* Ne Arıyorsunuz? - İl seçildikten sonra */}
+        {secim.il && !aramaTipi && (
           <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-black text-gray-800 mb-2">Ne Arıyorsunuz?</h2>
