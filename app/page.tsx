@@ -278,31 +278,31 @@ export default function Home() {
         </div>
 
         {/* İstatistik Kartları */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 animate-in fade-in slide-in-from-top-8 duration-700">
-          <div className="group relative overflow-hidden bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 p-6 rounded-3xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 animate-in fade-in slide-in-from-top-8 duration-700">
+          <div className="group relative overflow-hidden bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl">
             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative">
-              <div className="text-sm font-bold text-yellow-900/70 uppercase tracking-wider mb-2">Sanayi Sitesi</div>
-              <div className="text-5xl font-black text-white mb-1">{istatistikler.toplamSite}</div>
-              <div className="text-xs text-yellow-900/60 font-medium">Kayıtlı Lokasyon</div>
+              <div className="text-xs font-bold text-yellow-900/70 uppercase tracking-wider mb-1">Sanayi Sitesi</div>
+              <div className="text-3xl font-black text-white mb-0.5">{istatistikler.toplamSite}</div>
+              <div className="text-[10px] text-yellow-900/60 font-medium">Kayıtlı Lokasyon</div>
             </div>
           </div>
 
-          <div className="group relative overflow-hidden bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-6 rounded-3xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl">
+          <div className="group relative overflow-hidden bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl">
             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative">
-              <div className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Toplam Dükkan</div>
-              <div className="text-5xl font-black text-white mb-1">{istatistikler.toplamDukkan}</div>
-              <div className="text-xs text-slate-400 font-medium">Aktif İşletme</div>
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Toplam Dükkan</div>
+              <div className="text-3xl font-black text-white mb-0.5">{istatistikler.toplamDukkan}</div>
+              <div className="text-[10px] text-slate-400 font-medium">Aktif İşletme</div>
             </div>
           </div>
 
-          <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 p-6 rounded-3xl shadow-xl transform transition-all hover:scale-105 hover:shadow-2xl">
+          <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl">
             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative">
-              <div className="text-sm font-bold text-blue-200 uppercase tracking-wider mb-2">Kategoriler</div>
-              <div className="text-5xl font-black text-white mb-1">{istatistikler.toplamKategori}</div>
-              <div className="text-xs text-blue-200 font-medium">Farklı Sektör</div>
+              <div className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-1">Kategoriler</div>
+              <div className="text-3xl font-black text-white mb-0.5">{istatistikler.toplamKategori}</div>
+              <div className="text-[10px] text-blue-200 font-medium">Farklı Sektör</div>
             </div>
           </div>
         </div>
