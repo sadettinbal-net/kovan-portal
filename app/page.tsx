@@ -271,42 +271,68 @@ export default function Home() {
           <div className="flex items-center justify-between">
             {/* Logo - Sol Üst */}
             <div className="flex items-center gap-3">
-              <svg className="w-12 h-12" viewBox="0 0 80 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Üst Kanat (Animasyonlu) */}
-                <ellipse cx="35" cy="18" rx="18" ry="10" fill="white" opacity="0.8" transform="rotate(-10 35 18)" className="animate-pulse"/>
-                <ellipse cx="35" cy="18" rx="18" ry="10" fill="none" stroke="#FDB913" strokeWidth="1.5" opacity="0.6" transform="rotate(-10 35 18)"/>
+              <svg className="w-12 h-12" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Kanatlar - Arka Plan */}
+                <g opacity="0.85" className="animate-pulse">
+                  <path d="M45 25 Q35 15 25 20 Q15 25 18 35 Q20 42 30 40 Q38 38 45 35 Z" fill="white" stroke="#E0E0E0" strokeWidth="1"/>
+                  <path d="M48 25 Q38 12 28 16 Q20 20 23 30 Q25 36 33 34 Z" fill="white" stroke="#D0D0D0" strokeWidth="0.8" opacity="0.7"/>
+                  <path d="M45 48 Q35 58 25 53 Q15 48 18 38 Q20 31 30 33 Q38 35 45 38 Z" fill="white" stroke="#E0E0E0" strokeWidth="1"/>
+                  <path d="M48 48 Q38 61 28 57 Q20 53 23 43 Q25 37 33 39 Z" fill="white" stroke="#D0D0D0" strokeWidth="0.8" opacity="0.7"/>
+                </g>
 
-                {/* Alt Kanat (Animasyonlu) */}
-                <ellipse cx="35" cy="40" rx="16" ry="9" fill="white" opacity="0.7" transform="rotate(10 35 40)" className="animate-pulse"/>
-                <ellipse cx="35" cy="40" rx="16" ry="9" fill="none" stroke="#FDB913" strokeWidth="1.5" opacity="0.5" transform="rotate(10 35 40)"/>
+                {/* Göğüs (Thorax) - Tüylü Görünüm */}
+                <ellipse cx="52" cy="36" rx="10" ry="11" fill="#2C2416"/>
+                <ellipse cx="52" cy="36" rx="9" ry="10" fill="#3D321F"/>
+                <circle cx="49" cy="33" r="1.5" fill="#5C4A2F" opacity="0.6"/>
+                <circle cx="54" cy="35" r="1.2" fill="#5C4A2F" opacity="0.5"/>
+                <circle cx="51" cy="39" r="1.3" fill="#5C4A2F" opacity="0.5"/>
 
-                {/* Baş (Sağa bakıyor) */}
-                <circle cx="58" cy="30" r="9" fill="#1F1F1F"/>
+                {/* Karın (Abdomen) - Sarı-Siyah Çizgili */}
+                <ellipse cx="67" cy="36" rx="18" ry="13" fill="#FDB913"/>
+                <ellipse cx="67" cy="36" rx="17" ry="12" fill="url(#beeStripes)"/>
 
-                {/* Gözler (Sağa bakıyor) */}
-                <circle cx="61" cy="28" r="2.5" fill="white"/>
-                <circle cx="62.5" cy="28" r="1.2" fill="#1F1F1F"/>
-                <circle cx="61" cy="34" r="2" fill="white" opacity="0.5"/>
+                <defs>
+                  <pattern id="beeStripes" x="0" y="0" width="8" height="100%" patternUnits="userSpaceOnUse">
+                    <rect x="0" y="0" width="4" height="100%" fill="#2C2416"/>
+                    <rect x="4" y="0" width="4" height="100%" fill="transparent"/>
+                  </pattern>
+                  <radialGradient id="headGradient">
+                    <stop offset="0%" stopColor="#3D321F"/>
+                    <stop offset="100%" stopColor="#2C2416"/>
+                  </radialGradient>
+                </defs>
 
-                {/* Antenler (Öne doğru) */}
-                <path d="M62 23 L68 18 M62 25 L68 22" stroke="#1F1F1F" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="68" cy="18" r="2" fill="#FDB913"/>
-                <circle cx="68" cy="22" r="1.8" fill="#FDB913"/>
+                {/* Baş - Sağa Dönük */}
+                <ellipse cx="42" cy="36" rx="7" ry="8" fill="url(#headGradient)"/>
 
-                {/* Gövde (Yatay oval) */}
-                <ellipse cx="38" cy="30" rx="20" ry="12" fill="#FDB913"/>
+                {/* Gözler - Bileşik Göz Yapısı */}
+                <ellipse cx="40" cy="33" rx="3" ry="4" fill="#1a1a1a"/>
+                <ellipse cx="40" cy="33" rx="2.5" ry="3.5" fill="#2d2d2d"/>
+                <g opacity="0.3">
+                  <circle cx="39.5" cy="32" r="0.4" fill="white"/>
+                  <circle cx="40.5" cy="32.5" r="0.4" fill="white"/>
+                  <circle cx="39.5" cy="33.5" r="0.4" fill="white"/>
+                  <circle cx="40.5" cy="34" r="0.4" fill="white"/>
+                </g>
+                <circle cx="39" cy="31.5" r="0.8" fill="white" opacity="0.4"/>
 
-                {/* Siyah Çizgiler (Dikey) */}
-                <path d="M24 20 Q24 30 24 40" stroke="#1F1F1F" strokeWidth="3.5" strokeLinecap="round"/>
-                <path d="M32 18 Q32 30 32 42" stroke="#1F1F1F" strokeWidth="3.5" strokeLinecap="round"/>
-                <path d="M42 18 Q42 30 42 42" stroke="#1F1F1F" strokeWidth="3.5" strokeLinecap="round"/>
-
-                {/* İğne (Arkada) */}
-                <path d="M18 30 L10 30" stroke="#1F1F1F" strokeWidth="2.5" strokeLinecap="round"/>
-                <path d="M10 30 L13 27 L13 33 Z" fill="#1F1F1F"/>
+                {/* Antenler */}
+                <path d="M40 28 Q36 24 34 22" stroke="#2C2416" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M42 28 Q38 23 36 20" stroke="#2C2416" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="34" cy="22" r="1.2" fill="#3D321F"/>
+                <circle cx="36" cy="20" r="1.2" fill="#3D321F"/>
 
                 {/* Bacaklar */}
-                <path d="M35 40 L33 48 M38 41 L38 49 M41 40 L43 48" stroke="#1F1F1F" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M50 44 Q48 50 46 52" stroke="#2C2416" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M54 45 Q53 52 52 55" stroke="#2C2416" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M58 44 Q58 51 58 54" stroke="#2C2416" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M50 28 Q48 22 46 20" stroke="#2C2416" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M54 27 Q53 20 52 17" stroke="#2C2416" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M58 28 Q58 21 58 18" stroke="#2C2416" strokeWidth="1.8" strokeLinecap="round"/>
+
+                {/* Parlama Efekti */}
+                <ellipse cx="70" cy="32" rx="3" ry="2" fill="white" opacity="0.3"/>
+                <ellipse cx="75" cy="35" rx="2" ry="1.5" fill="white" opacity="0.25"/>
               </svg>
               <div>
                 <h1 className="text-2xl font-black bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-transparent uppercase tracking-tight leading-none">
