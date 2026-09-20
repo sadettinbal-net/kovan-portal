@@ -264,18 +264,58 @@ export default function Home() {
   }, [veriler.dukkanlar, veriler.altKategoriler, seciliKategori]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 p-4 font-sans">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-lg px-8 py-4 rounded-3xl shadow-xl border border-yellow-200/50 mb-4">
-            <span className="text-5xl">🐝</span>
-            <h1 className="text-4xl font-black bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-transparent uppercase tracking-tight">
-              KOVAN PORTAL
-            </h1>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 font-sans">
+      {/* Navigation Bar */}
+      <nav className="bg-white/80 backdrop-blur-lg shadow-lg border-b border-yellow-200/50 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Logo - Sol Üst */}
+            <div className="flex items-center gap-2">
+              <span className="text-3xl">🐝</span>
+              <div>
+                <h1 className="text-2xl font-black bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-transparent uppercase tracking-tight leading-none">
+                  KOVAN PORTAL
+                </h1>
+                <p className="text-[10px] text-gray-600 font-medium">Türkiye'nin Sanayi Rehberi</p>
+              </div>
+            </div>
+
+            {/* Navigation Menu - Sağ */}
+            <div className="hidden md:flex items-center gap-1">
+              <a href="#" className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all">
+                Anasayfa
+              </a>
+              <a href="#" className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all">
+                Firmalar
+              </a>
+              <a href="#" className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all">
+                Özel Firmalar
+              </a>
+              <a href="#" className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all">
+                Firma Ekle
+              </a>
+              <a href="#" className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all">
+                İletişim
+              </a>
+              <a href="#" className="px-4 py-2 text-sm font-bold text-gray-700 hover:text-yellow-600 hover:bg-yellow-50 rounded-xl transition-all">
+                Site Kullanımı
+              </a>
+              <a href="#" className="px-3 py-2 text-sm font-bold text-white bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 rounded-xl transition-all shadow-md">
+                Üye Ol
+              </a>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button className="md:hidden p-2 text-gray-700 hover:bg-yellow-50 rounded-xl">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
           </div>
-          <p className="text-gray-600 font-medium text-sm">Türkiye'nin Sanayi Rehberi</p>
         </div>
+      </nav>
+
+      <div className="max-w-5xl mx-auto p-4">
 
         {/* İstatistik Kartları */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 animate-in fade-in slide-in-from-top-8 duration-700">
