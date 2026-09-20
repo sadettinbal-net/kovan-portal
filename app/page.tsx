@@ -270,35 +270,43 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             {/* Logo - Sol Üst */}
-            <div className="flex items-center gap-2">
-              <svg className="w-10 h-10" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Arı Gövdesi */}
-                <ellipse cx="32" cy="36" rx="16" ry="20" fill="#FDB913"/>
-                {/* Siyah Çizgiler */}
-                <path d="M16 28 C16 28 48 28 48 28" stroke="#1F1F1F" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M16 36 C16 36 48 36 48 36" stroke="#1F1F1F" strokeWidth="3" strokeLinecap="round"/>
-                <path d="M16 44 C16 44 48 44 48 44" stroke="#1F1F1F" strokeWidth="3" strokeLinecap="round"/>
-                {/* Baş */}
-                <circle cx="32" cy="18" r="8" fill="#1F1F1F"/>
-                {/* Gözler */}
-                <circle cx="28" cy="17" r="2" fill="white"/>
-                <circle cx="36" cy="17" r="2" fill="white"/>
-                {/* Anten */}
-                <path d="M28 10 L25 5 M36 10 L39 5" stroke="#1F1F1F" strokeWidth="2" strokeLinecap="round"/>
-                <circle cx="25" cy="5" r="1.5" fill="#1F1F1F"/>
-                <circle cx="39" cy="5" r="1.5" fill="#1F1F1F"/>
-                {/* Sol Kanatlar */}
-                <ellipse cx="20" cy="28" rx="12" ry="8" fill="white" opacity="0.7" transform="rotate(-30 20 28)"/>
-                <ellipse cx="18" cy="32" rx="10" ry="6" fill="white" opacity="0.6" transform="rotate(-35 18 32)"/>
-                {/* Sağ Kanatlar */}
-                <ellipse cx="44" cy="28" rx="12" ry="8" fill="white" opacity="0.7" transform="rotate(30 44 28)"/>
-                <ellipse cx="46" cy="32" rx="10" ry="6" fill="white" opacity="0.6" transform="rotate(35 46 32)"/>
-                {/* Kanat Detayları */}
-                <ellipse cx="20" cy="28" rx="12" ry="8" fill="none" stroke="#FDB913" strokeWidth="1" opacity="0.5" transform="rotate(-30 20 28)"/>
-                <ellipse cx="44" cy="28" rx="12" ry="8" fill="none" stroke="#FDB913" strokeWidth="1" opacity="0.5" transform="rotate(30 44 28)"/>
-                {/* İğne */}
-                <path d="M32 52 L32 58" stroke="#1F1F1F" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M32 58 L30 56 L34 56 Z" fill="#1F1F1F"/>
+            <div className="flex items-center gap-3">
+              <svg className="w-12 h-12" viewBox="0 0 80 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Üst Kanat (Animasyonlu) */}
+                <ellipse cx="35" cy="18" rx="18" ry="10" fill="white" opacity="0.8" transform="rotate(-10 35 18)" className="animate-pulse"/>
+                <ellipse cx="35" cy="18" rx="18" ry="10" fill="none" stroke="#FDB913" strokeWidth="1.5" opacity="0.6" transform="rotate(-10 35 18)"/>
+
+                {/* Alt Kanat (Animasyonlu) */}
+                <ellipse cx="35" cy="40" rx="16" ry="9" fill="white" opacity="0.7" transform="rotate(10 35 40)" className="animate-pulse"/>
+                <ellipse cx="35" cy="40" rx="16" ry="9" fill="none" stroke="#FDB913" strokeWidth="1.5" opacity="0.5" transform="rotate(10 35 40)"/>
+
+                {/* Baş (Sağa bakıyor) */}
+                <circle cx="58" cy="30" r="9" fill="#1F1F1F"/>
+
+                {/* Gözler (Sağa bakıyor) */}
+                <circle cx="61" cy="28" r="2.5" fill="white"/>
+                <circle cx="62.5" cy="28" r="1.2" fill="#1F1F1F"/>
+                <circle cx="61" cy="34" r="2" fill="white" opacity="0.5"/>
+
+                {/* Antenler (Öne doğru) */}
+                <path d="M62 23 L68 18 M62 25 L68 22" stroke="#1F1F1F" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="68" cy="18" r="2" fill="#FDB913"/>
+                <circle cx="68" cy="22" r="1.8" fill="#FDB913"/>
+
+                {/* Gövde (Yatay oval) */}
+                <ellipse cx="38" cy="30" rx="20" ry="12" fill="#FDB913"/>
+
+                {/* Siyah Çizgiler (Dikey) */}
+                <path d="M24 20 Q24 30 24 40" stroke="#1F1F1F" strokeWidth="3.5" strokeLinecap="round"/>
+                <path d="M32 18 Q32 30 32 42" stroke="#1F1F1F" strokeWidth="3.5" strokeLinecap="round"/>
+                <path d="M42 18 Q42 30 42 42" stroke="#1F1F1F" strokeWidth="3.5" strokeLinecap="round"/>
+
+                {/* İğne (Arkada) */}
+                <path d="M18 30 L10 30" stroke="#1F1F1F" strokeWidth="2.5" strokeLinecap="round"/>
+                <path d="M10 30 L13 27 L13 33 Z" fill="#1F1F1F"/>
+
+                {/* Bacaklar */}
+                <path d="M35 40 L33 48 M38 41 L38 49 M41 40 L43 48" stroke="#1F1F1F" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
               <div>
                 <h1 className="text-2xl font-black bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 bg-clip-text text-transparent uppercase tracking-tight leading-none">
