@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
+import TurkiyeHaritasi from '@/components/TurkiyeHaritasi';
 
 export default function Home() {
   const [aramaTipi, setAramaTipi] = useState<'sanayi' | 'mahalle' | ''>(''); // Yeni: Arama tipi seçimi
@@ -11,6 +12,12 @@ export default function Home() {
   const [seciliKategori, setSeciliKategori] = useState(0);
   const [seciliAltKategori, setSeciliAltKategori] = useState(0);
   const [istatistikler, setIstatistikler] = useState({ toplamSite: 0, toplamDukkan: 0, toplamKategori: 0 });
+
+  // Sokak arama ve pagination state'leri
+  const [sokakAramaMetni, setSokakAramaMetni] = useState('');
+  const [sokakSayfasi, setSokakSayfasi] = useState(1);
+  const [toplamSokakSayisi, setToplamSokakSayisi] = useState(0);
+  const sokakSayfaBasinaMiktar = 50; // Her sayfada 50 sokak göster
 
   useEffect(() => {
     async function ilkYukleme() {
@@ -81,7 +88,40 @@ export default function Home() {
   const mahalleSec = async (mahalle_id: string) => {
     setSecim(prev => ({ ...prev, mahalle: mahalle_id, sokak: '', site: '' }));
     setAramaTipi(''); // Arama tipini sıfırla
-    const { data } = await supabase.from('sokaklar').select('*').eq('mahalle_id', parseInt(mahalle_id)).order('sokak_adi');
+    setSokakAramaMetni(''); // Sokak arama metnini sıfırla
+    setSokakSayfasi(1); // Sayfa numarasını sıfırla
+
+    // İlk olarak toplam sokak sayısını al
+    const { count } = await supabase
+      .from('sokaklar')
+      .select('*', { count: 'exact', head: true })
+      .eq('mahalle_id', parseInt(mahalle_id));
+
+    setToplamSokakSayisi(count || 0);
+
+    // İlk 50 sokağı yükle
+    await sokakYukle(parseInt(mahalle_id), '', 1);
+  };
+
+  // Sokak yükleme fonksiyonu (pagination ve arama ile)
+  const sokakYukle = async (mahalle_id: number, aramaMetni: string, sayfa: number) => {
+    let query = supabase
+      .from('sokaklar')
+      .select('*')
+      .eq('mahalle_id', mahalle_id);
+
+    // Arama filtresi
+    if (aramaMetni) {
+      query = query.ilike('sokak_adi', `%${aramaMetni}%`);
+    }
+
+    // Pagination (offset ve limit)
+    const baslangic = (sayfa - 1) * sokakSayfaBasinaMiktar;
+    query = query
+      .order('sokak_adi')
+      .range(baslangic, baslangic + sokakSayfaBasinaMiktar - 1);
+
+    const { data } = await query;
 
     // Unique sokak_id bazında filtrele (duplicate kayıtlar olabilir)
     const uniqueSokaklar = data ? Array.from(
@@ -89,6 +129,17 @@ export default function Home() {
     ) : [];
 
     setVeriler(prev => ({ ...prev, sokaklar: uniqueSokaklar, siteler: [], dukkanlar: [] }));
+
+    // Arama yapıldıysa toplam sayıyı güncelle
+    if (aramaMetni) {
+      const { count } = await supabase
+        .from('sokaklar')
+        .select('*', { count: 'exact', head: true })
+        .eq('mahalle_id', mahalle_id)
+        .ilike('sokak_adi', `%${aramaMetni}%`);
+
+      setToplamSokakSayisi(count || 0);
+    }
   };
 
   const sokakSec = async (sokak_id: string) => {
@@ -262,6 +313,20 @@ export default function Home() {
       ak.kategori_id === seciliKategori && altKatIds.has(ak.id)
     );
   }, [veriler.dukkanlar, veriler.altKategoriler, seciliKategori]);
+
+  // Sokak arama ve pagination için debounced effect
+  useEffect(() => {
+    if (!secim.mahalle) return;
+
+    const timer = setTimeout(() => {
+      sokakYukle(parseInt(secim.mahalle), sokakAramaMetni, sokakSayfasi);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [sokakAramaMetni, sokakSayfasi]);
+
+  // Toplam sayfa sayısı
+  const toplamSokakSayfasi = Math.ceil(toplamSokakSayisi / sokakSayfaBasinaMiktar);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 font-sans">
@@ -479,20 +544,109 @@ export default function Home() {
               </select>
             </div>
 
-            <div className="relative">
-              <label className="block text-sm font-bold text-gray-700 mb-2">🛣️ Sokak Seçin</label>
-              <select
-                className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
-                onChange={(e) => sokakSec(e.target.value)}
-                disabled={!secim.mahalle}
-                value={secim.sokak}
-              >
-                <option value="">Sokak Seç</option>
-                {veriler.sokaklar.map((sokak: any) => <option key={sokak.sokak_id} value={sokak.sokak_id}>{sokak.sokak_adi}</option>)}
-              </select>
-            </div>
+            {/* Sokak Seçimi - Arama ve Pagination ile */}
+            {secim.mahalle && (
+              <div className="relative space-y-4 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl border-2 border-blue-200/50">
+                <label className="block text-sm font-bold text-gray-700 mb-2">🛣️ Sokak Seçin</label>
+
+                {/* Arama Kutusu */}
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="🔍 Sokak adı ara..."
+                    value={sokakAramaMetni}
+                    onChange={(e) => {
+                      setSokakAramaMetni(e.target.value);
+                      setSokakSayfasi(1); // Arama yapınca ilk sayfaya dön
+                    }}
+                    className="w-full p-4 pl-12 bg-white rounded-2xl border-2 border-gray-200 font-medium text-gray-700 outline-none focus:border-blue-400 focus:shadow-lg transition-all placeholder:text-gray-400"
+                  />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">🔍</div>
+                  {sokakAramaMetni && (
+                    <button
+                      onClick={() => {
+                        setSokakAramaMetni('');
+                        setSokakSayfasi(1);
+                      }}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Sokak Listesi */}
+                {veriler.sokaklar.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                    {veriler.sokaklar.map((sokak: any) => (
+                      <button
+                        key={sokak.sokak_id}
+                        onClick={() => sokakSec(sokak.sokak_id.toString())}
+                        className={`w-full text-left p-4 rounded-xl transition-all font-bold ${
+                          secim.sokak === sokak.sokak_id.toString()
+                            ? 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg scale-[1.02]'
+                            : 'bg-white text-gray-700 hover:bg-blue-50 hover:shadow-md'
+                        }`}
+                      >
+                        {sokak.sokak_adi}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500 font-medium">
+                    {sokakAramaMetni ? (
+                      <>
+                        <div className="text-4xl mb-2">🔍</div>
+                        <div>"{sokakAramaMetni}" için sonuç bulunamadı</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-4xl mb-2">🛣️</div>
+                        <div>Bu mahallede sokak kaydı bulunamadı</div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Pagination Kontrolleri */}
+                {toplamSokakSayfasi > 1 && (
+                  <div className="flex items-center justify-between pt-4 border-t-2 border-blue-200/50">
+                    <button
+                      onClick={() => setSokakSayfasi(prev => Math.max(1, prev - 1))}
+                      disabled={sokakSayfasi === 1}
+                      className="px-4 py-2 bg-white rounded-xl font-bold text-gray-700 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+                    >
+                      ← Önceki
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-gray-600">
+                        Sayfa {sokakSayfasi} / {toplamSokakSayfasi}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        ({toplamSokakSayisi} sokak)
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => setSokakSayfasi(prev => Math.min(toplamSokakSayfasi, prev + 1))}
+                      disabled={sokakSayfasi === toplamSokakSayfasi}
+                      className="px-4 py-2 bg-white rounded-xl font-bold text-gray-700 hover:bg-blue-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
+                    >
+                      Sonraki →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Türkiye Haritası - Konum Seçim Panelinin Altında */}
+        <TurkiyeHaritasi
+          onIlClick={(ilAdi) => ilSec(ilAdi)}
+          seciliIl={secim.il}
+        />
 
         {/* Ne Arıyorsunuz? - İl seçildikten sonra */}
         {secim.il && !aramaTipi && (

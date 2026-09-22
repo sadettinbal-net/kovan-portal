@@ -1,0 +1,371 @@
+'use client';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+
+interface CityData {
+  il_adi: string;
+  ilce_sayisi: number;
+  mahalle_sayisi: number;
+  sokak_sayisi: number;
+  x: number;
+  y: number;
+}
+
+// Türkiye illerinin hexagonal grid'deki konumları (coğrafi konumlarına yakın)
+const CITY_POSITIONS = [
+  // Marmara Bölgesi
+  { il_adi: 'İstanbul', x: 8, y: 3 },
+  { il_adi: 'Kocaeli', x: 9, y: 3 },
+  { il_adi: 'Bursa', x: 7, y: 4 },
+  { il_adi: 'Balıkesir', x: 6, y: 4 },
+  { il_adi: 'Çanakkale', x: 5, y: 4 },
+  { il_adi: 'Edirne', x: 6, y: 2 },
+  { il_adi: 'Kırklareli', x: 7, y: 2 },
+  { il_adi: 'Tekirdağ', x: 6, y: 3 },
+  { il_adi: 'Yalova', x: 8, y: 4 },
+  { il_adi: 'Sakarya', x: 10, y: 3 },
+  { il_adi: 'Bilecik', x: 8, y: 5 },
+
+  // Ege Bölgesi
+  { il_adi: 'İzmir', x: 4, y: 6 },
+  { il_adi: 'Manisa', x: 5, y: 6 },
+  { il_adi: 'Aydın', x: 4, y: 7 },
+  { il_adi: 'Denizli', x: 5, y: 7 },
+  { il_adi: 'Muğla', x: 3, y: 7 },
+  { il_adi: 'Uşak', x: 6, y: 7 },
+  { il_adi: 'Afyonkarahisar', x: 7, y: 7 },
+  { il_adi: 'Kütahya', x: 7, y: 6 },
+
+  // İç Anadolu
+  { il_adi: 'Ankara', x: 10, y: 6 },
+  { il_adi: 'Konya', x: 9, y: 8 },
+  { il_adi: 'Eskişehir', x: 8, y: 6 },
+  { il_adi: 'Kayseri', x: 12, y: 7 },
+  { il_adi: 'Sivas', x: 13, y: 5 },
+  { il_adi: 'Yozgat', x: 12, y: 5 },
+  { il_adi: 'Aksaray', x: 11, y: 7 },
+  { il_adi: 'Kırıkkale', x: 11, y: 5 },
+  { il_adi: 'Kırşehir', x: 11, y: 6 },
+  { il_adi: 'Nevşehir', x: 11, y: 7 },
+  { il_adi: 'Niğde', x: 11, y: 8 },
+  { il_adi: 'Çankırı', x: 10, y: 4 },
+  { il_adi: 'Karaman', x: 10, y: 9 },
+
+  // Karadeniz
+  { il_adi: 'Zonguldak', x: 10, y: 2 },
+  { il_adi: 'Bartın', x: 11, y: 2 },
+  { il_adi: 'Karabük', x: 11, y: 3 },
+  { il_adi: 'Kastamonu', x: 12, y: 3 },
+  { il_adi: 'Sinop', x: 12, y: 2 },
+  { il_adi: 'Çorum', x: 12, y: 4 },
+  { il_adi: 'Samsun', x: 13, y: 3 },
+  { il_adi: 'Amasya', x: 13, y: 4 },
+  { il_adi: 'Tokat', x: 14, y: 4 },
+  { il_adi: 'Ordu', x: 14, y: 3 },
+  { il_adi: 'Giresun', x: 15, y: 3 },
+  { il_adi: 'Trabzon', x: 16, y: 3 },
+  { il_adi: 'Rize', x: 17, y: 3 },
+  { il_adi: 'Artvin', x: 18, y: 2 },
+  { il_adi: 'Gümüşhane', x: 16, y: 4 },
+  { il_adi: 'Bayburt', x: 17, y: 4 },
+  { il_adi: 'Bolu', x: 9, y: 4 },
+  { il_adi: 'Düzce', x: 10, y: 3 },
+
+  // Doğu Anadolu
+  { il_adi: 'Erzurum', x: 17, y: 5 },
+  { il_adi: 'Erzincan', x: 15, y: 5 },
+  { il_adi: 'Kars', x: 18, y: 4 },
+  { il_adi: 'Ağrı', x: 18, y: 5 },
+  { il_adi: 'Iğdır', x: 19, y: 4 },
+  { il_adi: 'Ardahan', x: 19, y: 3 },
+  { il_adi: 'Muş', x: 16, y: 6 },
+  { il_adi: 'Bingöl', x: 15, y: 6 },
+  { il_adi: 'Tunceli', x: 14, y: 6 },
+  { il_adi: 'Elazığ', x: 14, y: 7 },
+  { il_adi: 'Malatya', x: 13, y: 7 },
+  { il_adi: 'Van', x: 17, y: 7 },
+  { il_adi: 'Bitlis', x: 16, y: 7 },
+  { il_adi: 'Hakkari', x: 18, y: 8 },
+
+  // Güneydoğu Anadolu
+  { il_adi: 'Diyarbakır', x: 15, y: 7 },
+  { il_adi: 'Mardin', x: 15, y: 8 },
+  { il_adi: 'Şanlıurfa', x: 13, y: 8 },
+  { il_adi: 'Gaziantep', x: 12, y: 8 },
+  { il_adi: 'Adıyaman', x: 13, y: 7 },
+  { il_adi: 'Kilis', x: 12, y: 9 },
+  { il_adi: 'Batman', x: 16, y: 7 },
+  { il_adi: 'Şırnak', x: 17, y: 8 },
+  { il_adi: 'Siirt', x: 16, y: 8 },
+
+  // Akdeniz
+  { il_adi: 'Antalya', x: 7, y: 8 },
+  { il_adi: 'Mersin', x: 11, y: 9 },
+  { il_adi: 'Adana', x: 12, y: 9 },
+  { il_adi: 'Hatay', x: 13, y: 9 },
+  { il_adi: 'Isparta', x: 7, y: 8 },
+  { il_adi: 'Burdur', x: 6, y: 8 },
+  { il_adi: 'Osmaniye', x: 12, y: 9 },
+  { il_adi: 'Kahramanmaraş', x: 13, y: 8 },
+];
+
+export default function TurkeyHexMap() {
+  const [cityData, setCityData] = useState<CityData[]>([]);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadCityData();
+  }, []);
+
+  const loadCityData = async () => {
+    try {
+      setLoading(true);
+
+      // Tüm illeri al
+      const { data: iller } = await supabase
+        .from('iller')
+        .select('sehir_adi')
+        .order('sehir_adi');
+
+      if (!iller) return;
+
+      // Tüm mahalleleri tek seferde çek (performans için)
+      const { data: allMahalleler } = await supabase
+        .from('mahalleler')
+        .select('il_adi, ilce_adi');
+
+      // İl bazında istatistikleri grupla
+      const ilStats = new Map<string, { ilceler: Set<string>; mahalleSayisi: number }>();
+
+      allMahalleler?.forEach((m: any) => {
+        const ilAdi = m.il_adi;
+        if (!ilStats.has(ilAdi)) {
+          ilStats.set(ilAdi, { ilceler: new Set(), mahalleSayisi: 0 });
+        }
+        const stats = ilStats.get(ilAdi)!;
+        stats.ilceler.add(m.ilce_adi);
+        stats.mahalleSayisi++;
+      });
+
+      // Her il için veriyi birleştir
+      const enrichedData = iller.map((il: any) => {
+        const ilAdiUpper = il.sehir_adi.toLocaleUpperCase('tr-TR');
+        const stats = ilStats.get(ilAdiUpper);
+
+        // Pozisyonu bul
+        const position = CITY_POSITIONS.find(
+          p => p.il_adi.toLocaleUpperCase('tr-TR') === ilAdiUpper
+        );
+
+        return {
+          il_adi: il.sehir_adi,
+          ilce_sayisi: stats?.ilceler.size || 0,
+          mahalle_sayisi: stats?.mahalleSayisi || 0,
+          sokak_sayisi: 0, // Şimdilik sokak sayısını 0 bırakıyoruz (performans için)
+          x: position?.x || 0,
+          y: position?.y || 0,
+        };
+      });
+
+      setCityData(enrichedData);
+    } catch (error) {
+      console.error('Harita verileri yüklenirken hata:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Hexagon SVG path oluşturma
+  const createHexPath = (x: number, y: number, size: number) => {
+    const points = [];
+    for (let i = 0; i < 6; i++) {
+      const angle = (Math.PI / 3) * i;
+      const px = x + size * Math.cos(angle);
+      const py = y + size * Math.sin(angle);
+      points.push(`${px},${py}`);
+    }
+    return `M ${points.join(' L ')} Z`;
+  };
+
+  // Hexagon pozisyonunu hesaplama (offset grid için)
+  const getHexPosition = (gridX: number, gridY: number, hexSize: number) => {
+    const hexWidth = hexSize * 2;
+    const hexHeight = Math.sqrt(3) * hexSize;
+
+    const offsetX = gridY % 2 === 1 ? hexWidth * 0.75 : 0;
+    const x = gridX * hexWidth * 1.5 + offsetX;
+    const y = gridY * hexHeight;
+
+    return { x, y };
+  };
+
+  const hexSize = 20;
+
+  if (loading) {
+    return (
+      <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 animate-in fade-in">
+        <div className="flex items-center justify-center gap-3">
+          <div className="w-6 h-6 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-gray-600 font-bold">Türkiye Haritası Yükleniyor...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="mb-6">
+        <h2 className="text-2xl font-black text-gray-800 mb-2 flex items-center gap-2">
+          <span className="text-3xl">🗺️</span>
+          <span>Türkiye İnteraktif Haritası</span>
+        </h2>
+        <p className="text-sm text-gray-600">
+          {selectedCity
+            ? `Seçili: ${selectedCity}`
+            : 'İllere tıklayarak detayları görüntüleyin'}
+        </p>
+      </div>
+
+      <div className="overflow-x-auto pb-4">
+        <svg
+          viewBox="0 0 1200 600"
+          className="w-full h-auto min-h-[400px]"
+          style={{ maxHeight: '600px' }}
+        >
+          {/* Arka plan gradient */}
+          <defs>
+            <linearGradient id="mapBg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#fef3c7" />
+              <stop offset="100%" stopColor="#fed7aa" />
+            </linearGradient>
+
+            {/* Hover efekti için glow */}
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Hexagon grid */}
+          {cityData.map((city) => {
+            const pos = getHexPosition(city.x, city.y, hexSize);
+            const isSelected = selectedCity === city.il_adi;
+            const isHovered = hoveredCity === city.il_adi;
+
+            // Renk belirleme: mahalle sayısına göre gradient
+            let fillColor = '#e5e7eb'; // varsayılan gri
+            if (city.mahalle_sayisi > 500) {
+              fillColor = '#0f172a'; // lacivert (çok yoğun)
+            } else if (city.mahalle_sayisi > 200) {
+              fillColor = '#3b82f6'; // mavi
+            } else if (city.mahalle_sayisi > 100) {
+              fillColor = '#f59e0b'; // turuncu
+            } else if (city.mahalle_sayisi > 0) {
+              fillColor = '#fbbf24'; // sarı
+            }
+
+            return (
+              <g key={city.il_adi}>
+                {/* Hexagon */}
+                <path
+                  d={createHexPath(pos.x + 50, pos.y + 50, hexSize)}
+                  fill={isSelected ? '#dc2626' : fillColor}
+                  stroke={isHovered || isSelected ? '#fbbf24' : '#ffffff'}
+                  strokeWidth={isHovered || isSelected ? 3 : 1.5}
+                  className="transition-all duration-200 cursor-pointer"
+                  style={{
+                    filter: isHovered || isSelected ? 'url(#glow)' : 'none',
+                    opacity: isHovered || isSelected ? 1 : 0.85,
+                  }}
+                  onMouseEnter={() => setHoveredCity(city.il_adi)}
+                  onMouseLeave={() => setHoveredCity(null)}
+                  onClick={() => setSelectedCity(city.il_adi)}
+                />
+
+                {/* İl adı (hover/selected durumunda) */}
+                {(isHovered || isSelected) && (
+                  <text
+                    x={pos.x + 50}
+                    y={pos.y + 50}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="text-[8px] font-black fill-white pointer-events-none"
+                    style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
+                  >
+                    {city.il_adi}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Seçili il bilgileri */}
+      {selectedCity && cityData.find(c => c.il_adi === selectedCity) && (
+        <div className="mt-6 p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl border-2 border-yellow-300 animate-in fade-in slide-in-from-bottom-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-3xl font-black text-blue-600">
+                {cityData.find(c => c.il_adi === selectedCity)?.ilce_sayisi}
+              </div>
+              <div className="text-sm text-gray-600 font-bold">İlçe</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-black text-orange-600">
+                {cityData.find(c => c.il_adi === selectedCity)?.mahalle_sayisi}
+              </div>
+              <div className="text-sm text-gray-600 font-bold">Mahalle</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-black text-slate-700">
+                {selectedCity}
+              </div>
+              <div className="text-sm text-gray-600 font-bold">Şehir</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setSelectedCity(null)}
+            className="mt-4 w-full px-4 py-2 bg-gradient-to-r from-slate-700 to-slate-900 text-white rounded-xl font-bold hover:from-slate-600 hover:to-slate-800 transition-all"
+          >
+            Seçimi Temizle
+          </button>
+        </div>
+      )}
+
+      {/* Renk lejantı */}
+      <div className="mt-6 p-4 bg-gray-50 rounded-2xl">
+        <div className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wider">
+          Mahalle Yoğunluğu Göstergesi
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded" style={{ backgroundColor: '#e5e7eb' }}></div>
+            <span className="text-xs text-gray-600 font-medium">Veri Yok</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded" style={{ backgroundColor: '#fbbf24' }}></div>
+            <span className="text-xs text-gray-600 font-medium">1-100 Mahalle</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded" style={{ backgroundColor: '#f59e0b' }}></div>
+            <span className="text-xs text-gray-600 font-medium">101-200 Mahalle</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded" style={{ backgroundColor: '#3b82f6' }}></div>
+            <span className="text-xs text-gray-600 font-medium">201-500 Mahalle</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded" style={{ backgroundColor: '#0f172a' }}></div>
+            <span className="text-xs text-gray-600 font-medium">500+ Mahalle</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
