@@ -125,40 +125,77 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
 
       {/* Panel - Petek rengi arka plan */}
       <div
-        className="border-2 border-amber-900 rounded-xl shadow-2xl flex flex-col"
+        className="flex flex-col"
         style={{
-          position: 'fixed',
-          zIndex: 9999,
-          width: '240px',
-          height: '360px',
-          left: '38%',
-          top: '63%',
-          transform: 'translateY(-50%)',
-          background: 'linear-gradient(to bottom right, #f59e0b, #d97706)'
+          position: 'absolute',
+          zIndex: 20,
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%,-50%) scale(1)',
+          width: 'min(320px, 80vw)',
+          maxHeight: 'min(70vh, 520px)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          opacity: 1,
+          pointerEvents: 'auto',
+          transition: 'opacity .15s ease, transform .15s ease',
+          background: 'rgba(255,251,242,0.97)',
+          border: '2px solid #6b3d10',
+          borderRadius: '14px',
+          boxShadow: '0 18px 34px rgba(0,0,0,0.35)'
         }}
       >
 
         {/* Header - Daha kompakt */}
-        <div className="flex items-center justify-between px-1 py-1.5 border-b border-amber-200/80 bg-gradient-to-r from-amber-100/50 to-orange-100/50">
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '10px 14px',
+          fontSize: '13.5px',
+          fontWeight: 600,
+          backgroundColor: '#6b3d10',
+          color: '#fff8ec'
+        }}>
           {seciliIlce ? (
             <button
               onClick={handleBack}
-              className="w-6 h-6 flex items-center justify-center rounded hover:bg-amber-200/50 transition-colors text-amber-900 font-bold text-base"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'inherit',
+                fontSize: '17px',
+                lineHeight: 1,
+                padding: '0 2px',
+                cursor: 'pointer'
+              }}
               aria-label="Geri"
             >
               ←
             </button>
-          ) : (
-            <div className="w-6" />
-          )}
+          ) : null}
 
-          <span className="font-semibold text-amber-900 text-sm whitespace-nowrap px-1">
-            {seciliIlce ? seciliIlce : `${ilAdi} (${ilceSayisi} ilçe)`}
+          <span style={{
+            flex: '1 1 auto',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
+            {seciliIlce ? seciliIlce : `${ilAdi} - ${ilceSayisi} ilçe`}
           </span>
 
           <button
             onClick={handleClose}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-amber-200/50 transition-colors text-amber-900 font-bold text-base leading-none"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'inherit',
+              fontSize: '19px',
+              lineHeight: 1,
+              padding: '0 2px',
+              cursor: 'pointer'
+            }}
             aria-label="Kapat"
           >
             ×
@@ -166,48 +203,81 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
         </div>
 
         {/* Body - Kompakt */}
-        <div className="flex-1 overflow-y-auto p-1">
+        <div style={{
+          overflowY: 'auto',
+          padding: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '4px',
+          backgroundColor: 'rgba(255,251,242,0.97)'
+        }}>
           {yukluyor ? (
             <div className="flex items-center justify-center py-8">
               <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : seciliIlce ? (
             // Mahalle listesi - Her kutucuk bağımsız buton gibi
-            <div className="flex flex-col gap-3 px-4">
+            <>
               {mahalleler.length === 0 ? (
-                <p className="text-center text-gray-500 py-4 text-sm">Mahalle bulunamadı</p>
+                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>Mahalle bulunamadı</p>
               ) : (
                 mahalleler.map((mahalle, idx) => (
                   <div
                     key={idx}
-                    className="pl-10 pr-4 py-1.5 rounded-lg bg-amber-100/90 border-2 border-amber-400/70 hover:bg-amber-200/90 hover:border-amber-500 hover:shadow-md transition-all text-gray-800 whitespace-nowrap cursor-pointer"
-                    style={{ fontSize: '13px' }}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'background .12s, color .12s',
+                      backgroundColor: '#fdf0d5',
+                      color: '#4a2a08',
+                      border: '1.5px solid #8a5a20',
+                      borderRadius: '8px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f2a93b'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fdf0d5'}
                   >
                     {mahalle.mahalle_adi}
                   </div>
                 ))
               )}
-            </div>
+            </>
           ) : (
             // İlçe listesi - Her kutucuk bağımsız buton gibi
-            <div className="flex flex-col gap-3 px-4">
+            <>
               {ilceler.length === 0 ? (
-                <p className="text-center text-gray-500 py-4 text-sm">İlçe bulunamadı</p>
+                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>İlçe bulunamadı</p>
               ) : (
                 ilceler.map((ilce, idx) => (
                   <button
                     key={idx}
                     onClick={() => loadMahalleler(ilce.ilce_adi)}
-                    className="pl-10 pr-4 py-1.5 rounded-lg bg-amber-100/90 border-2 border-amber-400/70 hover:bg-amber-200/90 hover:border-amber-500 hover:shadow-md transition-all text-left flex items-center gap-2 group whitespace-nowrap"
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'background .12s, color .12s',
+                      backgroundColor: '#fdf0d5',
+                      color: '#4a2a08',
+                      border: '1.5px solid #8a5a20',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f2a93b'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fdf0d5'}
                   >
-                    <span className="font-medium text-gray-800" style={{ fontSize: '13px' }}>{ilce.ilce_adi}</span>
+                    <span style={{ flex: 1 }}>{ilce.ilce_adi}</span>
                     <span className="text-xs text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded-full group-hover:bg-amber-300/80">
                       {ilce.mahalle_sayisi}
                     </span>
                   </button>
                 ))
               )}
-            </div>
+            </>
           )}
         </div>
       </div>
