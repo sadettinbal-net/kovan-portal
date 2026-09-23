@@ -172,15 +172,15 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
               <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : seciliIlce ? (
-            // Mahalle listesi - Tüm satırlar aynı genişlik
-            <div className="space-y-5 inline-flex flex-col">
+            // Mahalle listesi - Her kutucuk bağımsız buton gibi
+            <div className="flex flex-col gap-3">
               {mahalleler.length === 0 ? (
                 <p className="text-center text-gray-500 py-4 text-sm">Mahalle bulunamadı</p>
               ) : (
                 mahalleler.map((mahalle, idx) => (
                   <div
                     key={idx}
-                    className="px-2.5 py-1 rounded bg-amber-100/80 border border-amber-300/60 hover:bg-amber-200/80 transition-all text-gray-800 whitespace-nowrap"
+                    className="px-3 py-2 rounded-lg bg-amber-100/90 border-2 border-amber-400/70 hover:bg-amber-200/90 hover:border-amber-500 hover:shadow-md transition-all text-gray-800 whitespace-nowrap cursor-pointer"
                     style={{ fontSize: '11px' }}
                   >
                     {mahalle.mahalle_adi}
@@ -189,8 +189,8 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
               )}
             </div>
           ) : (
-            // İlçe listesi - Tüm satırlar aynı genişlik
-            <div className="space-y-5 inline-flex flex-col">
+            // İlçe listesi - Her kutucuk bağımsız buton gibi
+            <div className="flex flex-col gap-3">
               {ilceler.length === 0 ? (
                 <p className="text-center text-gray-500 py-4 text-sm">İlçe bulunamadı</p>
               ) : (
@@ -198,7 +198,7 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
                   <button
                     key={idx}
                     onClick={() => loadMahalleler(ilce.ilce_adi)}
-                    className="px-2.5 py-1 rounded bg-amber-100/80 border border-amber-300/60 hover:bg-amber-200/80 hover:border-amber-400 transition-all text-left flex items-center gap-2 group whitespace-nowrap"
+                    className="px-3 py-2 rounded-lg bg-amber-100/90 border-2 border-amber-400/70 hover:bg-amber-200/90 hover:border-amber-500 hover:shadow-md transition-all text-left flex items-center gap-2 group whitespace-nowrap"
                   >
                     <span className="font-medium text-gray-800" style={{ fontSize: '11px' }}>{ilce.ilce_adi}</span>
                     <span className="text-xs text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded-full group-hover:bg-amber-300/80">
