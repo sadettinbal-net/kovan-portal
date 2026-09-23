@@ -119,12 +119,24 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]"
         onClick={handleClose}
       />
 
-      {/* Panel - Çeyrek boyut - Harita başlığından başlar */}
-      <div className="fixed left-8 top-8 z-50 h-[300px] bg-gradient-to-br from-amber-50/98 to-orange-50/98 border-2 border-amber-900/60 rounded-xl shadow-2xl flex flex-col animate-in fade-in slide-in-from-left duration-200" style={{ width: 'fit-content' }}>
+      {/* Panel - Petek rengi arka plan */}
+      <div
+        className="border-2 border-amber-900 rounded-xl shadow-2xl flex flex-col"
+        style={{
+          position: 'fixed',
+          zIndex: 9999,
+          width: '240px',
+          height: '360px',
+          left: '38%',
+          top: '63%',
+          transform: 'translateY(-50%)',
+          background: 'linear-gradient(to bottom right, #f59e0b, #d97706)'
+        }}
+      >
 
         {/* Header - Daha kompakt */}
         <div className="flex items-center justify-between px-1 py-1.5 border-b border-amber-200/80 bg-gradient-to-r from-amber-100/50 to-orange-100/50">
@@ -168,7 +180,8 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
                 mahalleler.map((mahalle, idx) => (
                   <div
                     key={idx}
-                    className="px-2.5 py-2 rounded bg-amber-100/80 border border-amber-300/60 hover:bg-amber-200/80 transition-all text-sm text-gray-800 whitespace-nowrap"
+                    className="px-2.5 py-1 rounded bg-amber-100/80 border border-amber-300/60 hover:bg-amber-200/80 transition-all text-gray-800 whitespace-nowrap"
+                    style={{ fontSize: '11px' }}
                   >
                     {mahalle.mahalle_adi}
                   </div>
@@ -185,9 +198,9 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
                   <button
                     key={idx}
                     onClick={() => loadMahalleler(ilce.ilce_adi)}
-                    className="px-2.5 py-2 rounded bg-amber-100/80 border border-amber-300/60 hover:bg-amber-200/80 hover:border-amber-400 transition-all text-left flex items-center gap-2 group whitespace-nowrap"
+                    className="px-2.5 py-1 rounded bg-amber-100/80 border border-amber-300/60 hover:bg-amber-200/80 hover:border-amber-400 transition-all text-left flex items-center gap-2 group whitespace-nowrap"
                   >
-                    <span className="text-sm font-medium text-gray-800">{ilce.ilce_adi}</span>
+                    <span className="font-medium text-gray-800" style={{ fontSize: '11px' }}>{ilce.ilce_adi}</span>
                     <span className="text-xs text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded-full group-hover:bg-amber-300/80">
                       {ilce.mahalle_sayisi}
                     </span>

@@ -214,7 +214,7 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
       <div className="mb-6">
         <h2 className="text-2xl font-black text-gray-800 mb-2 flex items-center gap-2">
           <span className="text-3xl">🗺️</span>
