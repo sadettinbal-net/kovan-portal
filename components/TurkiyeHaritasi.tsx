@@ -25,6 +25,7 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
   const [panelIlData, setPanelIlData] = useState<{ ilceSayisi: number; mahalleSayisi: number }>({ ilceSayisi: 0, mahalleSayisi: 0 });
   const [seciliIlForMap, setSeciliIlForMap] = useState<string>('');
   const [ilceSecildi, setIlceSecildi] = useState(false);
+  const [ilBoundingBox, setIlBoundingBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     loadIlData();
@@ -133,6 +134,12 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
     setSeciliIlForMap(ilAdi);
     console.log('seciliIlForMap güncellendi:', ilAdi);
 
+    // İl path'inin bounding box'ını hesapla
+    const pathElement = event.currentTarget as SVGPathElement;
+    const bbox = pathElement.getBBox();
+    setIlBoundingBox(bbox);
+    console.log('İl BBox:', bbox);
+
     // Panel için il verisini bul
     const ilData = Array.from(ilVerileri.values()).find(
       (d) => d.il_adi.toLocaleUpperCase('tr-TR') === ilAdi.toLocaleUpperCase('tr-TR')
@@ -157,6 +164,42 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
     const isSelected = seciliIl === ilAdi;
     const isHovered = hoveredIl === ilAdi;
     return isSelected || isHovered ? '0.9' : '0.7';
+  };
+
+  const getZoomTransform = () => {
+    if (!ilBoundingBox) return '';
+
+    // İlin boyutuna göre dinamik scale hesapla
+    // Hedef: Her il zoom olduğunda yaklaşık aynı görsel boyutta olsun
+    const targetSize = 400; // Hedef boyut (pixel)
+    const ilSize = Math.max(ilBoundingBox.width, ilBoundingBox.height);
+    const dynamicScale = targetSize / ilSize;
+
+    // Min-max sınırları koy
+    const scale = Math.min(Math.max(dynamicScale, 2), 8);
+
+    const centerX = ilBoundingBox.x + ilBoundingBox.width / 2;
+    const centerY = ilBoundingBox.y + ilBoundingBox.height / 2;
+
+    // SVG viewport merkezi (viewBox: 0 0 1040 462)
+    const viewportCenterX = 520;
+    const viewportCenterY = 231;
+
+    // İlin merkezini viewport merkezine getir
+    const translateX = viewportCenterX - centerX;
+    const translateY = viewportCenterY - centerY;
+
+    return `
+      translate(${translateX}, ${translateY})
+      translate(${centerX}, ${centerY})
+      scale(${scale})
+      translate(${-centerX}, ${-centerY})
+    `;
+  };
+
+  const getZoomShadow = () => {
+    // İl seçiliyse güçlü gölge
+    return 'drop-shadow(0 40px 80px rgba(0, 0, 0, 0.6)) drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2))';
   };
 
   if (loading) {
@@ -272,7 +315,14 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
 
           {/* Seçili il en üstte - zoom animasyonlu */}
           {seciliIlForMap && IL_PATHS[seciliIlForMap] && (
-            <g key={`${seciliIlForMap}-zoomed`}>
+            <g
+              key={`${seciliIlForMap}-zoomed`}
+              style={{
+                transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                filter: getZoomShadow(),
+              }}
+              transform={getZoomTransform()}
+            >
               <path
                 className="il il-zoomed"
                 data-name={seciliIlForMap}
@@ -280,13 +330,10 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
                 fill={getIlFillColor(seciliIlForMap)}
                 fillOpacity={getIlOpacity(seciliIlForMap)}
                 stroke="#000000"
-                strokeWidth="4"
+                strokeWidth="2.5"
                 strokeOpacity="1"
                 style={{
                   cursor: 'pointer',
-                  transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: `scale(${ilceSecildi ? 3 : 1.5})`,
-                  transformOrigin: '520px 231px',
                 }}
                 onMouseEnter={() => setHoveredIl(seciliIlForMap)}
                 onMouseLeave={() => setHoveredIl(null)}
