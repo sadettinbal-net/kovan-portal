@@ -173,7 +173,7 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
             </div>
           ) : seciliIlce ? (
             // Mahalle listesi - Tüm satırlar aynı genişlik
-            <div className="space-y-1.5 inline-flex flex-col">
+            <div className="space-y-3 inline-flex flex-col">
               {mahalleler.length === 0 ? (
                 <p className="text-center text-gray-500 py-4 text-sm">Mahalle bulunamadı</p>
               ) : (
@@ -190,7 +190,7 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
             </div>
           ) : (
             // İlçe listesi - Tüm satırlar aynı genişlik
-            <div className="space-y-1.5 inline-flex flex-col">
+            <div className="space-y-3 inline-flex flex-col">
               {ilceler.length === 0 ? (
                 <p className="text-center text-gray-500 py-4 text-sm">İlçe bulunamadı</p>
               ) : (
