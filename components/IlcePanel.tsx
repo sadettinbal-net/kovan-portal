@@ -180,7 +180,7 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
                 mahalleler.map((mahalle, idx) => (
                   <div
                     key={idx}
-                    className="pl-4 pr-2 py-1 rounded-lg bg-amber-100/90 border-2 border-amber-400/70 hover:bg-amber-200/90 hover:border-amber-500 hover:shadow-md transition-all text-gray-800 whitespace-nowrap cursor-pointer"
+                    className="pl-6 pr-2 py-1 rounded-lg bg-amber-100/90 border-2 border-amber-400/70 hover:bg-amber-200/90 hover:border-amber-500 hover:shadow-md transition-all text-gray-800 whitespace-nowrap cursor-pointer"
                     style={{ fontSize: '13px' }}
                   >
                     {mahalle.mahalle_adi}
@@ -198,7 +198,7 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
                   <button
                     key={idx}
                     onClick={() => loadMahalleler(ilce.ilce_adi)}
-                    className="pl-4 pr-2 py-1 rounded-lg bg-amber-100/90 border-2 border-amber-400/70 hover:bg-amber-200/90 hover:border-amber-500 hover:shadow-md transition-all text-left flex items-center gap-2 group whitespace-nowrap"
+                    className="pl-6 pr-2 py-1 rounded-lg bg-amber-100/90 border-2 border-amber-400/70 hover:bg-amber-200/90 hover:border-amber-500 hover:shadow-md transition-all text-left flex items-center gap-2 group whitespace-nowrap"
                   >
                     <span className="font-medium text-gray-800" style={{ fontSize: '13px' }}>{ilce.ilce_adi}</span>
                     <span className="text-xs text-amber-800 bg-amber-200/80 px-1.5 py-0.5 rounded-full group-hover:bg-amber-300/80">
