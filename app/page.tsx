@@ -124,13 +124,14 @@ export default function Home() {
     setSokakAramaMetni(''); // Sokak arama metnini sıfırla
     setSokakSayfasi(1); // Sayfa numarasını sıfırla
 
-    // İlk olarak toplam sokak sayısını al
-    const { count } = await supabase
+    // İlk olarak toplam unique sokak sayısını al
+    const { data: sokakData } = await supabase
       .from('sokaklar')
-      .select('*', { count: 'exact', head: true })
+      .select('sokak_id')
       .eq('mahalle_id', parseInt(mahalle_id));
 
-    setToplamSokakSayisi(count || 0);
+    const uniqueSokakIds = new Set(sokakData?.map((s: any) => s.sokak_id));
+    setToplamSokakSayisi(uniqueSokakIds.size);
 
     // İlk 50 sokağı yükle
     await sokakYukle(parseInt(mahalle_id), '', 1);
@@ -540,7 +541,9 @@ export default function Home() {
         <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
           <div className="space-y-5">
             <div className="relative">
-              <label className="block text-sm font-bold text-gray-700 mb-2">📍 Şehir Seçin</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                📍 Şehir Seçin {veriler.iller.length > 0 && <span className="text-xs text-gray-500">({veriler.iller.length} il)</span>}
+              </label>
               <select
                 className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
                 onChange={(e) => ilSec(e.target.value)}
@@ -552,7 +555,9 @@ export default function Home() {
             </div>
 
             <div className="relative">
-              <label className="block text-sm font-bold text-gray-700 mb-2">🗺️ İlçe Seçin</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                🗺️ İlçe Seçin {veriler.ilceler.length > 0 && <span className="text-xs text-gray-500">({veriler.ilceler.length} ilçe)</span>}
+              </label>
               <select
                 className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
                 onChange={(e) => ilceSec(e.target.value)}
@@ -565,7 +570,9 @@ export default function Home() {
             </div>
 
             <div className="relative">
-              <label className="block text-sm font-bold text-gray-700 mb-2">🏘️ Mahalle Seçin</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                🏘️ Mahalle Seçin {veriler.mahalleler.length > 0 && <span className="text-xs text-gray-500">({veriler.mahalleler.length} mahalle)</span>}
+              </label>
               <select
                 className="w-full p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl border-2 border-gray-200 font-bold text-gray-700 outline-none disabled:opacity-40 disabled:cursor-not-allowed transition-all hover:border-yellow-400 focus:border-yellow-500 focus:shadow-lg appearance-none cursor-pointer"
                 onChange={(e) => mahalleSec(e.target.value)}
@@ -580,7 +587,9 @@ export default function Home() {
             {/* Sokak Seçimi - Arama ve Pagination ile */}
             {secim.mahalle && (
               <div className="relative space-y-4 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl border-2 border-blue-200/50">
-                <label className="block text-sm font-bold text-gray-700 mb-2">🛣️ Sokak Seçin</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  🛣️ Sokak Seçin {toplamSokakSayisi > 0 && <span className="text-xs text-gray-500">({toplamSokakSayisi} sokak)</span>}
+                </label>
 
                 {/* Arama Kutusu */}
                 <div className="relative">
