@@ -360,7 +360,9 @@ export default function Home() {
   };
 
   const dukkanlariGoster = async () => {
-    const { data: dukkanlar } = await supabase.from('dukkanlar').select('*').order('isletme_adi');
+    const { data: dukkanlar, error } = await supabase.from('dukkanlar').select('*').order('dukkan_adi');
+
+    console.log('Dükkanlar sorgusu:', { dukkanlar, error, count: dukkanlar?.length });
 
     // Her dükkan için kategori bilgisini manuel olarak çek
     const dukkanlarWithKategoriler = await Promise.all(
@@ -392,6 +394,7 @@ export default function Home() {
       })
     );
 
+    console.log('Kategori eklenmiş dükkanlar:', dukkanlarWithKategoriler.length);
     setModalVeriler(dukkanlarWithKategoriler);
     setModalAcik('dukkanlar');
   };
@@ -1085,9 +1088,15 @@ export default function Home() {
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <span className="bg-slate-700 text-white text-xs font-bold px-2 py-1 rounded-full">#{index + 1}</span>
-                                <h3 className="font-bold text-gray-800">{dukkan.isletme_adi}</h3>
+                                <h3 className="font-bold text-gray-800">{dukkan.dukkan_adi}</h3>
                               </div>
                               <div className="text-sm text-gray-600 space-y-1">
+                                {dukkan.usta_adi && (
+                                  <div className="flex items-center gap-2">
+                                    <span>👤</span>
+                                    <span className="font-medium">{dukkan.usta_adi}</span>
+                                  </div>
+                                )}
                                 {dukkan.alt_kategoriler && (
                                   <div className="flex items-center gap-2">
                                     <span>📂</span>
@@ -1100,6 +1109,12 @@ export default function Home() {
                                   <div className="flex items-center gap-2">
                                     <span>📞</span>
                                     <span>{dukkan.telefon}</span>
+                                  </div>
+                                )}
+                                {dukkan.web_sitesi && (
+                                  <div className="flex items-center gap-2">
+                                    <span>🌐</span>
+                                    <a href={dukkan.web_sitesi} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{dukkan.web_sitesi}</a>
                                   </div>
                                 )}
                               </div>
