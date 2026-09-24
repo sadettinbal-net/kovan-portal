@@ -177,18 +177,11 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]"
-        onClick={handleClose}
-      />
-
       {/* Panel - Petek rengi arka plan */}
       <div
-        className="flex flex-col"
+        className="flex flex-col fixed"
         style={{
-          position: 'absolute',
-          zIndex: 20,
+          zIndex: 1000,
           left: '50%',
           top: '50%',
           transform: 'translate(-50%,-50%) scale(1)',
@@ -200,10 +193,10 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
           opacity: 1,
           pointerEvents: 'auto',
           transition: 'opacity .15s ease, transform .15s ease',
-          background: 'rgba(255,251,242,0.97)',
-          border: '2px solid #6b3d10',
-          borderRadius: '14px',
-          boxShadow: '0 18px 34px rgba(0,0,0,0.35)'
+          background: 'rgba(255,251,242,0.98)',
+          border: '3px solid #6b3d10',
+          borderRadius: '16px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.3)'
         }}
       >
 

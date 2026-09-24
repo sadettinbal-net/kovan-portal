@@ -26,6 +26,7 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
   const [seciliIlForMap, setSeciliIlForMap] = useState<string>('');
   const [ilceSecildi, setIlceSecildi] = useState(false);
   const [ilBoundingBox, setIlBoundingBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+  const [hoveredIlBoundingBox, setHoveredIlBoundingBox] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     loadIlData();
@@ -231,12 +232,12 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
 
     // İlin boyutuna göre dinamik scale hesapla
     // Hedef: Her il zoom olduğunda yaklaşık aynı görsel boyutta olsun
-    const targetSize = 400; // Hedef boyut (pixel)
+    const targetSize = 300; // Hedef boyut (pixel) - azaltıldı
     const ilSize = Math.max(ilBoundingBox.width, ilBoundingBox.height);
     const dynamicScale = targetSize / ilSize;
 
-    // Min-max sınırları koy
-    const scale = Math.min(Math.max(dynamicScale, 2), 8);
+    // Min-max sınırları koy - daha düşük max zoom
+    const scale = Math.min(Math.max(dynamicScale, 1.5), 4);
 
     const centerX = ilBoundingBox.x + ilBoundingBox.width / 2;
     const centerY = ilBoundingBox.y + ilBoundingBox.height / 2;
@@ -258,8 +259,8 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
   };
 
   const getZoomShadow = () => {
-    // İl seçiliyse güçlü gölge
-    return 'drop-shadow(0 40px 80px rgba(0, 0, 0, 0.6)) drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4)) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2))';
+    // İl seçiliyse hafif gölge - performans için azaltıldı
+    return 'drop-shadow(0 10px 30px rgba(0, 0, 0, 0.3))';
   };
 
   if (loading) {
@@ -303,7 +304,7 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
         </p>
       </div>
 
-      <div className="relative" style={{ minHeight: '500px' }}>
+      <div className="relative" style={{ minHeight: '500px', overflow: 'visible' }}>
         <svg
           style={{ overflow: 'visible' }}
           width="100%"
@@ -342,9 +343,9 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
           />
 
           {/* İl path'leri - Her il kendi g grubunda */}
-          {/* Önce seçili olmayan iller */}
+          {/* Önce seçili/hover olmayan iller */}
           {Object.keys(IL_PATHS)
-            .filter((ilAdi) => seciliIlForMap !== ilAdi)
+            .filter((ilAdi) => seciliIlForMap !== ilAdi && hoveredIl !== ilAdi)
             .map((ilAdi) => {
               const isOtherIl = seciliIlForMap && seciliIlForMap !== ilAdi;
 
@@ -363,8 +364,15 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
                       cursor: 'pointer',
                       transition: 'all 0.3s ease',
                     }}
-                    onMouseEnter={() => setHoveredIl(ilAdi)}
-                    onMouseLeave={() => setHoveredIl(null)}
+                    onMouseEnter={(e) => {
+                      setHoveredIl(ilAdi);
+                      const bbox = (e.currentTarget as SVGPathElement).getBBox();
+                      setHoveredIlBoundingBox(bbox);
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredIl(null);
+                      setHoveredIlBoundingBox(null);
+                    }}
                     onClick={(e) => handleIlClick(ilAdi, e)}
                   >
                     <title>{ilAdi} - Tıklayın</title>
@@ -373,13 +381,77 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
               );
             })}
 
+          {/* Hover edilen il - harita boyutunda zoom - EN ÜSTTE */}
+          {hoveredIl && !seciliIlForMap && hoveredIlBoundingBox && IL_PATHS[hoveredIl] && (() => {
+            const bbox = hoveredIlBoundingBox;
+
+            // Zoom hesaplama (daha büyük zoom)
+            const targetSize = 400;
+            const ilSize = Math.max(bbox.width, bbox.height);
+            const dynamicScale = targetSize / ilSize;
+            const scale = Math.min(Math.max(dynamicScale, 2), 5); // Daha büyük scale
+
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
+            const viewportCenterX = 520;
+            const viewportCenterY = 231;
+            const translateX = viewportCenterX - centerX;
+            const translateY = viewportCenterY - centerY;
+
+            return (
+              <g
+                key={`${hoveredIl}-hovered`}
+                style={{
+                  filter: 'drop-shadow(0 15px 40px rgba(0, 0, 0, 0.6))',
+                  transition: 'all 0.25s ease-out',
+                  willChange: 'transform',
+                  pointerEvents: 'all',
+                }}
+                transform={`
+                  translate(${translateX}, ${translateY})
+                  translate(${centerX}, ${centerY})
+                  scale(${scale})
+                  translate(${-centerX}, ${-centerY})
+                `}
+              >
+                <path
+                  className="il il-hovered"
+                  data-name={hoveredIl}
+                  d={IL_PATHS[hoveredIl]}
+                  fill={getIlFillColor(hoveredIl)}
+                  fillOpacity="1"
+                  stroke="#000000"
+                  strokeWidth="3"
+                  strokeOpacity="1"
+                  style={{
+                    cursor: 'pointer',
+                    pointerEvents: 'all',
+                  }}
+                  onMouseEnter={(e) => {
+                    setHoveredIl(hoveredIl);
+                    const bbox = (e.currentTarget as SVGPathElement).getBBox();
+                    setHoveredIlBoundingBox(bbox);
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredIl(null);
+                    setHoveredIlBoundingBox(null);
+                  }}
+                  onClick={(e) => handleIlClick(hoveredIl, e)}
+                >
+                  <title>{hoveredIl} - Tıklayın</title>
+                </path>
+              </g>
+            );
+          })()}
+
           {/* Seçili il en üstte - zoom animasyonlu */}
           {seciliIlForMap && IL_PATHS[seciliIlForMap] && (
             <g
               key={`${seciliIlForMap}-zoomed`}
               style={{
-                transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.4s ease-in-out',
                 filter: getZoomShadow(),
+                willChange: 'transform',
               }}
               transform={getZoomTransform()}
             >
