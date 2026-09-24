@@ -443,12 +443,20 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
         mahalleSayisi={panelIlData.mahalleSayisi}
         onIlceClick={(ilceAdi) => {
           console.log('İlçe seçildi:', ilceAdi);
+          // İlçe seçildiğinde veya seçim kaldırıldığında
           setIlceSecildi(ilceAdi !== ''); // Boş değilse true, boşsa false
+
+          // İlçe seçimi kaldırıldığında harita zoom'unu resetle
+          if (ilceAdi === '') {
+            // Zoom'u koru ama ilçe bilgisini temizle
+            console.log('İlçe seçimi kaldırıldı, harita zoom korunuyor');
+          }
         }}
         onClose={() => {
           setPanelAcik(false);
           setSeciliIlForMap(''); // Haritayı resetle
           setIlceSecildi(false); // İlçe seçimini sıfırla
+          setIlBoundingBox(null); // Zoom'u resetle
         }}
       />
     </div>

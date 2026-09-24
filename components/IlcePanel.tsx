@@ -33,8 +33,10 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
   const [sokaklar, setSokaklar] = useState<Sokak[]>([]);
   const [seciliIlce, setSeciliIlce] = useState<string>('');
   const [seciliMahalle, setSeciliMahalle] = useState<string>('');
+  const [seciliMahalleId, setSeciliMahalleId] = useState<number>(0);
   const [yukluyor, setYukluyor] = useState(false);
   const [gercekIlceSayisi, setGercekIlceSayisi] = useState<number>(0);
+  const [aramaMetni, setAramaMetni] = useState<string>('');
 
   // İlçeleri yükle
   useEffect(() => {
@@ -137,6 +139,7 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
 
       setSokaklar(uniqueSokaklar);
       setSeciliMahalle(mahalleAdi);
+      setSeciliMahalleId(mahalleId);
     } catch (error) {
       console.error('Sokaklar yüklenirken hata:', error);
     } finally {
@@ -239,7 +242,11 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap'
           }}>
-            {seciliMahalle ? seciliMahalle : seciliIlce ? seciliIlce : `${ilAdi} - ${gercekIlceSayisi} ilçe`}
+            {seciliMahalle
+              ? `${seciliMahalle} - ${sokaklar.length} sokak`
+              : seciliIlce
+              ? `${seciliIlce} - ${mahalleler.length} mahalle`
+              : `${ilAdi} - ${gercekIlceSayisi} ilçe`}
           </span>
 
           <button
@@ -258,6 +265,29 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
             ×
           </button>
         </div>
+
+        {/* Arama Kutusu - Sadece ilçe veya mahalle listesi gösterilirken */}
+        {!seciliMahalle && (seciliIlce || !seciliIlce) && (
+          <div style={{ padding: '8px 8px 4px 8px', backgroundColor: 'rgba(255,251,242,0.97)' }}>
+            <input
+              type="text"
+              placeholder={seciliIlce ? "Mahalle ara..." : "İlçe ara..."}
+              value={aramaMetni}
+              onChange={(e) => setAramaMetni(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '6px 10px',
+                fontSize: '12px',
+                border: '1.5px solid #8a5a20',
+                borderRadius: '6px',
+                backgroundColor: '#fff',
+                outline: 'none'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#f2a93b'}
+              onBlur={(e) => e.target.style.borderColor = '#8a5a20'}
+            />
+          </div>
+        )}
 
         {/* Body - Kompakt */}
         <div style={{
@@ -303,10 +333,18 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
           ) : seciliIlce ? (
             // Mahalle listesi - Her kutucuk bağımsız buton gibi
             <>
-              {mahalleler.length === 0 ? (
-                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>Mahalle bulunamadı</p>
+              {mahalleler.filter(m =>
+                !aramaMetni || m.mahalle_adi.toLocaleLowerCase('tr-TR').includes(aramaMetni.toLocaleLowerCase('tr-TR'))
+              ).length === 0 ? (
+                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>
+                  {aramaMetni ? 'Arama sonucu bulunamadı' : 'Mahalle bulunamadı'}
+                </p>
               ) : (
-                mahalleler.map((mahalle, idx) => (
+                mahalleler
+                  .filter(m =>
+                    !aramaMetni || m.mahalle_adi.toLocaleLowerCase('tr-TR').includes(aramaMetni.toLocaleLowerCase('tr-TR'))
+                  )
+                  .map((mahalle, idx) => (
                   <button
                     key={idx}
                     onClick={() => loadSokaklar(mahalle.mahalle_id, mahalle.mahalle_adi)}
@@ -333,10 +371,18 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
           ) : (
             // İlçe listesi - Her kutucuk bağımsız buton gibi
             <>
-              {ilceler.length === 0 ? (
-                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>İlçe bulunamadı</p>
+              {ilceler.filter(i =>
+                !aramaMetni || i.ilce_adi.toLocaleLowerCase('tr-TR').includes(aramaMetni.toLocaleLowerCase('tr-TR'))
+              ).length === 0 ? (
+                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>
+                  {aramaMetni ? 'Arama sonucu bulunamadı' : 'İlçe bulunamadı'}
+                </p>
               ) : (
-                ilceler.map((ilce, idx) => (
+                ilceler
+                  .filter(i =>
+                    !aramaMetni || i.ilce_adi.toLocaleLowerCase('tr-TR').includes(aramaMetni.toLocaleLowerCase('tr-TR'))
+                  )
+                  .map((ilce, idx) => (
                   <button
                     key={idx}
                     onClick={() => loadMahalleler(ilce.ilce_adi)}
