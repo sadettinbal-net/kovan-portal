@@ -41,22 +41,32 @@ const { count: toplamSokak } = await supabase
 
 console.log(`  Toplam sokak kaydı: ${toplamSokak || 'bilinmiyor'}`);
 
-// Tüm sokakları sayfalama ile al
+// Tüm sokakları sayfalama ile al (ID bazlı cursor pagination)
 let allSokaklar = [];
 const pageSize = 1000;
-let page = 0;
+let lastId = 0;
 let hasMore = true;
+let pageCount = 0;
+
+console.log('  Sokak verileri çekiliyor (Bu işlem birkaç dakika sürebilir)...\n');
 
 while (hasMore) {
   const { data: sokakPage } = await supabase
     .from('sokaklar')
-    .select('il_adi, ilce_adi, mahalle_id, mahalle_adi')
-    .range(page * pageSize, (page + 1) * pageSize - 1);
+    .select('id, il_adi, ilce_adi, mahalle_id, mahalle_adi')
+    .gt('id', lastId)
+    .order('id', { ascending: true })
+    .limit(pageSize);
 
   if (sokakPage && sokakPage.length > 0) {
     allSokaklar = allSokaklar.concat(sokakPage);
-    console.log(`  Sayfa ${page + 1}: ${sokakPage.length} kayıt (Toplam: ${allSokaklar.length})`);
-    page++;
+    lastId = sokakPage[sokakPage.length - 1].id;
+    pageCount++;
+
+    // Her 100 sayfada bir progress göster
+    if (pageCount % 100 === 0) {
+      console.log(`  ${pageCount} sayfa işlendi - ${allSokaklar.length} kayıt toplandı`);
+    }
 
     if (sokakPage.length < pageSize) {
       hasMore = false;
@@ -67,7 +77,7 @@ while (hasMore) {
 }
 
 const sokaklar = allSokaklar;
-console.log(`  ${sokaklar?.length} sokak kaydı toplandı`);
+console.log(`\n  ✅ ${sokaklar?.length} sokak kaydı toplandı (${pageCount} sayfa)`);
 
 // Unique mahalle kombinasyonlarını topla
 const mahalleMap = new Map();
@@ -117,6 +127,12 @@ const mahallelerToInsert = [];
 let skippedCount = 0;
 
 Array.from(mahalleMap.values()).forEach(mahalle => {
+  // Null/undefined kontrolü
+  if (!mahalle.il_adi || !mahalle.ilce_adi) {
+    skippedCount++;
+    return;
+  }
+
   const sehirId = ilAdToId.get(mahalle.il_adi.toLocaleUpperCase('tr-TR'));
 
   if (!sehirId) {
