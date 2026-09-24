@@ -10,6 +10,7 @@ interface IlcePanelProps {
   mahalleSayisi: number;
   onClose: () => void;
   onIlceClick?: (ilceAdi: string) => void;
+  onMahalleClick?: (ilAdi: string, ilceAdi: string, mahalleId: number, mahalleAdi: string) => void;
 }
 
 interface Ilce {
@@ -27,7 +28,7 @@ interface Sokak {
   sokak_id: number;
 }
 
-export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, onClose, onIlceClick }: IlcePanelProps) {
+export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, onClose, onIlceClick, onMahalleClick }: IlcePanelProps) {
   const [ilceler, setIlceler] = useState<Ilce[]>([]);
   const [mahalleler, setMahalleler] = useState<Mahalle[]>([]);
   const [sokaklar, setSokaklar] = useState<Sokak[]>([]);
@@ -37,6 +38,9 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
   const [yukluyor, setYukluyor] = useState(false);
   const [gercekIlceSayisi, setGercekIlceSayisi] = useState<number>(0);
   const [aramaMetni, setAramaMetni] = useState<string>('');
+
+  // Debug logging
+  console.log('IlcePanel render - isOpen:', isOpen, 'ilAdi:', ilAdi, 'ilceSayisi:', ilceSayisi);
 
   // İlçeleri yükle
   useEffect(() => {
@@ -49,18 +53,21 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
     setYukluyor(true);
     try {
       const ilAdiUpper = ilAdi.toLocaleUpperCase('tr-TR');
+      console.log('loadIlceler çağrıldı - ilAdi:', ilAdi, 'ilAdiUpper:', ilAdiUpper);
 
-      // Mahalleler tablosundan ilçeleri getir
-      const { data: mahallelerData } = await supabase
-        .from('mahalleler')
-        .select('ilce_adi, mahalle_id')
+      // SOKAKLAR tablosundan ilçeleri getir (mahalleler tablosu yanlış yapıda)
+      const { data: sokakData, error } = await supabase
+        .from('sokaklar')
+        .select('ilce_adi, mahalle_id, mahalle_adi')
         .eq('il_adi', ilAdiUpper);
+
+      console.log('Sokaklar sorgusu - data count:', sokakData?.length, 'error:', error);
 
       // İlçe bazında unique mahalle ID'leri topla
       const ilceMahalleMap = new Map<string, Set<number>>();
-      mahallelerData?.forEach((m: any) => {
-        const ilceAdi = m.ilce_adi?.toString().trim();
-        const mahalleId = m.mahalle_id;
+      sokakData?.forEach((s: any) => {
+        const ilceAdi = s.ilce_adi?.toString().trim();
+        const mahalleId = s.mahalle_id;
         if (ilceAdi && mahalleId) {
           if (!ilceMahalleMap.has(ilceAdi)) {
             ilceMahalleMap.set(ilceAdi, new Set());
@@ -77,6 +84,15 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
         }))
         .sort((a, b) => a.ilce_adi.localeCompare(b.ilce_adi));
 
+      console.log('İlçeler yüklendi - count:', ilcelerWithCount.length);
+      console.table(ilcelerWithCount);
+
+      // Her ilçe için detaylı debug
+      ilcelerWithCount.forEach(ilce => {
+        const mahalleler = Array.from(ilceMahalleMap.get(ilce.ilce_adi) || []);
+        console.log(`${ilce.ilce_adi}: ${mahalleler.length} unique mahalle_id -`, mahalleler);
+      });
+
       setIlceler(ilcelerWithCount);
       setGercekIlceSayisi(ilcelerWithCount.length);
     } catch (error) {
@@ -90,21 +106,28 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
     setYukluyor(true);
     try {
       const ilAdiUpper = ilAdi.toLocaleUpperCase('tr-TR');
+      console.log('loadMahalleler çağrıldı - il:', ilAdiUpper, 'ilce:', ilceAdi);
 
-      const { data: mahallelerData } = await supabase
-        .from('mahalleler')
+      // SOKAKLAR tablosundan mahalle listesi al
+      const { data: sokakData, error } = await supabase
+        .from('sokaklar')
         .select('mahalle_adi, mahalle_id')
         .eq('il_adi', ilAdiUpper)
         .eq('ilce_adi', ilceAdi)
         .order('mahalle_adi');
 
+      console.log('Mahalle sorgusu - data count:', sokakData?.length, 'error:', error);
+
       // Unique mahalleler - mahalle_id'ye göre
-      const uniqueMahalleler = mahallelerData ? Array.from(
-        new Map(mahallelerData.map((m: any) => [m.mahalle_id, {
-          mahalle_adi: m.mahalle_adi,
-          mahalle_id: m.mahalle_id
+      const uniqueMahalleler = sokakData ? Array.from(
+        new Map(sokakData.map((s: any) => [s.mahalle_id, {
+          mahalle_adi: s.mahalle_adi,
+          mahalle_id: s.mahalle_id
         }])).values()
       ) : [];
+
+      console.log('Unique mahalleler:', uniqueMahalleler.length);
+      console.table(uniqueMahalleler);
 
       setMahalleler(uniqueMahalleler);
       setSeciliIlce(ilceAdi);
@@ -289,7 +312,9 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
           display: 'flex',
           flexDirection: 'column',
           gap: '4px',
-          backgroundColor: 'rgba(255,251,242,0.97)'
+          backgroundColor: 'rgba(255,251,242,0.97)',
+          flex: '1 1 auto',
+          minHeight: 0
         }}>
           {yukluyor ? (
             <div className="flex items-center justify-center py-8">
@@ -340,7 +365,13 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
                   .map((mahalle, idx) => (
                   <button
                     key={idx}
-                    onClick={() => loadSokaklar(mahalle.mahalle_id, mahalle.mahalle_adi)}
+                    onClick={() => {
+                      // Mahalle tıklandığında ana sayfaya bilgi gönder ve panel'i kapat
+                      if (onMahalleClick) {
+                        onMahalleClick(ilAdi, seciliIlce, mahalle.mahalle_id, mahalle.mahalle_adi);
+                      }
+                      handleClose();
+                    }}
                     style={{
                       padding: '8px 12px',
                       fontSize: '13px',

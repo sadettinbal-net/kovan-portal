@@ -14,9 +14,10 @@ interface IlData {
 interface Props {
   onIlClick?: (ilAdi: string) => void;
   seciliIl?: string;
+  onMahalleClick?: (ilAdi: string, ilceAdi: string, mahalleId: number, mahalleAdi: string) => void;
 }
 
-export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
+export default function TurkiyeHaritasi({ onIlClick, seciliIl, onMahalleClick }: Props) {
   const [ilVerileri, setIlVerileri] = useState<Map<string, IlData>>(new Map());
   const [hoveredIl, setHoveredIl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,13 +52,13 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
 
       console.log('İller tablosundan gelen ilk 10 il:', iller.slice(0, 10).map((il: any) => il.sehir_adi));
 
-      // Tüm mahalleleri tek seferde çek (hem mahalle hem ilçe bilgisi için)
-      const { data: allMahalleler, error: mahalleError } = await supabase
-        .from('mahalleler')
-        .select('il_adi, ilce_adi, mahalle_id');
+      // SOKAKLAR tablosundan veri çek (mahalleler tablosu yanlış yapıda)
+      const { data: allSokaklar, error: sokakError } = await supabase
+        .from('sokaklar')
+        .select('il_adi, ilce_adi, mahalle_id, mahalle_adi');
 
-      if (mahalleError) {
-        console.error('Mahalleler sorgu hatası:', mahalleError);
+      if (sokakError) {
+        console.error('Sokaklar sorgu hatası:', sokakError);
       }
 
       // İl bazında mahalle sayılarını hesapla - Türkçe karakterlere duyarlı normalizasyon
@@ -71,10 +72,10 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
       const ankaraIlceler = new Set<string>();
       const ankaraMahalleler = new Set<number>();
 
-      allMahalleler?.forEach((m: any) => {
-        const ilAdiNormalized = m.il_adi?.toString().trim().toLocaleUpperCase('tr-TR');
-        const ilceAdi = m.ilce_adi?.toString().trim();
-        const mahalleId = m.mahalle_id;
+      allSokaklar?.forEach((s: any) => {
+        const ilAdiNormalized = s.il_adi?.toString().trim().toLocaleUpperCase('tr-TR');
+        const ilceAdi = s.ilce_adi?.toString().trim();
+        const mahalleId = s.mahalle_id;
 
         // Ankara için debug
         if (ilAdiNormalized?.includes('ANKARA')) {
@@ -82,7 +83,7 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
           if (ilceAdi) ankaraIlceler.add(ilceAdi);
           if (mahalleId) ankaraMahalleler.add(mahalleId);
           if (ankaraCount <= 3) {
-            console.log('Ankara mahalle örneği:', { il_adi: m.il_adi, ilAdiNormalized, ilceAdi, mahalleId });
+            console.log('Ankara mahalle örneği:', { il_adi: s.il_adi, ilAdiNormalized, ilceAdi, mahalleId });
           }
         }
 
@@ -184,7 +185,10 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
   };
 
   const handleIlClick = (ilAdi: string, event: React.MouseEvent<SVGPathElement>) => {
-    console.log('İl tıklandı:', ilAdi);
+    console.log('=== İL TIKLANDI ===');
+    console.log('İl adı parametresi:', ilAdi);
+    console.log('İl adı type:', typeof ilAdi);
+    console.log('İl adı length:', ilAdi?.length);
 
     // Önce dropdown'ı güncelle
     if (onIlClick) {
@@ -202,17 +206,26 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
     console.log('İl BBox:', bbox);
 
     // Panel için il verisini bul
+    console.log('ilVerileri Map:', ilVerileri);
+    console.log('ilVerileri size:', ilVerileri.size);
     const ilData = Array.from(ilVerileri.values()).find(
-      (d) => d.il_adi.toLocaleUpperCase('tr-TR') === ilAdi.toLocaleUpperCase('tr-TR')
+      (d) => {
+        console.log('Karşılaştırma:', d.il_adi, 'vs', ilAdi);
+        return d.il_adi.toLocaleUpperCase('tr-TR') === ilAdi.toLocaleUpperCase('tr-TR');
+      }
     );
 
     if (ilData) {
+      console.log('Panel açılıyor - İl verisi:', ilData);
       setPanelIlAdi(ilAdi);
       setPanelIlData({
         ilceSayisi: ilData.ilce_sayisi,
         mahalleSayisi: ilData.mahalle_sayisi,
       });
       setPanelAcik(true);
+      console.log('setPanelAcik(true) çağrıldı');
+    } else {
+      console.error('İl verisi bulunamadı:', ilAdi);
     }
   };
 
@@ -507,7 +520,24 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
         </div>
       </div>
 
+      {/* Debug Panel State */}
+      {panelAcik && (
+        <div style={{
+          position: 'fixed',
+          top: '10px',
+          right: '10px',
+          background: 'red',
+          color: 'white',
+          padding: '10px',
+          zIndex: 9999,
+          borderRadius: '5px'
+        }}>
+          Panel AÇIK: {panelIlAdi}
+        </div>
+      )}
+
       {/* İlçe Panel */}
+      {console.log('IlcePanel props - isOpen:', panelAcik, 'ilAdi:', panelIlAdi, 'ilceSayisi:', panelIlData.ilceSayisi)}
       <IlcePanel
         isOpen={panelAcik}
         ilAdi={panelIlAdi}
@@ -522,6 +552,13 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
           if (ilceAdi === '') {
             // Zoom'u koru ama ilçe bilgisini temizle
             console.log('İlçe seçimi kaldırıldı, harita zoom korunuyor');
+          }
+        }}
+        onMahalleClick={(ilAdi, ilceAdi, mahalleId, mahalleAdi) => {
+          console.log('Mahalle seçildi:', { ilAdi, ilceAdi, mahalleId, mahalleAdi });
+          // Ana sayfaya mahalle bilgisini gönder
+          if (onMahalleClick) {
+            onMahalleClick(ilAdi, ilceAdi, mahalleId, mahalleAdi);
           }
         }}
         onClose={() => {

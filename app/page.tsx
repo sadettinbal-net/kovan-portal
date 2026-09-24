@@ -52,21 +52,22 @@ export default function Home() {
     setSecim({ il: ilAdi, ilce: '', mahalle: '', sokak: '', site: '' });
     setAramaTipi(''); // Arama tipini sıfırla
 
-    // İlçeleri mahalleler tablosundan alalım (unique ilce_adi)
-    // Mahalleler tablosunda il_adi tamamı büyük harf (İSTANBUL, İZMİR, ANKARA)
-    // İller tablosunda küçük harfle başlıyor (İstanbul, İzmir, Ankara)
-    // Türkçe karakterler için toLocaleUpperCase('tr-TR') kullanıyoruz
+    // SOKAKLAR tablosundan ilçeleri çek (mahalleler tablosu yanlış yapıda)
     const ilAdiUpper = ilAdi.toLocaleUpperCase('tr-TR');
+    console.log('İl seçildi:', ilAdi, '→ Upper:', ilAdiUpper);
 
-    const { data: mahallelerData } = await supabase
-      .from('mahalleler')
+    const { data: sokakData, error } = await supabase
+      .from('sokaklar')
       .select('ilce_adi')
       .eq('il_adi', ilAdiUpper);
 
+    console.log('İlçe sorgusu - data:', sokakData?.length, 'error:', error);
+
     // Unique ilçe adlarını al
-    const uniqueIlceler = [...new Set(mahallelerData?.map((m: any) => m.ilce_adi) || [])];
+    const uniqueIlceler = [...new Set(sokakData?.map((s: any) => s.ilce_adi) || [])];
     const ilcelerArray = uniqueIlceler.map((ilce, idx) => ({ id: idx, ilce_adi: ilce })).sort((a, b) => a.ilce_adi.localeCompare(b.ilce_adi));
 
+    console.log('Unique ilçeler:', ilcelerArray.length);
     setVeriler(prev => ({ ...prev, ilceler: ilcelerArray, mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
@@ -74,14 +75,25 @@ export default function Home() {
     setSecim(prev => ({ ...prev, ilce: ilceAdi, mahalle: '', sokak: '', site: '' }));
     setAramaTipi(''); // Arama tipini sıfırla
 
-    // Her zaman mahalleleri yükle (konum seçimi için)
-    const { data } = await supabase.from('mahalleler').select('*').eq('ilce_adi', ilceAdi).order('mahalle_adi');
+    // SOKAKLAR tablosundan mahalleleri çek
+    const ilAdiUpper = secim.il.toLocaleUpperCase('tr-TR');
+    console.log('İlçe seçildi:', ilceAdi, 'İl:', ilAdiUpper);
 
-    // Unique mahalle_id bazında filtrele (duplicate kayıtlar olabilir)
-    const uniqueMahalleler = data ? Array.from(
-      new Map(data.map(m => [m.mahalle_id, m])).values()
+    const { data: sokakData, error } = await supabase
+      .from('sokaklar')
+      .select('mahalle_id, mahalle_adi')
+      .eq('il_adi', ilAdiUpper)
+      .eq('ilce_adi', ilceAdi)
+      .order('mahalle_adi');
+
+    console.log('Mahalle sorgusu - data:', sokakData?.length, 'error:', error);
+
+    // Unique mahalle_id bazında filtrele
+    const uniqueMahalleler = sokakData ? Array.from(
+      new Map(sokakData.map(s => [s.mahalle_id, s])).values()
     ) : [];
 
+    console.log('Unique mahalleler:', uniqueMahalleler.length);
     setVeriler(prev => ({ ...prev, mahalleler: uniqueMahalleler, sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
@@ -642,11 +654,65 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Türkiye Haritası - Konum Seçim Panelinin Altında */}
-        <TurkiyeHaritasi
-          onIlClick={(ilAdi) => ilSec(ilAdi)}
-          seciliIl={secim.il}
-        />
+        {/* Türkiye Haritası - Gizli (sadece görsel kaldırıldı) */}
+        <div style={{ display: 'none' }}>
+          <TurkiyeHaritasi
+            onIlClick={(ilAdi) => ilSec(ilAdi)}
+            seciliIl={secim.il}
+            onMahalleClick={async (ilAdi, ilceAdi, mahalleId, mahalleAdi) => {
+              console.log('Mahalle haritadan seçildi:', { ilAdi, ilceAdi, mahalleId, mahalleAdi });
+
+              // Seçimi güncelle
+              setSecim({
+                il: ilAdi,
+                ilce: ilceAdi,
+                mahalle: mahalleId.toString(),
+                sokak: '',
+                site: ''
+              });
+
+              // Mahalle işletmelerini yükle
+              const { data: mahalleIsletmeler } = await supabase
+                .from('dukkanlar')
+                .select('*')
+                .eq('mahalle_id', mahalleId)
+                .is('site_id', null);
+
+              // İşletmelere kategori bilgisi ekle
+              const dukkanlarWithKategoriler = await Promise.all(
+                (mahalleIsletmeler || []).map(async (dukkan) => {
+                  if (dukkan.alt_kategori_id) {
+                    const { data: altKat } = await supabase
+                      .from('alt_kategoriler')
+                      .select('id, alt_kategori_adi, kategori_id')
+                      .eq('id', dukkan.alt_kategori_id)
+                      .single();
+
+                    if (altKat) {
+                      const { data: anaKat } = await supabase
+                        .from('kategoriler')
+                        .select('id, kategori_adi, icon, renk')
+                        .eq('id', altKat.kategori_id)
+                        .single();
+
+                      return {
+                        ...dukkan,
+                        alt_kategoriler: {
+                          ...altKat,
+                          kategoriler: anaKat
+                        }
+                      };
+                    }
+                  }
+                  return dukkan;
+                })
+              );
+
+              setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
+              setAramaTipi('mahalle'); // Mahalle işletmesi gösterildiğini belirt
+            }}
+          />
+        </div>
 
         {/* Ne Arıyorsunuz? - İl seçildikten sonra */}
         {secim.il && !aramaTipi && (
