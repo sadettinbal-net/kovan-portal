@@ -360,16 +360,39 @@ export default function Home() {
   };
 
   const dukkanlariGoster = async () => {
-    const { data } = await supabase.from('dukkanlar').select(`
-      *,
-      alt_kategoriler (
-        alt_kategori_adi,
-        kategoriler (
-          kategori_adi
-        )
-      )
-    `).order('isletme_adi');
-    setModalVeriler(data || []);
+    const { data: dukkanlar } = await supabase.from('dukkanlar').select('*').order('isletme_adi');
+
+    // Her dükkan için kategori bilgisini manuel olarak çek
+    const dukkanlarWithKategoriler = await Promise.all(
+      (dukkanlar || []).map(async (dukkan) => {
+        if (dukkan.alt_kategori_id) {
+          const { data: altKat } = await supabase
+            .from('alt_kategoriler')
+            .select('id, alt_kategori_adi, kategori_id')
+            .eq('id', dukkan.alt_kategori_id)
+            .single();
+
+          if (altKat) {
+            const { data: anaKat } = await supabase
+              .from('kategoriler')
+              .select('id, kategori_adi')
+              .eq('id', altKat.kategori_id)
+              .single();
+
+            return {
+              ...dukkan,
+              alt_kategoriler: {
+                ...altKat,
+                kategoriler: anaKat
+              }
+            };
+          }
+        }
+        return dukkan;
+      })
+    );
+
+    setModalVeriler(dukkanlarWithKategoriler);
     setModalAcik('dukkanlar');
   };
 
