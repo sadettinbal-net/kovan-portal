@@ -1,0 +1,105 @@
+📊 TÜRKİYE İLLERİ SOKAK SAYILARI RAPORU
+Tarih: 2026-09-24
+========================================================================================================
+
+✅ TÜM 81 İLDE SOKAK VERİSİ MEVCUT
+
+SIRA  İL ADI                    SOKAK KAYIT SAYISI    DURUM
+========================================================================================================
+1     İstanbul                      178,774           ✅ En fazla sokak
+2     İzmir                         127,016           ✅
+3     Konya                         113,988           ✅
+4     Ankara                         96,778           ✅
+5     Bursa                          76,248           ✅
+6     Antalya                        71,986           ✅
+7     Adana                          68,760           ✅
+8     Denizli                        52,868           ✅
+9     Mersin                         48,380           ✅
+10    Kocaeli                        47,098           ✅
+11    Aydın                          45,476           ✅
+12    Muğla                          45,552           ✅
+13    Balıkesir                      45,452           ✅
+14    Tekirdağ                       44,730           ✅
+15    Hatay                          44,134           ✅
+16    Samsun                         43,404           ✅
+17    Kahramanmaraş                  37,732           ✅
+18    Gaziantep                      37,002           ✅
+19    Şanlıurfa                      35,094           ✅
+20    Afyonkarahisar                 34,498           ✅
+21    Manisa                         34,998           ✅
+22    Sakarya                        33,448           ✅
+23    Trabzon                        30,918           ✅
+24    Kayseri                        28,416           ✅
+25    Diyarbakır                     27,770           ✅
+26    Eskişehir                      26,454           ✅
+27    Kütahya                        25,350           ✅
+28    Aksaray                        24,164           ✅
+29    Sivas                          23,996           ✅
+30    Isparta                        22,096           ✅
+31    Yozgat                         20,238           ✅
+32    Osmaniye                       20,278           ✅
+33    Tokat                          19,892           ✅
+34    Uşak                           19,442           ✅
+35    Kastamonu                      19,304           ✅
+36    Malatya                        19,566           ✅
+37    Çanakkale                      19,170           ✅
+38    Ordu                           18,978           ✅
+39    Erzurum                        18,594           ✅
+40    Çorum                          18,306           ✅
+41    Van                            17,060           ✅
+42    Mardin                         16,752           ✅
+43    Yalova                         16,274           ✅
+44    Kırıkkale                      15,922           ✅
+45    Burdur                         15,736           ✅
+46    Bolu                           15,604           ✅
+47    Adıyaman                       15,262           ✅
+48    Düzce                          15,146           ✅
+49    Erzincan                       14,956           ✅
+50    Kırklareli                     14,746           ✅
+51    Edirne                         14,292           ✅
+52    Zonguldak                      14,308           ✅
+53    Karaman                        13,410           ✅
+54    Niğde                          13,136           ✅
+55    Giresun                        12,736           ✅
+56    Kırşehir                       11,934           ✅
+57    Nevşehir                       11,626           ✅
+58    Elazığ                         11,730           ✅
+59    Ağrı                           11,270           ✅
+60    Amasya                         10,554           ✅
+61    Sinop                          10,096           ✅
+62    Batman                          9,890           ✅
+63    Muş                             9,338           ✅
+64    Bilecik                         9,340           ✅
+65    Bitlis                          9,144           ✅
+66    Şırnak                          8,080           ✅
+67    Bingöl                          7,834           ✅
+68    Çankırı                         7,448           ✅
+69    Rize                            6,878           ✅
+70    Karabük                         6,872           ✅
+71    Gümüşhane                       6,572           ✅
+72    Artvin                          6,532           ✅
+73    Tunceli                         6,088           ✅
+74    Bartın                          5,908           ✅
+75    Siirt                           5,778           ✅
+76    Iğdır                           5,678           ✅
+77    Kilis                           5,220           ✅
+78    Kars                            4,366           ✅
+79    Ardahan                         4,286           ✅
+80    Hakkari                         4,098           ✅
+81    Bayburt                         4,050           ✅ En az sokak
+
+========================================================================================================
+ÖZET İSTATİSTİKLER
+========================================================================================================
+✅ Toplam İl Sayısı:              81
+✅ Sokağı Olan İl:                 81 (100%)
+❌ Sokağı Olmayan İl:               0 (0%)
+
+📊 Toplam Sokak Kaydı:            ~2,200,000 (tahmini)
+📍 En Fazla Sokak:                İstanbul (178,774 kayıt)
+📍 En Az Sokak:                   Bayburt (4,050 kayıt)
+
+⚠️  NOT: Supabase count() metodu bazı sorgularda yanlış sonuç verdiği için
+    cursor-based pagination ile gerçek sayılar kontrol edildi.
+
+========================================================================================================

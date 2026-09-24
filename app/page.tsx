@@ -13,6 +13,10 @@ export default function Home() {
   const [seciliAltKategori, setSeciliAltKategori] = useState(0);
   const [istatistikler, setIstatistikler] = useState({ toplamSite: 0, toplamDukkan: 0, toplamKategori: 0 });
 
+  // Modal state'leri
+  const [modalAcik, setModalAcik] = useState<'siteler' | 'dukkanlar' | 'kategoriler' | null>(null);
+  const [modalVeriler, setModalVeriler] = useState<any[]>([]);
+
   // Sokak arama ve pagination state'leri
   const [sokakAramaMetni, setSokakAramaMetni] = useState('');
   const [sokakSayfasi, setSokakSayfasi] = useState(1);
@@ -348,6 +352,38 @@ export default function Home() {
     );
   }, [veriler.dukkanlar, veriler.altKategoriler, seciliKategori]);
 
+  // Modal açma fonksiyonları
+  const siteleriGoster = async () => {
+    const { data } = await supabase.from('sanayi_siteleri').select('*').order('site_adi');
+    setModalVeriler(data || []);
+    setModalAcik('siteler');
+  };
+
+  const dukkanlariGoster = async () => {
+    const { data } = await supabase.from('dukkanlar').select(`
+      *,
+      alt_kategoriler (
+        alt_kategori_adi,
+        kategoriler (
+          kategori_adi
+        )
+      )
+    `).order('isletme_adi');
+    setModalVeriler(data || []);
+    setModalAcik('dukkanlar');
+  };
+
+  const kategorileriGoster = async () => {
+    const { data } = await supabase.from('kategoriler').select('*').order('kategori_adi');
+    setModalVeriler(data || []);
+    setModalAcik('kategoriler');
+  };
+
+  const modalKapat = () => {
+    setModalAcik(null);
+    setModalVeriler([]);
+  };
+
   // Sokak arama ve pagination için debounced effect
   useEffect(() => {
     if (!secim.mahalle) return;
@@ -497,32 +533,32 @@ export default function Home() {
 
         {/* İstatistik Kartları */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 animate-in fade-in slide-in-from-top-8 duration-700">
-          <div className="group relative overflow-hidden bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl">
+          <button onClick={siteleriGoster} className="group relative overflow-hidden bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-500 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl cursor-pointer text-left">
             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative">
               <div className="text-xs font-bold text-yellow-900/70 uppercase tracking-wider mb-1">Sanayi Sitesi</div>
               <div className="text-3xl font-black text-white mb-0.5">{istatistikler.toplamSite}</div>
-              <div className="text-[10px] text-yellow-900/60 font-medium">Kayıtlı Lokasyon</div>
+              <div className="text-[10px] text-yellow-900/60 font-medium">Kayıtlı Lokasyon • Tıklayın</div>
             </div>
-          </div>
+          </button>
 
-          <div className="group relative overflow-hidden bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl">
+          <button onClick={dukkanlariGoster} className="group relative overflow-hidden bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl cursor-pointer text-left">
             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Toplam Dükkan</div>
               <div className="text-3xl font-black text-white mb-0.5">{istatistikler.toplamDukkan}</div>
-              <div className="text-[10px] text-slate-400 font-medium">Aktif İşletme</div>
+              <div className="text-[10px] text-slate-400 font-medium">Aktif İşletme • Tıklayın</div>
             </div>
-          </div>
+          </button>
 
-          <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl">
+          <button onClick={kategorileriGoster} className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 p-3 rounded-2xl shadow-lg transform transition-all hover:scale-105 hover:shadow-xl cursor-pointer text-left">
             <div className="absolute inset-0 bg-white/10 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div className="relative">
               <div className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-1">Kategoriler</div>
               <div className="text-3xl font-black text-white mb-0.5">{istatistikler.toplamKategori}</div>
-              <div className="text-[10px] text-blue-200 font-medium">Farklı Sektör</div>
+              <div className="text-[10px] text-blue-200 font-medium">Farklı Sektör • Tıklayın</div>
             </div>
-          </div>
+          </button>
         </div>
 
         {hata && (
@@ -961,6 +997,130 @@ export default function Home() {
             </div>
           )}
         </div>
+
+        {/* Modal */}
+        {modalAcik && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={modalKapat}>
+            <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-yellow-500 to-amber-500 p-6 flex items-center justify-between">
+                <h2 className="text-2xl font-black text-white">
+                  {modalAcik === 'siteler' && '🏭 Sanayi Siteleri'}
+                  {modalAcik === 'dukkanlar' && '🏪 Tüm Dükkanlar'}
+                  {modalAcik === 'kategoriler' && '📂 Kategoriler'}
+                </h2>
+                <button onClick={modalKapat} className="text-white hover:bg-white/20 rounded-full p-2 transition-all">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+                {modalAcik === 'siteler' && (
+                  <div className="space-y-3">
+                    {modalVeriler.length === 0 ? (
+                      <div className="text-center text-gray-500 py-10">Henüz sanayi sitesi kaydı yok</div>
+                    ) : (
+                      modalVeriler.map((site: any, index) => (
+                        <div key={site.id} className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border-l-4 border-yellow-500 hover:shadow-md transition-all">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">#{index + 1}</span>
+                                <h3 className="font-bold text-gray-800">{site.site_adi}</h3>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span>📍</span>
+                                  <span>{site.il_adi} / {site.ilce_adi}</span>
+                                </div>
+                                {site.adres && (
+                                  <div className="flex items-center gap-2">
+                                    <span>🗺️</span>
+                                    <span>{site.adres}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {modalAcik === 'dukkanlar' && (
+                  <div className="space-y-3">
+                    {modalVeriler.length === 0 ? (
+                      <div className="text-center text-gray-500 py-10">Henüz dükkan kaydı yok</div>
+                    ) : (
+                      modalVeriler.map((dukkan: any, index) => (
+                        <div key={dukkan.id} className="bg-gradient-to-r from-slate-50 to-gray-50 p-4 rounded-xl border-l-4 border-slate-700 hover:shadow-md transition-all">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="bg-slate-700 text-white text-xs font-bold px-2 py-1 rounded-full">#{index + 1}</span>
+                                <h3 className="font-bold text-gray-800">{dukkan.isletme_adi}</h3>
+                              </div>
+                              <div className="text-sm text-gray-600 space-y-1">
+                                {dukkan.alt_kategoriler && (
+                                  <div className="flex items-center gap-2">
+                                    <span>📂</span>
+                                    <span className="font-semibold">{dukkan.alt_kategoriler.kategoriler?.kategori_adi}</span>
+                                    <span className="text-gray-400">→</span>
+                                    <span>{dukkan.alt_kategoriler.alt_kategori_adi}</span>
+                                  </div>
+                                )}
+                                {dukkan.telefon && (
+                                  <div className="flex items-center gap-2">
+                                    <span>📞</span>
+                                    <span>{dukkan.telefon}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {modalAcik === 'kategoriler' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {modalVeriler.length === 0 ? (
+                      <div className="col-span-2 text-center text-gray-500 py-10">Henüz kategori kaydı yok</div>
+                    ) : (
+                      modalVeriler.map((kategori: any) => (
+                        <div key={kategori.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200 hover:shadow-md transition-all">
+                          <div className="flex items-center gap-3">
+                            <div className="text-3xl">{kategori.icon || '📦'}</div>
+                            <div>
+                              <h3 className="font-bold text-gray-800">{kategori.kategori_adi}</h3>
+                              <div className="text-xs text-gray-500">Kategori ID: {kategori.id}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
+                <div className="text-sm text-gray-600 font-medium">
+                  Toplam: <span className="font-bold text-gray-800">{modalVeriler.length}</span> kayıt
+                </div>
+                <button onClick={modalKapat} className="px-6 py-2 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-xl transition-all">
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-10 text-center">
