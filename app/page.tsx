@@ -81,26 +81,41 @@ export default function Home() {
     setSecim(prev => ({ ...prev, ilce: ilceAdi, mahalle: '', sokak: '', site: '' }));
     setAramaTipi(''); // Arama tipini sıfırla
 
-    // SOKAKLAR tablosundan mahalleleri çek
-    const ilAdiUpper = secim.il.toLocaleUpperCase('tr-TR');
-    console.log('İlçe seçildi:', ilceAdi, 'İl:', ilAdiUpper);
+    // İl ID'sini bul
+    const { data: ilData } = await supabase
+      .from('iller')
+      .select('id')
+      .eq('sehir_adi', secim.il)
+      .single();
 
-    const { data: sokakData, error } = await supabase
-      .from('sokaklar')
+    if (!ilData) {
+      setVeriler(prev => ({ ...prev, mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
+      return;
+    }
+
+    // İlçe ID'sini bul (case-insensitive)
+    const { data: ilceData } = await supabase
+      .from('ilceler')
+      .select('id')
+      .eq('sehir_id', ilData.id)
+      .ilike('ilce_adi', ilceAdi)
+      .single();
+
+    if (!ilceData) {
+      setVeriler(prev => ({ ...prev, mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
+      return;
+    }
+
+    // MAHALLELER_YENI tablosundan mahalleleri çek
+    const { data: mahalleData, error } = await supabase
+      .from('mahalleler_yeni')
       .select('mahalle_id, mahalle_adi')
-      .eq('il_adi', ilAdiUpper)
-      .eq('ilce_adi', ilceAdi)
+      .eq('ilce_id', ilceData.id)
       .order('mahalle_adi');
 
-    console.log('Mahalle sorgusu - data:', sokakData?.length, 'error:', error);
+    console.log('Mahalle sorgusu - data:', mahalleData?.length, 'error:', error);
 
-    // Unique mahalle_id bazında filtrele
-    const uniqueMahalleler = sokakData ? Array.from(
-      new Map(sokakData.map(s => [s.mahalle_id, s])).values()
-    ) : [];
-
-    console.log('Unique mahalleler:', uniqueMahalleler.length);
-    setVeriler(prev => ({ ...prev, mahalleler: uniqueMahalleler, sokaklar: [], siteler: [], dukkanlar: [] }));
+    setVeriler(prev => ({ ...prev, mahalleler: mahalleData || [], sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
   const mahalleSec = async (mahalle_id: string) => {
