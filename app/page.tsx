@@ -1027,10 +1027,10 @@ export default function Home() {
         {/* Modal */}
         {modalAcik && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={modalKapat}>
-            <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[70vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
               {/* Modal Header */}
-              <div className="bg-gradient-to-r from-yellow-500 to-amber-500 p-6 flex items-center justify-between">
-                <h2 className="text-2xl font-black text-white">
+              <div className="bg-gradient-to-r from-yellow-500 to-amber-500 p-4 flex items-center justify-between">
+                <h2 className="text-xl font-black text-white">
                   {modalAcik === 'siteler' && '🏭 Sanayi Siteleri'}
                   {modalAcik === 'dukkanlar' && '🏪 Tüm Dükkanlar'}
                   {modalAcik === 'kategoriler' && '📂 Kategoriler'}
@@ -1043,14 +1043,14 @@ export default function Home() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+              <div className="p-4 overflow-y-auto max-h-[calc(70vh-120px)]">
                 {modalAcik === 'siteler' && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {modalVeriler.length === 0 ? (
-                      <div className="text-center text-gray-500 py-10">Henüz sanayi sitesi kaydı yok</div>
+                      <div className="text-center text-gray-500 py-8">Henüz sanayi sitesi kaydı yok</div>
                     ) : (
                       modalVeriler.map((site: any, index) => (
-                        <div key={site.id} className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-xl border-l-4 border-yellow-500 hover:shadow-md transition-all">
+                        <div key={site.id} className="bg-gradient-to-r from-yellow-50 to-amber-50 p-3 rounded-lg border-l-4 border-yellow-500 hover:shadow-md transition-all">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
@@ -1078,12 +1078,12 @@ export default function Home() {
                 )}
 
                 {modalAcik === 'dukkanlar' && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {modalVeriler.length === 0 ? (
-                      <div className="text-center text-gray-500 py-10">Henüz dükkan kaydı yok</div>
+                      <div className="text-center text-gray-500 py-8">Henüz dükkan kaydı yok</div>
                     ) : (
                       modalVeriler.map((dukkan: any, index) => (
-                        <div key={dukkan.id} className="bg-gradient-to-r from-slate-50 to-gray-50 p-4 rounded-xl border-l-4 border-slate-700 hover:shadow-md transition-all">
+                        <div key={dukkan.id} className="bg-gradient-to-r from-slate-50 to-gray-50 p-3 rounded-lg border-l-4 border-slate-700 hover:shadow-md transition-all">
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
@@ -1127,12 +1127,12 @@ export default function Home() {
                 )}
 
                 {modalAcik === 'kategoriler' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {modalVeriler.length === 0 ? (
-                      <div className="col-span-2 text-center text-gray-500 py-10">Henüz kategori kaydı yok</div>
+                      <div className="col-span-2 text-center text-gray-500 py-8">Henüz kategori kaydı yok</div>
                     ) : (
                       modalVeriler.map((kategori: any) => (
-                        <div key={kategori.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl border-2 border-blue-200 hover:shadow-md transition-all">
+                        <div key={kategori.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200 hover:shadow-md transition-all">
                           <div className="flex items-center gap-3">
                             <div className="text-3xl">{kategori.icon || '📦'}</div>
                             <div>
@@ -1148,11 +1148,11 @@ export default function Home() {
               </div>
 
               {/* Modal Footer */}
-              <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
+              <div className="bg-gray-50 px-4 py-3 flex items-center justify-between">
                 <div className="text-sm text-gray-600 font-medium">
                   Toplam: <span className="font-bold text-gray-800">{modalVeriler.length}</span> kayıt
                 </div>
-                <button onClick={modalKapat} className="px-6 py-2 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-xl transition-all">
+                <button onClick={modalKapat} className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-lg transition-all text-sm">
                   Kapat
                 </button>
               </div>
