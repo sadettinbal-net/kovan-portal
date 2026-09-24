@@ -48,10 +48,12 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
 
       if (!iller) return;
 
+      console.log('İller tablosundan gelen ilk 10 il:', iller.slice(0, 10).map((il: any) => il.sehir_adi));
+
       // Tüm mahalleleri tek seferde çek (hem mahalle hem ilçe bilgisi için)
       const { data: allMahalleler, error: mahalleError } = await supabase
         .from('mahalleler')
-        .select('il_adi, ilce_adi');
+        .select('il_adi, ilce_adi, mahalle_id');
 
       if (mahalleError) {
         console.error('Mahalleler sorgu hatası:', mahalleError);
@@ -61,13 +63,36 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
       const ilMahalleStats = new Map<string, number>();
       const ilIlceMap = new Map<string, Set<string>>();
 
+      // Mahalle ID'lere göre unique mahalleleri topla
+      const ilMahalleIdMap = new Map<string, Set<number>>();
+
+      let ankaraCount = 0;
+      const ankaraIlceler = new Set<string>();
+      const ankaraMahalleler = new Set<number>();
+
       allMahalleler?.forEach((m: any) => {
         const ilAdiNormalized = m.il_adi?.toString().trim().toLocaleUpperCase('tr-TR');
         const ilceAdi = m.ilce_adi?.toString().trim();
+        const mahalleId = m.mahalle_id;
+
+        // Ankara için debug
+        if (ilAdiNormalized?.includes('ANKARA')) {
+          ankaraCount++;
+          if (ilceAdi) ankaraIlceler.add(ilceAdi);
+          if (mahalleId) ankaraMahalleler.add(mahalleId);
+          if (ankaraCount <= 3) {
+            console.log('Ankara mahalle örneği:', { il_adi: m.il_adi, ilAdiNormalized, ilceAdi, mahalleId });
+          }
+        }
 
         if (ilAdiNormalized) {
-          // Mahalle sayısını artır
-          ilMahalleStats.set(ilAdiNormalized, (ilMahalleStats.get(ilAdiNormalized) || 0) + 1);
+          // Unique mahalle ID'leri topla
+          if (mahalleId) {
+            if (!ilMahalleIdMap.has(ilAdiNormalized)) {
+              ilMahalleIdMap.set(ilAdiNormalized, new Set());
+            }
+            ilMahalleIdMap.get(ilAdiNormalized)!.add(mahalleId);
+          }
 
           // İlçeleri unique olarak topla
           if (ilceAdi) {
@@ -78,6 +103,25 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
           }
         }
       });
+
+      console.log('ANKARA VERİTABANI İSTATİSTİKLERİ:');
+      console.log('- Toplam kayıt sayısı:', ankaraCount);
+      console.log('- Unique ilçe sayısı:', ankaraIlceler.size);
+      console.log('- Unique mahalle sayısı:', ankaraMahalleler.size);
+      console.log('- İlçeler:', Array.from(ankaraIlceler).sort());
+
+      // Unique mahalle sayılarını hesapla
+      ilMahalleIdMap.forEach((mahalleIds, ilAdi) => {
+        ilMahalleStats.set(ilAdi, mahalleIds.size);
+      });
+
+      console.log('VERİTABANINDA VERİ OLAN İLLER:');
+      const illereGoreSayilar = Array.from(ilMahalleIdMap.keys()).map(il => ({
+        il,
+        ilceSayisi: ilIlceMap.get(il)?.size || 0,
+        mahalleSayisi: ilMahalleIdMap.get(il)?.size || 0
+      })).sort((a, b) => a.il.localeCompare(b.il, 'tr-TR'));
+      console.table(illereGoreSayilar);
 
       // İl bazında ilçe sayılarını hesapla (unique ilçe sayısı)
       const ilIlceStats = new Map<string, number>();
@@ -92,6 +136,22 @@ export default function TurkiyeHaritasi({ onIlClick, seciliIl }: Props) {
         const ilAdiNormalized = il.sehir_adi.toString().trim().toLocaleUpperCase('tr-TR');
         const mahalleSayisi = ilMahalleStats.get(ilAdiNormalized) || 0;
         const ilceSayisi = ilIlceStats.get(ilAdiNormalized) || 0;
+
+        // Debug için
+        if (il.sehir_adi === 'Ankara') {
+          console.log('Ankara için:', { ilAdiNormalized, mahalleSayisi, ilceSayisi });
+          const mahalleKey = Array.from(ilMahalleStats.keys()).find(k => k.includes('ANKARA'));
+          const ilceKey = Array.from(ilIlceStats.keys()).find(k => k.includes('ANKARA'));
+          console.log('ilMahalleStats ANKARA key:', mahalleKey, '- Değer:', ilMahalleStats.get(mahalleKey || ''));
+          console.log('ilIlceStats ANKARA key:', ilceKey, '- Değer:', ilIlceStats.get(ilceKey || ''));
+          console.log('Normalizasyon karşılaştırma:', {
+            illerdenGelen: ilAdiNormalized,
+            mahalleStatsKey: mahalleKey,
+            esitMi: ilAdiNormalized === mahalleKey,
+            illerdenLength: ilAdiNormalized.length,
+            statsKeyLength: mahalleKey?.length
+          });
+        }
 
         // Renk belirleme (yoğunluğa göre)
         let fillColor = '#e5e7eb'; // gri - veri yok

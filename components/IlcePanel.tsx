@@ -19,13 +19,22 @@ interface Ilce {
 
 interface Mahalle {
   mahalle_adi: string;
+  mahalle_id: number;
+}
+
+interface Sokak {
+  sokak_adi: string;
+  sokak_id: number;
 }
 
 export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, onClose, onIlceClick }: IlcePanelProps) {
   const [ilceler, setIlceler] = useState<Ilce[]>([]);
   const [mahalleler, setMahalleler] = useState<Mahalle[]>([]);
+  const [sokaklar, setSokaklar] = useState<Sokak[]>([]);
   const [seciliIlce, setSeciliIlce] = useState<string>('');
+  const [seciliMahalle, setSeciliMahalle] = useState<string>('');
   const [yukluyor, setYukluyor] = useState(false);
+  const [gercekIlceSayisi, setGercekIlceSayisi] = useState<number>(0);
 
   // İlçeleri yükle
   useEffect(() => {
@@ -42,27 +51,32 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
       // Mahalleler tablosundan ilçeleri getir
       const { data: mahallelerData } = await supabase
         .from('mahalleler')
-        .select('ilce_adi')
+        .select('ilce_adi, mahalle_id')
         .eq('il_adi', ilAdiUpper);
 
-      // Mahalle sayılarını hesapla ve unique ilçeleri bul
-      const mahalleSayilari = new Map<string, number>();
+      // İlçe bazında unique mahalle ID'leri topla
+      const ilceMahalleMap = new Map<string, Set<number>>();
       mahallelerData?.forEach((m: any) => {
         const ilceAdi = m.ilce_adi?.toString().trim();
-        if (ilceAdi) {
-          mahalleSayilari.set(ilceAdi, (mahalleSayilari.get(ilceAdi) || 0) + 1);
+        const mahalleId = m.mahalle_id;
+        if (ilceAdi && mahalleId) {
+          if (!ilceMahalleMap.has(ilceAdi)) {
+            ilceMahalleMap.set(ilceAdi, new Set());
+          }
+          ilceMahalleMap.get(ilceAdi)!.add(mahalleId);
         }
       });
 
-      // İlçe listesini oluştur (unique ilçeler ve mahalle sayıları ile)
-      const ilcelerWithCount = Array.from(mahalleSayilari.entries())
-        .map(([ilce_adi, mahalle_sayisi]) => ({
+      // İlçe listesini oluştur (unique ilçeler ve unique mahalle sayıları ile)
+      const ilcelerWithCount = Array.from(ilceMahalleMap.entries())
+        .map(([ilce_adi, mahalleIds]) => ({
           ilce_adi,
-          mahalle_sayisi,
+          mahalle_sayisi: mahalleIds.size,
         }))
         .sort((a, b) => a.ilce_adi.localeCompare(b.ilce_adi));
 
       setIlceler(ilcelerWithCount);
+      setGercekIlceSayisi(ilcelerWithCount.length);
     } catch (error) {
       console.error('İlçeler yüklenirken hata:', error);
     } finally {
@@ -77,12 +91,20 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
 
       const { data: mahallelerData } = await supabase
         .from('mahalleler')
-        .select('mahalle_adi')
+        .select('mahalle_adi, mahalle_id')
         .eq('il_adi', ilAdiUpper)
         .eq('ilce_adi', ilceAdi)
         .order('mahalle_adi');
 
-      setMahalleler(mahallelerData?.map((m: any) => ({ mahalle_adi: m.mahalle_adi })) || []);
+      // Unique mahalleler - mahalle_id'ye göre
+      const uniqueMahalleler = mahallelerData ? Array.from(
+        new Map(mahallelerData.map((m: any) => [m.mahalle_id, {
+          mahalle_adi: m.mahalle_adi,
+          mahalle_id: m.mahalle_id
+        }])).values()
+      ) : [];
+
+      setMahalleler(uniqueMahalleler);
       setSeciliIlce(ilceAdi);
 
       // İlçe seçildiğinde parent'a bildir (harita için zoom)
@@ -96,19 +118,54 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
     }
   };
 
-  const handleBack = () => {
-    setSeciliIlce('');
-    setMahalleler([]);
+  const loadSokaklar = async (mahalleId: number, mahalleAdi: string) => {
+    setYukluyor(true);
+    try {
+      const { data: sokakData } = await supabase
+        .from('sokaklar')
+        .select('sokak_adi, sokak_id')
+        .eq('mahalle_id', mahalleId)
+        .order('sokak_adi');
 
-    // Geri dönerken haritayı normal zoom'a getir
-    if (onIlceClick) {
-      onIlceClick(''); // Boş string = ilçe seçimi iptal
+      // Unique sokaklar - sokak_id'ye göre
+      const uniqueSokaklar = sokakData ? Array.from(
+        new Map(sokakData.map((s: any) => [s.sokak_id, {
+          sokak_adi: s.sokak_adi,
+          sokak_id: s.sokak_id
+        }])).values()
+      ) : [];
+
+      setSokaklar(uniqueSokaklar);
+      setSeciliMahalle(mahalleAdi);
+    } catch (error) {
+      console.error('Sokaklar yüklenirken hata:', error);
+    } finally {
+      setYukluyor(false);
+    }
+  };
+
+  const handleBack = () => {
+    if (seciliMahalle) {
+      // Sokak seviyesinden mahalle seviyesine dön
+      setSeciliMahalle('');
+      setSokaklar([]);
+    } else if (seciliIlce) {
+      // Mahalle seviyesinden ilçe seviyesine dön
+      setSeciliIlce('');
+      setMahalleler([]);
+
+      // Geri dönerken haritayı normal zoom'a getir
+      if (onIlceClick) {
+        onIlceClick(''); // Boş string = ilçe seçimi iptal
+      }
     }
   };
 
   const handleClose = () => {
     setSeciliIlce('');
+    setSeciliMahalle('');
     setMahalleler([]);
+    setSokaklar([]);
     setIlceler([]);
     onClose();
   };
@@ -158,7 +215,7 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
           backgroundColor: '#6b3d10',
           color: '#fff8ec'
         }}>
-          {seciliIlce ? (
+          {(seciliIlce || seciliMahalle) ? (
             <button
               onClick={handleBack}
               style={{
@@ -182,7 +239,7 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap'
           }}>
-            {seciliIlce ? seciliIlce : `${ilAdi} - ${ilceSayisi} ilçe`}
+            {seciliMahalle ? seciliMahalle : seciliIlce ? seciliIlce : `${ilAdi} - ${gercekIlceSayisi} ilçe`}
           </span>
 
           <button
@@ -215,13 +272,13 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
             <div className="flex items-center justify-center py-8">
               <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : seciliIlce ? (
-            // Mahalle listesi - Her kutucuk bağımsız buton gibi
+          ) : seciliMahalle ? (
+            // Sokak listesi
             <>
-              {mahalleler.length === 0 ? (
-                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>Mahalle bulunamadı</p>
+              {sokaklar.length === 0 ? (
+                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>Sokak bulunamadı</p>
               ) : (
-                mahalleler.map((mahalle, idx) => (
+                sokaklar.map((sokak, idx) => (
                   <div
                     key={idx}
                     style={{
@@ -238,8 +295,38 @@ export default function IlcePanel({ isOpen, ilAdi, ilceSayisi, mahalleSayisi, on
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f2a93b'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fdf0d5'}
                   >
-                    {mahalle.mahalle_adi}
+                    {sokak.sokak_adi}
                   </div>
+                ))
+              )}
+            </>
+          ) : seciliIlce ? (
+            // Mahalle listesi - Her kutucuk bağımsız buton gibi
+            <>
+              {mahalleler.length === 0 ? (
+                <p style={{ padding: '14px', fontSize: '13px', textAlign: 'center', color: '#6b7280' }}>Mahalle bulunamadı</p>
+              ) : (
+                mahalleler.map((mahalle, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => loadSokaklar(mahalle.mahalle_id, mahalle.mahalle_adi)}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'background .12s, color .12s',
+                      backgroundColor: '#fdf0d5',
+                      color: '#4a2a08',
+                      border: '1.5px solid #8a5a20',
+                      borderRadius: '8px',
+                      width: '100%'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f2a93b'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fdf0d5'}
+                  >
+                    {mahalle.mahalle_adi}
+                  </button>
                 ))
               )}
             </>
