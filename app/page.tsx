@@ -52,23 +52,29 @@ export default function Home() {
     setSecim({ il: ilAdi, ilce: '', mahalle: '', sokak: '', site: '' });
     setAramaTipi(''); // Arama tipini sıfırla
 
-    // SOKAKLAR tablosundan ilçeleri çek (mahalleler tablosu yanlış yapıda)
-    const ilAdiUpper = ilAdi.toLocaleUpperCase('tr-TR');
-    console.log('İl seçildi:', ilAdi, '→ Upper:', ilAdiUpper);
+    // İller tablosundan il_id bul
+    const { data: ilData } = await supabase
+      .from('iller')
+      .select('id')
+      .eq('sehir_adi', ilAdi)
+      .single();
 
-    const { data: sokakData, error } = await supabase
-      .from('sokaklar')
-      .select('ilce_adi')
-      .eq('il_adi', ilAdiUpper);
+    if (!ilData) {
+      console.log('İl bulunamadı:', ilAdi);
+      setVeriler(prev => ({ ...prev, ilceler: [], mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
+      return;
+    }
 
-    console.log('İlçe sorgusu - data:', sokakData?.length, 'error:', error);
+    // İLÇELER tablosundan ilçeleri çek (kolon adı sehir_id)
+    const { data: ilcelerData, error } = await supabase
+      .from('ilceler')
+      .select('id, ilce_adi')
+      .eq('sehir_id', ilData.id)
+      .order('ilce_adi');
 
-    // Unique ilçe adlarını al
-    const uniqueIlceler = [...new Set(sokakData?.map((s: any) => s.ilce_adi) || [])];
-    const ilcelerArray = uniqueIlceler.map((ilce, idx) => ({ id: idx, ilce_adi: ilce })).sort((a, b) => a.ilce_adi.localeCompare(b.ilce_adi));
+    console.log('İl seçildi:', ilAdi, 'ID:', ilData.id, 'İlçe sayısı:', ilcelerData?.length, 'error:', error);
 
-    console.log('Unique ilçeler:', ilcelerArray.length);
-    setVeriler(prev => ({ ...prev, ilceler: ilcelerArray, mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
+    setVeriler(prev => ({ ...prev, ilceler: ilcelerData || [], mahalleler: [], sokaklar: [], siteler: [], dukkanlar: [] }));
   };
 
   const ilceSec = async (ilceAdi: string) => {
