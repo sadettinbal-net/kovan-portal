@@ -1511,6 +1511,107 @@ export default function Home() {
           </div>
         )}
 
+        {/* Alt Kategoriler Modal */}
+        {altKategoriModalAcik && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60]" onClick={() => setAltKategoriModalAcik(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-6 py-4 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl">{seciliKategoriDetay?.icon || '📦'}</span>
+                      <div>
+                        <h2 className="text-2xl font-bold">{seciliKategoriDetay?.kategori_adi || 'Alt Kategoriler'}</h2>
+                        <p className="text-blue-100 text-sm mt-1">{altKategoriListesi.length} alt kategori</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={() => setAltKategoriModalAcik(false)} className="text-white hover:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold transition-all">
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto flex-1">
+                {altKategoriListesi.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">📂</div>
+                    <div className="text-gray-700 font-bold text-xl mb-2">Alt Kategori Yok</div>
+                    <div className="text-gray-500">Bu kategoride henüz alt kategori bulunmamaktadır.</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {altKategoriListesi.map((altKat: any) => (
+                      <button
+                        key={altKat.id}
+                        onClick={async () => {
+                          // Alt kategoriye tıklandığında firmaları yükle ve modal aç
+                          const { data: dukkanlar } = await supabase
+                            .from('dukkanlar')
+                            .select('*')
+                            .eq('alt_kategori_id', altKat.id);
+
+                          // Her dükkan için kategori bilgisini ekle
+                          const dukkanlarWithKategoriler = await Promise.all(
+                            (dukkanlar || []).map(async (dukkan) => {
+                              const { data: altKategori } = await supabase
+                                .from('alt_kategoriler')
+                                .select('id, alt_kategori_adi, kategori_id')
+                                .eq('id', dukkan.alt_kategori_id)
+                                .single();
+
+                              if (altKategori) {
+                                const { data: anaKategori } = await supabase
+                                  .from('kategoriler')
+                                  .select('id, kategori_adi, icon, renk')
+                                  .eq('id', altKategori.kategori_id)
+                                  .single();
+
+                                return {
+                                  ...dukkan,
+                                  alt_kategoriler: {
+                                    ...altKategori,
+                                    kategoriler: anaKategori
+                                  }
+                                };
+                              }
+                              return dukkan;
+                            })
+                          );
+
+                          // Firmalar modalını aç
+                          setSeciliAltKategoriDetay(altKat);
+                          setFirmaListesi(dukkanlarWithKategoriler);
+                          setFirmalarModalAcik(true);
+                        }}
+                        className="w-full bg-gradient-to-br from-indigo-50 to-blue-100 p-4 rounded-xl border-2 border-indigo-200 hover:shadow-lg transition-all hover:border-indigo-400 hover:from-indigo-100 hover:to-blue-200 cursor-pointer text-left"
+                      >
+                        <div className="font-bold text-gray-800 text-lg mb-1">{altKat.alt_kategori_adi}</div>
+                        <div className="text-xs text-indigo-600 font-semibold">
+                          {seciliKategoriDetay?.kategori_adi}
+                          <span className="text-gray-500 ml-1">• Firmaları göster</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  <span className="font-bold">{seciliKategoriDetay?.kategori_adi}</span> kategorisi
+                </div>
+                <button onClick={() => setAltKategoriModalAcik(false)} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-all">
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Firmalar Modal */}
         {firmalarModalAcik && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70]" onClick={() => setFirmalarModalAcik(false)}>
