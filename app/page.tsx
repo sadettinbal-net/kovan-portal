@@ -1794,16 +1794,14 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Copyright */}
-          <div className="mt-6 text-center">
-            <p className="text-gray-400 text-sm mb-4">
-              Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
-            </p>
-          </div>
         </div>
 
         {/* Alt Koyu Bant - Tam Genişlik */}
-        <div className="w-full bg-[#0f1f3d] py-3"></div>
+        <div className="w-full bg-[#0f1f3d] py-5 text-center">
+          <p className="text-gray-400 text-sm">
+            Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
+          </p>
+        </div>
       </footer>
     </div>
   );
