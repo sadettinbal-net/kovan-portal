@@ -1388,11 +1388,17 @@ export default function Home() {
                                         );
 
                                         // Firmaları göster
+                                        console.log('Firmalar yüklendi:', dukkanlarWithKategoriler.length);
                                         setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
                                         modalKapat();
                                         setAramaMetni('');
                                         setSeciliKategori(0);
                                         setSeciliAltKategori(0);
+
+                                        // Sayfayı firmalar bölümüne kaydır
+                                        setTimeout(() => {
+                                          window.scrollTo({ top: 800, behavior: 'smooth' });
+                                        }, 100);
                                       }}
                                       className="w-full bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-all hover:border-purple-400 hover:from-purple-100 hover:to-purple-200 cursor-pointer text-left"
                                     >
