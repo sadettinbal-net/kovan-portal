@@ -962,7 +962,7 @@ export default function Home() {
         )}
 
         {/* DÜKKAN LİSTESİ */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-8">
+        <div id="firmalar-listesi" className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-8">
           {filtreliDukkanlar.length > 0 ? (
             filtreliDukkanlar.map((dukkan: any, index: number) => (
               <div
@@ -1397,8 +1397,11 @@ export default function Home() {
 
                                         // Sayfayı firmalar bölümüne kaydır
                                         setTimeout(() => {
-                                          window.scrollTo({ top: 800, behavior: 'smooth' });
-                                        }, 100);
+                                          const firmalarlElement = document.getElementById('firmalar-listesi');
+                                          if (firmalarlElement) {
+                                            firmalarlElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                          }
+                                        }, 300);
                                       }}
                                       className="w-full bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-all hover:border-purple-400 hover:from-purple-100 hover:to-purple-200 cursor-pointer text-left"
                                     >
