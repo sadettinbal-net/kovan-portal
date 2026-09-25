@@ -433,19 +433,19 @@ export default function Home() {
 
   // Kategoriler modalında alt kategori araması yapıldığında otomatik işlem yap
   useEffect(() => {
-    if (!modalAcik || modalAcik !== 'kategoriler' || !modalAramaMetni || modalAramaMetni.length < 2) return;
+    if (!modalAcik || modalAcik !== 'kategoriler' || !modalAramaMetni || modalAramaMetni.length < 3) return;
 
     const timer = setTimeout(async () => {
-      const aramaKelime = modalAramaMetni.toLowerCase();
+      const aramaKelime = modalAramaMetni.toLowerCase().trim();
 
-      // Tüm alt kategorilerde doğrudan arama yap
-      const eslesenAltKategoriler = veriler.altKategoriler.filter((ak: any) =>
-        ak.alt_kategori_adi?.toLowerCase().includes(aramaKelime)
+      // Tüm alt kategorilerde tam eşleşme ara (önce tam eşleşme kontrol et)
+      const tamEslesen = veriler.altKategoriler.find((ak: any) =>
+        ak.alt_kategori_adi?.toLowerCase() === aramaKelime
       );
 
-      // Eğer sadece 1 alt kategori eşleşirse, direkt o alt kategorinin firmalarını göster
-      if (eslesenAltKategoriler.length === 1) {
-        const altKat = eslesenAltKategoriler[0];
+      // Sadece tam eşleşme varsa otomatik aç
+      if (tamEslesen) {
+        const altKat = tamEslesen;
 
         // Alt kategorideki firmaları çek
         const { data: dukkanlar } = await supabase
@@ -488,7 +488,7 @@ export default function Home() {
         setSeciliKategori(0);
         setSeciliAltKategori(0);
       }
-    }, 600); // 600ms debounce
+    }, 800); // 800ms debounce (daha uzun süre bekle)
 
     return () => clearTimeout(timer);
   }, [modalAramaMetni, modalAcik]);
