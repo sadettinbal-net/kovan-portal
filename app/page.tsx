@@ -1330,23 +1330,91 @@ export default function Home() {
                     {modalVeriler.length === 0 ? (
                       <div className="text-center text-gray-500 py-8">Henüz kategori kaydı yok</div>
                     ) : (() => {
+                      // Eğer arama yapılıyorsa, önce alt kategorilerde ara
+                      if (modalAramaMetni) {
+                        const aramaKelime = modalAramaMetni.toLowerCase();
+
+                        // Alt kategorilerde direkt arama yap
+                        const eslesenAltKategoriler = veriler.altKategoriler.filter((ak: any) =>
+                          ak.alt_kategori_adi?.toLowerCase().includes(aramaKelime)
+                        );
+
+                        // Eğer alt kategori eşleşmesi varsa, direkt alt kategorileri göster
+                        if (eslesenAltKategoriler.length > 0) {
+                          return (
+                            <div className="space-y-2">
+                              <div className="text-sm text-gray-600 font-medium mb-3">
+                                {eslesenAltKategoriler.length} alt kategori bulundu
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {eslesenAltKategoriler.map((altKat: any) => {
+                                  const anaKategori = modalVeriler.find((k: any) => k.id === altKat.kategori_id);
+                                  return (
+                                    <button
+                                      key={altKat.id}
+                                      onClick={async () => {
+                                        // Alt kategoriye tıklandığında firmaları göster
+                                        const { data: dukkanlar } = await supabase
+                                          .from('dukkanlar')
+                                          .select('*')
+                                          .eq('alt_kategori_id', altKat.id);
+
+                                        // Her dükkan için kategori bilgisini ekle
+                                        const dukkanlarWithKategoriler = await Promise.all(
+                                          (dukkanlar || []).map(async (dukkan) => {
+                                            const { data: altKategori } = await supabase
+                                              .from('alt_kategoriler')
+                                              .select('id, alt_kategori_adi, kategori_id')
+                                              .eq('id', dukkan.alt_kategori_id)
+                                              .single();
+
+                                            if (altKategori) {
+                                              const { data: anaKategori } = await supabase
+                                                .from('kategoriler')
+                                                .select('id, kategori_adi, icon, renk')
+                                                .eq('id', altKategori.kategori_id)
+                                                .single();
+
+                                              return {
+                                                ...dukkan,
+                                                alt_kategoriler: {
+                                                  ...altKategori,
+                                                  kategoriler: anaKategori
+                                                }
+                                              };
+                                            }
+                                            return dukkan;
+                                          })
+                                        );
+
+                                        // Firmaları göster
+                                        setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
+                                        modalKapat();
+                                        setAramaMetni('');
+                                        setSeciliKategori(0);
+                                        setSeciliAltKategori(0);
+                                      }}
+                                      className="w-full bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-all hover:border-purple-400 hover:from-purple-100 hover:to-purple-200 cursor-pointer text-left"
+                                    >
+                                      <div className="font-bold text-gray-800 mb-1">{altKat.alt_kategori_adi}</div>
+                                      <div className="text-xs text-purple-600 font-semibold">
+                                        {anaKategori?.kategori_adi || 'Kategori'}
+                                        <span className="text-gray-500 ml-1">• Firmaları göster</span>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+
+                      // Kategori araması veya normal görünüm
                       const filtreliKategoriler = modalVeriler.filter((kategori: any) => {
                         if (!modalAramaMetni) return true;
                         const aramaKelime = modalAramaMetni.toLowerCase();
-
-                        // Kategori adında arama
-                        if (kategori.kategori_adi?.toLowerCase().includes(aramaKelime)) {
-                          return true;
-                        }
-
-                        // Alt kategorilerde arama
-                        const kategoriAltKategoriler = veriler.altKategoriler.filter(
-                          (ak: any) => ak.kategori_id === kategori.id
-                        );
-
-                        return kategoriAltKategoriler.some((ak: any) =>
-                          ak.alt_kategori_adi?.toLowerCase().includes(aramaKelime)
-                        );
+                        return kategori.kategori_adi?.toLowerCase().includes(aramaKelime);
                       });
 
                       if (filtreliKategoriler.length === 0) {
@@ -1354,7 +1422,7 @@ export default function Home() {
                           <div className="text-center py-8">
                             <div className="text-4xl mb-2">🔍</div>
                             <div className="text-gray-700 font-bold mb-1">Sonuç bulunamadı</div>
-                            <div className="text-gray-500 text-sm">"{modalAramaMetni}" için kategori bulunamadı</div>
+                            <div className="text-gray-500 text-sm">"{modalAramaMetni}" için sonuç bulunamadı</div>
                           </div>
                         );
                       }
