@@ -1702,7 +1702,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="mt-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
           <div className="max-w-7xl mx-auto px-6 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Hakkımızda Bölümü */}
               <div>
                 <h3 className="text-xl font-bold mb-4 text-yellow-400">ÜMRANİYE SANAYİ SİTESİ</h3>
@@ -1751,40 +1751,51 @@ export default function Home() {
                   </li>
                 </ul>
               </div>
-
-              {/* Mobil Uygulama */}
-              <div>
-                <h3 className="text-lg font-bold mb-4 text-yellow-400">Mobil Uygulama</h3>
-                <p className="text-gray-400 text-xs mb-4">QR kodu okut, telefona uygulama gibi ekle</p>
-                <div className="space-y-3">
-                  <div className="bg-white p-3 rounded-lg inline-block">
-                    <div className="w-24 h-24 bg-gray-200 flex items-center justify-center rounded">
-                      <div className="text-center">
-                        <div className="text-2xl mb-1">📱</div>
-                        <div className="text-xs text-gray-600 font-bold">iOS</div>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-400 text-xs">iPhone</p>
-                  <div className="bg-white p-3 rounded-lg inline-block">
-                    <div className="w-24 h-24 bg-gray-200 flex items-center justify-center rounded">
-                      <div className="text-center">
-                        <div className="text-2xl mb-1">🤖</div>
-                        <div className="text-xs text-gray-600 font-bold">Android</div>
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-gray-400 text-xs">Android</p>
-                  <p className="text-gray-400 text-xs italic mt-3">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
-                </div>
-              </div>
             </div>
 
             {/* Copyright */}
             <div className="mt-8 pt-6 border-t border-gray-700 text-center">
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-sm mb-8">
                 Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
               </p>
+
+              {/* QR Kodlar */}
+              <div className="mt-6">
+                <h3 className="text-yellow-400 font-bold text-lg mb-4">Mobil Uygulama</h3>
+                <p className="text-gray-400 text-sm mb-6">QR kodu okut, telefona uygulama gibi ekle</p>
+                <div className="flex justify-center gap-8 flex-wrap">
+                  {/* iOS QR */}
+                  <div className="text-center">
+                    <div className="bg-white p-4 rounded-xl inline-block shadow-lg mb-3">
+                      <img
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
+                        alt="iOS QR Code"
+                        className="w-32 h-32"
+                      />
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-gray-300">
+                      <span className="text-xl">📱</span>
+                      <span className="font-semibold">iPhone</span>
+                    </div>
+                  </div>
+
+                  {/* Android QR */}
+                  <div className="text-center">
+                    <div className="bg-white p-4 rounded-xl inline-block shadow-lg mb-3">
+                      <img
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
+                        alt="Android QR Code"
+                        className="w-32 h-32"
+                      />
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-gray-300">
+                      <span className="text-xl">🤖</span>
+                      <span className="font-semibold">Android</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-gray-400 text-xs italic mt-4">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
+              </div>
             </div>
           </div>
         </footer>
