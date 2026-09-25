@@ -1353,55 +1353,71 @@ export default function Home() {
                                     <button
                                       key={altKat.id}
                                       onClick={async () => {
-                                        // Alt kategoriye tıklandığında firmaları göster
-                                        const { data: dukkanlar } = await supabase
-                                          .from('dukkanlar')
-                                          .select('*')
-                                          .eq('alt_kategori_id', altKat.id);
+                                        try {
+                                          // Alt kategoriye tıklandığında firmaları göster
+                                          console.log('Alt kategori ID:', altKat.id, 'İsim:', altKat.alt_kategori_adi);
 
-                                        // Her dükkan için kategori bilgisini ekle
-                                        const dukkanlarWithKategoriler = await Promise.all(
-                                          (dukkanlar || []).map(async (dukkan) => {
-                                            const { data: altKategori } = await supabase
-                                              .from('alt_kategoriler')
-                                              .select('id, alt_kategori_adi, kategori_id')
-                                              .eq('id', dukkan.alt_kategori_id)
-                                              .single();
+                                          const { data: dukkanlar, error } = await supabase
+                                            .from('dukkanlar')
+                                            .select('*')
+                                            .eq('alt_kategori_id', altKat.id);
 
-                                            if (altKategori) {
-                                              const { data: anaKategori } = await supabase
-                                                .from('kategoriler')
-                                                .select('id, kategori_adi, icon, renk')
-                                                .eq('id', altKategori.kategori_id)
+                                          console.log('Supabase sonuç:', { dukkanlar, error, count: dukkanlar?.length });
+
+                                          if (error) {
+                                            alert('Hata: ' + error.message);
+                                            return;
+                                          }
+
+                                          // Her dükkan için kategori bilgisini ekle
+                                          const dukkanlarWithKategoriler = await Promise.all(
+                                            (dukkanlar || []).map(async (dukkan) => {
+                                              const { data: altKategori } = await supabase
+                                                .from('alt_kategoriler')
+                                                .select('id, alt_kategori_adi, kategori_id')
+                                                .eq('id', dukkan.alt_kategori_id)
                                                 .single();
 
-                                              return {
-                                                ...dukkan,
-                                                alt_kategoriler: {
-                                                  ...altKategori,
-                                                  kategoriler: anaKategori
-                                                }
-                                              };
+                                              if (altKategori) {
+                                                const { data: anaKategori } = await supabase
+                                                  .from('kategoriler')
+                                                  .select('id, kategori_adi, icon, renk')
+                                                  .eq('id', altKategori.kategori_id)
+                                                  .single();
+
+                                                return {
+                                                  ...dukkan,
+                                                  alt_kategoriler: {
+                                                    ...altKategori,
+                                                    kategoriler: anaKategori
+                                                  }
+                                                };
+                                              }
+                                              return dukkan;
+                                            })
+                                          );
+
+                                          // Firmaları göster
+                                          console.log('Firmalar yüklendi:', dukkanlarWithKategoriler.length);
+                                          alert(`${altKat.alt_kategori_adi}: ${dukkanlarWithKategoriler.length} firma bulundu`);
+
+                                          setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
+                                          modalKapat();
+                                          setAramaMetni('');
+                                          setSeciliKategori(0);
+                                          setSeciliAltKategori(0);
+
+                                          // Sayfayı firmalar bölümüne kaydır
+                                          setTimeout(() => {
+                                            const firmalarlElement = document.getElementById('firmalar-listesi');
+                                            if (firmalarlElement) {
+                                              firmalarlElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                             }
-                                            return dukkan;
-                                          })
-                                        );
-
-                                        // Firmaları göster
-                                        console.log('Firmalar yüklendi:', dukkanlarWithKategoriler.length);
-                                        setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
-                                        modalKapat();
-                                        setAramaMetni('');
-                                        setSeciliKategori(0);
-                                        setSeciliAltKategori(0);
-
-                                        // Sayfayı firmalar bölümüne kaydır
-                                        setTimeout(() => {
-                                          const firmalarlElement = document.getElementById('firmalar-listesi');
-                                          if (firmalarlElement) {
-                                            firmalarlElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                          }
-                                        }, 300);
+                                          }, 300);
+                                        } catch (err) {
+                                          console.error('Hata:', err);
+                                          alert('Bir hata oluştu: ' + err);
+                                        }
                                       }}
                                       className="w-full bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-all hover:border-purple-400 hover:from-purple-100 hover:to-purple-200 cursor-pointer text-left"
                                     >
