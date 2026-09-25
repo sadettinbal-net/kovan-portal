@@ -1796,14 +1796,13 @@ export default function Home() {
 
           {/* Copyright */}
           <div className="mt-6 text-center">
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-sm mb-4">
               Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
             </p>
+            {/* Alt Koyu Bant */}
+            <div className="w-full bg-[#0f1f3d] py-2 -mx-6"></div>
           </div>
         </div>
-
-        {/* Alt Koyu Bant */}
-        <div className="w-full bg-[#0f1f3d] py-2"></div>
       </footer>
     </div>
   );
