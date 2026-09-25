@@ -1700,13 +1700,13 @@ export default function Home() {
         )}
 
         {/* Footer */}
-        <footer className="mt-20 text-white" style={{ backgroundColor: '#1a3a6b' }}>
-          <div className="max-w-7xl mx-auto px-6 py-12">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <footer className="mt-20 text-white w-full" style={{ backgroundColor: '#1a3a6b' }}>
+          <div className="max-w-full mx-auto px-6 py-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Hakkımızda Bölümü */}
               <div>
-                <h3 className="text-xl font-bold mb-4 text-yellow-400">ÜMRANİYE SANAYİ SİTESİ</h3>
-                <p className="text-gray-300 text-sm leading-relaxed mb-3">Firmalar Rehberi</p>
+                <h3 className="text-lg font-bold mb-3 text-yellow-400">ÜMRANİYE SANAYİ SİTESİ</h3>
+                <p className="text-gray-300 text-sm leading-relaxed mb-2">Firmalar Rehberi</p>
                 <p className="text-gray-400 text-xs leading-relaxed">
                   Ümraniye'deki sanayi sitelerindeki firmaları tek platformda bulun. 1886+ kayıtlı firma ile bölgenin en kapsamlı rehberi.
                 </p>
@@ -1714,8 +1714,8 @@ export default function Home() {
 
               {/* Hızlı Erişim */}
               <div>
-                <h3 className="text-lg font-bold mb-4 text-yellow-400">Hızlı Erişim</h3>
-                <ul className="space-y-2 text-sm">
+                <h3 className="text-lg font-bold mb-3 text-yellow-400">Hızlı Erişim</h3>
+                <ul className="space-y-1.5 text-sm">
                   <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Anasayfa</a></li>
                   <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Tüm Firmalar</a></li>
                   <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Özel Firmalar</a></li>
@@ -1727,8 +1727,8 @@ export default function Home() {
 
               {/* İletişim */}
               <div>
-                <h3 className="text-lg font-bold mb-4 text-yellow-400">İletişim</h3>
-                <ul className="space-y-3 text-sm">
+                <h3 className="text-lg font-bold mb-3 text-yellow-400">İletişim</h3>
+                <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">
                     <span className="text-yellow-400 mt-0.5">📍</span>
                     <span className="text-gray-300 text-xs">140 Simcoe Street, Toronto, Ontario, Canada</span>
@@ -1754,17 +1754,17 @@ export default function Home() {
             </div>
 
             {/* QR Kodlar */}
-            <div className="mt-8 pt-6 border-t border-gray-700 text-center">
-              <h3 className="text-yellow-400 font-bold text-lg mb-4">Mobil Uygulama</h3>
-              <p className="text-gray-400 text-sm mb-6">QR kodu okut, telefona uygulama gibi ekle</p>
-              <div className="flex justify-center gap-8 flex-wrap">
+            <div className="mt-6 pt-4 border-t border-gray-700 text-center">
+              <h3 className="text-yellow-400 font-bold text-base mb-3">Mobil Uygulama</h3>
+              <p className="text-gray-400 text-xs mb-4">QR kodu okut, telefona uygulama gibi ekle</p>
+              <div className="flex justify-center gap-6 flex-wrap">
                 {/* iOS QR */}
                 <div className="text-center">
-                  <div className="bg-white p-4 rounded-xl inline-block shadow-lg mb-3">
+                  <div className="bg-white p-3 rounded-xl inline-block shadow-lg mb-2">
                     <img
                       src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
                       alt="iOS QR Code"
-                      className="w-32 h-32"
+                      className="w-24 h-24"
                     />
                   </div>
                   <div className="flex items-center justify-center gap-2 text-gray-300">
@@ -1775,11 +1775,11 @@ export default function Home() {
 
                 {/* Android QR */}
                 <div className="text-center">
-                  <div className="bg-white p-4 rounded-xl inline-block shadow-lg mb-3">
+                  <div className="bg-white p-3 rounded-xl inline-block shadow-lg mb-2">
                     <img
                       src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
                       alt="Android QR Code"
-                      className="w-32 h-32"
+                      className="w-24 h-24"
                     />
                   </div>
                   <div className="flex items-center justify-center gap-2 text-gray-300">
@@ -1788,11 +1788,11 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <p className="text-gray-400 text-xs italic mt-4">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
+              <p className="text-gray-400 text-xs italic mt-3">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
             </div>
 
             {/* Copyright */}
-            <div className="mt-8 text-center">
+            <div className="mt-6 text-center">
               <p className="text-gray-400 text-sm">
                 Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
               </p>
