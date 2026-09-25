@@ -1715,42 +1715,42 @@ export default function Home() {
 
             {/* Mobil Uygulama / QR Kodlar */}
             <div className="text-center">
-              <h3 className="text-lg font-bold mb-2 text-yellow-400">Mobil Uygulama</h3>
-              <p className="text-gray-400 text-[10px] mb-1.5">QR kodu okut, telefona uygulama gibi ekle</p>
-              <div className="flex justify-center items-center gap-2 flex-wrap">
+              <h3 className="text-lg font-bold mb-3 text-yellow-400">Mobil Uygulama</h3>
+              <p className="text-gray-400 text-sm mb-3">QR kodu okut, telefona uygulama gibi ekle</p>
+              <div className="flex justify-center items-center gap-3 flex-wrap">
                 {/* iOS QR */}
                 <div className="text-center">
-                  <div className="bg-white p-1 rounded inline-block shadow-sm mb-0.5">
+                  <div className="bg-white p-1 rounded inline-block shadow-sm mb-1">
                     <img
                       src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://umraniyesanayisitesi.com"
                       alt="iOS QR Code"
                       className="w-12 h-12"
                     />
                   </div>
-                  <div className="flex items-center justify-center gap-0.5 text-gray-300 text-[10px]">
-                    <span className="text-xs">📱</span>
+                  <div className="flex items-center justify-center gap-1 text-gray-300 text-sm">
+                    <span className="text-base">📱</span>
                     <span className="font-semibold">iPhone</span>
                   </div>
                 </div>
 
                 {/* Android QR */}
                 <div className="text-center">
-                  <div className="bg-white p-1 rounded inline-block shadow-sm mb-0.5">
+                  <div className="bg-white p-1 rounded inline-block shadow-sm mb-1">
                     <img
                       src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=https://umraniyesanayisitesi.com"
                       alt="Android QR Code"
                       className="w-12 h-12"
                     />
                   </div>
-                  <div className="flex items-center justify-center gap-0.5 text-gray-300 text-[10px]">
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="#3DDC84">
+                  <div className="flex items-center justify-center gap-1 text-gray-300 text-sm">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#3DDC84">
                       <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-2.86-1.21-6.08-1.21-8.94 0L5.65 5.67c-.19-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85l1.84 3.18C4.25 11.24 2.5 13.96 2.5 17h19c0-3.04-1.75-5.76-3.9-7.52zM7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/>
                     </svg>
                     <span className="font-semibold">Android</span>
                   </div>
                 </div>
               </div>
-              <p className="text-gray-400 text-[10px] italic mt-1.5">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
+              <p className="text-gray-400 text-sm italic mt-2">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
             </div>
 
             {/* Hızlı Erişim */}
