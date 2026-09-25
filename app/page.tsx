@@ -1730,7 +1730,7 @@ export default function Home() {
             <div className="text-center flex flex-col items-center justify-center">
               <h3 className="text-lg font-bold mb-3 text-yellow-400">Mobil Uygulama</h3>
               <p className="text-gray-400 text-xs mb-3">QR kodu okut, telefona uygulama gibi ekle</p>
-              <div className="flex justify-center gap-4 flex-wrap">
+              <div className="flex justify-center items-center gap-8 flex-nowrap">
                 {/* iOS QR */}
                 <div className="text-center">
                   <div className="bg-white p-2 rounded-lg inline-block shadow-md mb-1">
