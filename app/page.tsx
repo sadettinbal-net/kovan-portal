@@ -1801,6 +1801,9 @@ export default function Home() {
             </p>
           </div>
         </div>
+
+        {/* Alt Koyu Bant */}
+        <div className="w-full bg-[#0f1f3d] py-2"></div>
       </footer>
     </div>
   );
