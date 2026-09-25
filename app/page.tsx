@@ -1263,7 +1263,7 @@ export default function Home() {
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="🔍 Kategori ara..."
+                          placeholder="🔍 Kategori veya alt kategori ara..."
                           value={modalAramaMetni}
                           onChange={(e) => setModalAramaMetni(e.target.value)}
                           className="w-full p-3 pl-10 bg-gray-50 rounded-xl border-2 border-gray-200 font-medium text-gray-700 outline-none focus:border-blue-400 focus:shadow-lg transition-all placeholder:text-gray-400"
@@ -1286,7 +1286,20 @@ export default function Home() {
                       const filtreliKategoriler = modalVeriler.filter((kategori: any) => {
                         if (!modalAramaMetni) return true;
                         const aramaKelime = modalAramaMetni.toLowerCase();
-                        return kategori.kategori_adi?.toLowerCase().includes(aramaKelime);
+
+                        // Kategori adında arama
+                        if (kategori.kategori_adi?.toLowerCase().includes(aramaKelime)) {
+                          return true;
+                        }
+
+                        // Alt kategorilerde arama
+                        const kategoriAltKategoriler = veriler.altKategoriler.filter(
+                          (ak: any) => ak.kategori_id === kategori.id
+                        );
+
+                        return kategoriAltKategoriler.some((ak: any) =>
+                          ak.alt_kategori_adi?.toLowerCase().includes(aramaKelime)
+                        );
                       });
 
                       if (filtreliKategoriler.length === 0) {
