@@ -1183,22 +1183,64 @@ export default function Home() {
                 )}
 
                 {modalAcik === 'kategoriler' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-3">
+                    {/* Arama Kutusu */}
+                    <div className="sticky top-0 bg-white z-10 pb-2">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="🔍 Kategori ara..."
+                          value={modalAramaMetni}
+                          onChange={(e) => setModalAramaMetni(e.target.value)}
+                          className="w-full p-3 pl-10 bg-gray-50 rounded-xl border-2 border-gray-200 font-medium text-gray-700 outline-none focus:border-blue-400 focus:shadow-lg transition-all placeholder:text-gray-400"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xl">🔍</div>
+                        {modalAramaMetni && (
+                          <button
+                            onClick={() => setModalAramaMetni('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-lg"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     {modalVeriler.length === 0 ? (
-                      <div className="col-span-2 text-center text-gray-500 py-8">Henüz kategori kaydı yok</div>
-                    ) : (
-                      modalVeriler.map((kategori: any) => (
-                        <div key={kategori.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200 hover:shadow-md transition-all">
-                          <div className="flex items-center gap-3">
-                            <div className="text-3xl">{kategori.icon || '📦'}</div>
-                            <div>
-                              <h3 className="font-bold text-gray-800">{kategori.kategori_adi}</h3>
-                              <div className="text-xs text-gray-500">Kategori ID: {kategori.id}</div>
-                            </div>
+                      <div className="text-center text-gray-500 py-8">Henüz kategori kaydı yok</div>
+                    ) : (() => {
+                      const filtreliKategoriler = modalVeriler.filter((kategori: any) => {
+                        if (!modalAramaMetni) return true;
+                        const aramaKelime = modalAramaMetni.toLowerCase();
+                        return kategori.kategori_adi?.toLowerCase().includes(aramaKelime);
+                      });
+
+                      if (filtreliKategoriler.length === 0) {
+                        return (
+                          <div className="text-center py-8">
+                            <div className="text-4xl mb-2">🔍</div>
+                            <div className="text-gray-700 font-bold mb-1">Sonuç bulunamadı</div>
+                            <div className="text-gray-500 text-sm">"{modalAramaMetni}" için kategori bulunamadı</div>
                           </div>
+                        );
+                      }
+
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {filtreliKategoriler.map((kategori: any) => (
+                            <div key={kategori.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200 hover:shadow-md transition-all">
+                              <div className="flex items-center gap-3">
+                                <div className="text-3xl">{kategori.icon || '📦'}</div>
+                                <div>
+                                  <h3 className="font-bold text-gray-800">{kategori.kategori_adi}</h3>
+                                  <div className="text-xs text-gray-500">Kategori ID: {kategori.id}</div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))
-                    )}
+                      );
+                    })()}
                   </div>
                 )}
               </div>
