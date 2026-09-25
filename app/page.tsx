@@ -1050,7 +1050,15 @@ export default function Home() {
                       <div className="text-center text-gray-500 py-8">Henüz sanayi sitesi kaydı yok</div>
                     ) : (
                       modalVeriler.map((site: any, index) => (
-                        <div key={site.id} className="bg-gradient-to-r from-yellow-50 to-amber-50 p-3 rounded-lg border-l-4 border-yellow-500 hover:shadow-md transition-all">
+                        <button
+                          key={site.id}
+                          onClick={async () => {
+                            // Site tıklandığında o siteye ait firmaları göster
+                            await siteSec(site.id.toString());
+                            modalKapat();
+                          }}
+                          className="w-full bg-gradient-to-r from-yellow-50 to-amber-50 p-3 rounded-lg border-l-4 border-yellow-500 hover:shadow-md hover:from-yellow-100 hover:to-amber-100 transition-all cursor-pointer text-left"
+                        >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
@@ -1069,9 +1077,12 @@ export default function Home() {
                                   </div>
                                 )}
                               </div>
+                              <div className="mt-2 text-xs text-yellow-700 font-semibold">
+                                👉 Firmaları görmek için tıklayın
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </button>
                       ))
                     )}
                   </div>
