@@ -23,6 +23,11 @@ export default function Home() {
   const [seciliKategoriDetay, setSeciliKategoriDetay] = useState<any>(null);
   const [altKategoriListesi, setAltKategoriListesi] = useState<any[]>([]);
 
+  // Firmalar modal state'leri
+  const [firmalarModalAcik, setFirmalarModalAcik] = useState(false);
+  const [seciliAltKategoriDetay, setSeciliAltKategoriDetay] = useState<any>(null);
+  const [firmaListesi, setFirmaListesi] = useState<any[]>([]);
+
   // Sokak arama ve pagination state'leri
   const [sokakAramaMetni, setSokakAramaMetni] = useState('');
   const [sokakSayfasi, setSokakSayfasi] = useState(1);
@@ -1353,71 +1358,44 @@ export default function Home() {
                                     <button
                                       key={altKat.id}
                                       onClick={async () => {
-                                        try {
-                                          // Alt kategoriye tıklandığında firmaları göster
-                                          console.log('Alt kategori ID:', altKat.id, 'İsim:', altKat.alt_kategori_adi);
+                                        // Alt kategoriye tıklandığında firmaları yükle ve modal aç
+                                        const { data: dukkanlar } = await supabase
+                                          .from('dukkanlar')
+                                          .select('*')
+                                          .eq('alt_kategori_id', altKat.id);
 
-                                          const { data: dukkanlar, error } = await supabase
-                                            .from('dukkanlar')
-                                            .select('*')
-                                            .eq('alt_kategori_id', altKat.id);
+                                        // Her dükkan için kategori bilgisini ekle
+                                        const dukkanlarWithKategoriler = await Promise.all(
+                                          (dukkanlar || []).map(async (dukkan) => {
+                                            const { data: altKategori } = await supabase
+                                              .from('alt_kategoriler')
+                                              .select('id, alt_kategori_adi, kategori_id')
+                                              .eq('id', dukkan.alt_kategori_id)
+                                              .single();
 
-                                          console.log('Supabase sonuç:', { dukkanlar, error, count: dukkanlar?.length });
-
-                                          if (error) {
-                                            alert('Hata: ' + error.message);
-                                            return;
-                                          }
-
-                                          // Her dükkan için kategori bilgisini ekle
-                                          const dukkanlarWithKategoriler = await Promise.all(
-                                            (dukkanlar || []).map(async (dukkan) => {
-                                              const { data: altKategori } = await supabase
-                                                .from('alt_kategoriler')
-                                                .select('id, alt_kategori_adi, kategori_id')
-                                                .eq('id', dukkan.alt_kategori_id)
+                                            if (altKategori) {
+                                              const { data: anaKategori } = await supabase
+                                                .from('kategoriler')
+                                                .select('id, kategori_adi, icon, renk')
+                                                .eq('id', altKategori.kategori_id)
                                                 .single();
 
-                                              if (altKategori) {
-                                                const { data: anaKategori } = await supabase
-                                                  .from('kategoriler')
-                                                  .select('id, kategori_adi, icon, renk')
-                                                  .eq('id', altKategori.kategori_id)
-                                                  .single();
-
-                                                return {
-                                                  ...dukkan,
-                                                  alt_kategoriler: {
-                                                    ...altKategori,
-                                                    kategoriler: anaKategori
-                                                  }
-                                                };
-                                              }
-                                              return dukkan;
-                                            })
-                                          );
-
-                                          // Firmaları göster
-                                          console.log('Firmalar yüklendi:', dukkanlarWithKategoriler.length);
-                                          alert(`${altKat.alt_kategori_adi}: ${dukkanlarWithKategoriler.length} firma bulundu`);
-
-                                          setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
-                                          modalKapat();
-                                          setAramaMetni('');
-                                          setSeciliKategori(0);
-                                          setSeciliAltKategori(0);
-
-                                          // Sayfayı firmalar bölümüne kaydır
-                                          setTimeout(() => {
-                                            const firmalarlElement = document.getElementById('firmalar-listesi');
-                                            if (firmalarlElement) {
-                                              firmalarlElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                              return {
+                                                ...dukkan,
+                                                alt_kategoriler: {
+                                                  ...altKategori,
+                                                  kategoriler: anaKategori
+                                                }
+                                              };
                                             }
-                                          }, 300);
-                                        } catch (err) {
-                                          console.error('Hata:', err);
-                                          alert('Bir hata oluştu: ' + err);
-                                        }
+                                            return dukkan;
+                                          })
+                                        );
+
+                                        // Firmalar modalını aç
+                                        setSeciliAltKategoriDetay(altKat);
+                                        setFirmaListesi(dukkanlarWithKategoriler);
+                                        setFirmalarModalAcik(true);
                                       }}
                                       className="w-full bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-all hover:border-purple-400 hover:from-purple-100 hover:to-purple-200 cursor-pointer text-left"
                                     >
@@ -1526,6 +1504,93 @@ export default function Home() {
                   Toplam: <span className="font-bold text-gray-800">{modalVeriler.length}</span> kayıt
                 </div>
                 <button onClick={modalKapat} className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-lg transition-all text-sm">
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Firmalar Modal */}
+        {firmalarModalAcik && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[70]" onClick={() => setFirmalarModalAcik(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-4 rounded-t-2xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">{seciliAltKategoriDetay?.alt_kategori_adi || 'Firmalar'}</h2>
+                    <p className="text-purple-100 text-sm mt-1">Kayıtlı Firmalar Listesi</p>
+                  </div>
+                  <button onClick={() => setFirmalarModalAcik(false)} className="text-white hover:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold transition-all">
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 overflow-y-auto flex-1">
+                {firmaListesi.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🏪</div>
+                    <div className="text-gray-700 font-bold text-xl mb-2">Kayıtlı Firma Yok</div>
+                    <div className="text-gray-500">Bu alt kategoride henüz kayıtlı firma bulunmamaktadır.</div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600 font-medium mb-4">
+                      Toplam: <span className="font-bold text-gray-800">{firmaListesi.length}</span> firma
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {firmaListesi.map((firma: any) => (
+                        <div key={firma.id} className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border-2 border-purple-200 hover:shadow-lg transition-all">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <h3 className="font-bold text-gray-800 text-lg mb-1">{firma.isletme_adi}</h3>
+                              {firma.alt_kategoriler?.kategoriler && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <span className="text-2xl">{firma.alt_kategoriler.kategoriler.icon || '📦'}</span>
+                                  <span className="text-purple-700 font-semibold">{firma.alt_kategoriler.kategoriler.kategori_adi}</span>
+                                  <span className="text-gray-400">•</span>
+                                  <span className="text-purple-600">{firma.alt_kategoriler.alt_kategori_adi}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="space-y-2 text-sm text-gray-600">
+                            {firma.yetkili_adi && (
+                              <div className="flex items-center gap-2">
+                                <span>👤</span>
+                                <span className="font-medium">{firma.yetkili_adi}</span>
+                              </div>
+                            )}
+                            {firma.telefon && (
+                              <div className="flex items-center gap-2">
+                                <span>📞</span>
+                                <span className="font-mono">{firma.telefon}</span>
+                              </div>
+                            )}
+                            {firma.adres && (
+                              <div className="flex items-center gap-2">
+                                <span>📍</span>
+                                <span className="text-xs">{firma.adres}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  <span className="font-bold">{seciliAltKategoriDetay?.alt_kategori_adi}</span> kategorisi
+                </div>
+                <button onClick={() => setFirmalarModalAcik(false)} className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-all">
                   Kapat
                 </button>
               </div>
