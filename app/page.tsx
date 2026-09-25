@@ -1753,49 +1753,49 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Copyright */}
+            {/* QR Kodlar */}
             <div className="mt-8 pt-6 border-t border-gray-700 text-center">
-              <p className="text-gray-400 text-sm mb-8">
-                Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
-              </p>
-
-              {/* QR Kodlar */}
-              <div className="mt-6">
-                <h3 className="text-yellow-400 font-bold text-lg mb-4">Mobil Uygulama</h3>
-                <p className="text-gray-400 text-sm mb-6">QR kodu okut, telefona uygulama gibi ekle</p>
-                <div className="flex justify-center gap-8 flex-wrap">
-                  {/* iOS QR */}
-                  <div className="text-center">
-                    <div className="bg-white p-4 rounded-xl inline-block shadow-lg mb-3">
-                      <img
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
-                        alt="iOS QR Code"
-                        className="w-32 h-32"
-                      />
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-gray-300">
-                      <span className="text-xl">📱</span>
-                      <span className="font-semibold">iPhone</span>
-                    </div>
+              <h3 className="text-yellow-400 font-bold text-lg mb-4">Mobil Uygulama</h3>
+              <p className="text-gray-400 text-sm mb-6">QR kodu okut, telefona uygulama gibi ekle</p>
+              <div className="flex justify-center gap-8 flex-wrap">
+                {/* iOS QR */}
+                <div className="text-center">
+                  <div className="bg-white p-4 rounded-xl inline-block shadow-lg mb-3">
+                    <img
+                      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
+                      alt="iOS QR Code"
+                      className="w-32 h-32"
+                    />
                   </div>
-
-                  {/* Android QR */}
-                  <div className="text-center">
-                    <div className="bg-white p-4 rounded-xl inline-block shadow-lg mb-3">
-                      <img
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
-                        alt="Android QR Code"
-                        className="w-32 h-32"
-                      />
-                    </div>
-                    <div className="flex items-center justify-center gap-2 text-gray-300">
-                      <span className="text-xl">🤖</span>
-                      <span className="font-semibold">Android</span>
-                    </div>
+                  <div className="flex items-center justify-center gap-2 text-gray-300">
+                    <span className="text-xl">📱</span>
+                    <span className="font-semibold">iPhone</span>
                   </div>
                 </div>
-                <p className="text-gray-400 text-xs italic mt-4">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
+
+                {/* Android QR */}
+                <div className="text-center">
+                  <div className="bg-white p-4 rounded-xl inline-block shadow-lg mb-3">
+                    <img
+                      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
+                      alt="Android QR Code"
+                      className="w-32 h-32"
+                    />
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-gray-300">
+                    <span className="text-xl">🤖</span>
+                    <span className="font-semibold">Android</span>
+                  </div>
+                </div>
               </div>
+              <p className="text-gray-400 text-xs italic mt-4">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
+            </div>
+
+            {/* Copyright */}
+            <div className="mt-8 text-center">
+              <p className="text-gray-400 text-sm">
+                Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
+              </p>
             </div>
           </div>
         </footer>
