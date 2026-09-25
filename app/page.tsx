@@ -1703,7 +1703,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="mt-20 text-white w-full" style={{ backgroundColor: '#1a3a6b' }}>
         <div className="max-w-full mx-auto px-6 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Hakkımızda Bölümü */}
             <div>
               <h3 className="text-lg font-bold mb-3 text-yellow-400">ÜMRANİYE SANAYİ SİTESİ</h3>
@@ -1726,7 +1726,36 @@ export default function Home() {
               </ul>
             </div>
 
-            {/* Mobil Uygulama / QR Kodlar */}
+            {/* İletişim */}
+            <div>
+              <h3 className="text-lg font-bold mb-3 text-yellow-400">İletişim</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400 mt-0.5">📍</span>
+                  <span className="text-gray-300 text-xs">140 Simcoe Street, Toronto, Ontario, Canada</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">📞</span>
+                  <span className="text-gray-300 text-xs">+1-(647)-561-41-94 (Canada)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">📞</span>
+                  <span className="text-gray-300 text-xs">05353594763 (Türkiye)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">✉️</span>
+                  <a href="mailto:info@umraniyesanayisitesi.com" className="text-gray-300 hover:text-yellow-400 transition-colors text-xs">info@umraniyesanayisitesi.com</a>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">📍</span>
+                  <span className="text-gray-300 text-xs">Ümraniye, İstanbul</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Mobil Uygulama / QR Kodlar - Alt Satır */}
+          <div className="mt-6 pt-4 border-t border-gray-700">
             <div className="text-center flex flex-col items-center justify-center">
               <h3 className="text-lg font-bold mb-3 text-yellow-400">Mobil Uygulama</h3>
               <p className="text-gray-400 text-xs mb-3">QR kodu okut, telefona uygulama gibi ekle</p>
@@ -1764,33 +1793,6 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-gray-400 text-xs italic mt-2">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
-            </div>
-
-            {/* İletişim */}
-            <div>
-              <h3 className="text-lg font-bold mb-3 text-yellow-400">İletişim</h3>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-400 mt-0.5">📍</span>
-                  <span className="text-gray-300 text-xs">140 Simcoe Street, Toronto, Ontario, Canada</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-400">📞</span>
-                  <span className="text-gray-300 text-xs">+1-(647)-561-41-94 (Canada)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-400">📞</span>
-                  <span className="text-gray-300 text-xs">05353594763 (Türkiye)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-400">✉️</span>
-                  <a href="mailto:info@umraniyesanayisitesi.com" className="text-gray-300 hover:text-yellow-400 transition-colors text-xs">info@umraniyesanayisitesi.com</a>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-yellow-400">📍</span>
-                  <span className="text-gray-300 text-xs">Ümraniye, İstanbul</span>
-                </li>
-              </ul>
             </div>
           </div>
 
