@@ -18,6 +18,11 @@ export default function Home() {
   const [modalVeriler, setModalVeriler] = useState<any[]>([]);
   const [modalAramaMetni, setModalAramaMetni] = useState('');
 
+  // Alt kategori modal state'leri
+  const [altKategoriModalAcik, setAltKategoriModalAcik] = useState(false);
+  const [seciliKategoriDetay, setSeciliKategoriDetay] = useState<any>(null);
+  const [altKategoriListesi, setAltKategoriListesi] = useState<any[]>([]);
+
   // Sokak arama ve pagination state'leri
   const [sokakAramaMetni, setSokakAramaMetni] = useState('');
   const [sokakSayfasi, setSokakSayfasi] = useState(1);
@@ -1026,6 +1031,75 @@ export default function Home() {
           )}
         </div>
 
+        {/* Alt Kategoriler Modalı */}
+        {altKategoriModalAcik && seciliKategoriDetay && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={() => setAltKategoriModalAcik(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div
+                className="p-4 flex items-center justify-between"
+                style={{ backgroundColor: seciliKategoriDetay.renk || '#3B82F6' }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl">{seciliKategoriDetay.icon || '📦'}</span>
+                  <div>
+                    <h2 className="text-xl font-black text-white">{seciliKategoriDetay.kategori_adi}</h2>
+                    <p className="text-sm text-white/80">Alt Kategoriler ({altKategoriListesi.length})</p>
+                  </div>
+                </div>
+                <button onClick={() => setAltKategoriModalAcik(false)} className="text-white hover:bg-white/20 rounded-full p-2 transition-all">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-4 overflow-y-auto max-h-[calc(80vh-180px)]">
+                {altKategoriListesi.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">📭</div>
+                    <div className="text-gray-700 font-bold text-lg mb-2">Henüz alt kategori yok</div>
+                    <div className="text-gray-500 text-sm">Bu kategoriye alt kategori ekleyebilirsiniz</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {altKategoriListesi.map((altKat: any) => (
+                      <div
+                        key={altKat.id}
+                        className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border-2 border-gray-200 hover:shadow-lg transition-all hover:border-blue-300"
+                      >
+                        <div className="font-bold text-gray-800 mb-1">{altKat.alt_kategori_adi}</div>
+                        <div className="text-xs text-gray-500">ID: {altKat.id}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="bg-gray-50 px-4 py-3 flex items-center justify-between border-t">
+                <button
+                  onClick={() => {
+                    // Alt kategori ekleme işlemi
+                    alert('Alt kategori ekleme özelliği yakında eklenecek!');
+                  }}
+                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-all text-sm flex items-center gap-2"
+                >
+                  <span>+</span>
+                  <span>Alt Kategori Ekle</span>
+                </button>
+                <button
+                  onClick={() => setAltKategoriModalAcik(false)}
+                  className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white font-bold rounded-lg transition-all text-sm"
+                >
+                  Kapat
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal */}
         {modalAcik && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={modalKapat}>
@@ -1228,15 +1302,30 @@ export default function Home() {
                       return (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {filtreliKategoriler.map((kategori: any) => (
-                            <div key={kategori.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200 hover:shadow-md transition-all">
+                            <button
+                              key={kategori.id}
+                              onClick={() => {
+                                // Kategori tıklandığında alt kategorileri göster
+                                const altKategoriler = veriler.altKategoriler.filter(
+                                  (ak: any) => ak.kategori_id === kategori.id
+                                );
+                                setSeciliKategoriDetay(kategori);
+                                setAltKategoriListesi(altKategoriler);
+                                setAltKategoriModalAcik(true);
+                              }}
+                              className="w-full bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200 hover:shadow-md hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer text-left"
+                            >
                               <div className="flex items-center gap-3">
                                 <div className="text-3xl">{kategori.icon || '📦'}</div>
-                                <div>
+                                <div className="flex-1">
                                   <h3 className="font-bold text-gray-800">{kategori.kategori_adi}</h3>
-                                  <div className="text-xs text-gray-500">Kategori ID: {kategori.id}</div>
+                                  <div className="text-xs text-gray-500">
+                                    {veriler.altKategoriler.filter((ak: any) => ak.kategori_id === kategori.id).length} alt kategori
+                                  </div>
                                 </div>
+                                <div className="text-blue-500 text-xl">→</div>
                               </div>
-                            </div>
+                            </button>
                           ))}
                         </div>
                       );
