@@ -431,42 +431,64 @@ export default function Home() {
   // Toplam sayfa sayısı
   const toplamSokakSayfasi = Math.ceil(toplamSokakSayisi / sokakSayfaBasinaMiktar);
 
-  // Kategoriler modalında alt kategori araması yapıldığında otomatik modal aç
+  // Kategoriler modalında alt kategori araması yapıldığında otomatik işlem yap
   useEffect(() => {
     if (!modalAcik || modalAcik !== 'kategoriler' || !modalAramaMetni || modalAramaMetni.length < 2) return;
 
-    const timer = setTimeout(() => {
-      // Alt kategori araması yap
-      const eslesenKategoriler = modalVeriler.filter((kategori: any) => {
-        const aramaKelime = modalAramaMetni.toLowerCase();
+    const timer = setTimeout(async () => {
+      const aramaKelime = modalAramaMetni.toLowerCase();
 
-        // Kategori adında eşleşme varsa atla
-        if (kategori.kategori_adi?.toLowerCase().includes(aramaKelime)) {
-          return false;
-        }
+      // Tüm alt kategorilerde doğrudan arama yap
+      const eslesenAltKategoriler = veriler.altKategoriler.filter((ak: any) =>
+        ak.alt_kategori_adi?.toLowerCase().includes(aramaKelime)
+      );
 
-        // Alt kategorilerde eşleşme ara
-        const kategoriAltKategoriler = veriler.altKategoriler.filter(
-          (ak: any) => ak.kategori_id === kategori.id
+      // Eğer sadece 1 alt kategori eşleşirse, direkt o alt kategorinin firmalarını göster
+      if (eslesenAltKategoriler.length === 1) {
+        const altKat = eslesenAltKategoriler[0];
+
+        // Alt kategorideki firmaları çek
+        const { data: dukkanlar } = await supabase
+          .from('dukkanlar')
+          .select('*')
+          .eq('alt_kategori_id', altKat.id);
+
+        // Her dükkan için kategori bilgisini ekle
+        const dukkanlarWithKategoriler = await Promise.all(
+          (dukkanlar || []).map(async (dukkan) => {
+            const { data: altKategori } = await supabase
+              .from('alt_kategoriler')
+              .select('id, alt_kategori_adi, kategori_id')
+              .eq('id', dukkan.alt_kategori_id)
+              .single();
+
+            if (altKategori) {
+              const { data: anaKategori } = await supabase
+                .from('kategoriler')
+                .select('id, kategori_adi, icon, renk')
+                .eq('id', altKategori.kategori_id)
+                .single();
+
+              return {
+                ...dukkan,
+                alt_kategoriler: {
+                  ...altKategori,
+                  kategoriler: anaKategori
+                }
+              };
+            }
+            return dukkan;
+          })
         );
 
-        return kategoriAltKategoriler.some((ak: any) =>
-          ak.alt_kategori_adi?.toLowerCase().includes(aramaKelime)
-        );
-      });
-
-      // Sadece 1 kategori bulunduysa ve kategori adında eşleşme yoksa direkt aç
-      if (eslesenKategoriler.length === 1) {
-        const kategori = eslesenKategoriler[0];
-        const altKategoriler = veriler.altKategoriler.filter(
-          (ak: any) => ak.kategori_id === kategori.id
-        );
-
-        setSeciliKategoriDetay(kategori);
-        setAltKategoriListesi(altKategoriler);
-        setAltKategoriModalAcik(true);
+        // Firmaları göster ve modali kapat
+        setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
+        modalKapat();
+        setAramaMetni('');
+        setSeciliKategori(0);
+        setSeciliAltKategori(0);
       }
-    }, 500); // 500ms debounce
+    }, 600); // 600ms debounce
 
     return () => clearTimeout(timer);
   }, [modalAramaMetni, modalAcik]);
@@ -1105,13 +1127,60 @@ export default function Home() {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {altKategoriListesi.map((altKat: any) => (
-                      <div
+                      <button
                         key={altKat.id}
-                        className="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border-2 border-gray-200 hover:shadow-lg transition-all hover:border-blue-300"
+                        onClick={async () => {
+                          // Alt kategoriye tıklandığında o alt kategorideki firmaları göster
+                          const { data: dukkanlar } = await supabase
+                            .from('dukkanlar')
+                            .select('*')
+                            .eq('alt_kategori_id', altKat.id);
+
+                          // Her dükkan için kategori bilgisini ekle
+                          const dukkanlarWithKategoriler = await Promise.all(
+                            (dukkanlar || []).map(async (dukkan) => {
+                              const { data: altKategori } = await supabase
+                                .from('alt_kategoriler')
+                                .select('id, alt_kategori_adi, kategori_id')
+                                .eq('id', dukkan.alt_kategori_id)
+                                .single();
+
+                              if (altKategori) {
+                                const { data: anaKategori } = await supabase
+                                  .from('kategoriler')
+                                  .select('id, kategori_adi, icon, renk')
+                                  .eq('id', altKategori.kategori_id)
+                                  .single();
+
+                                return {
+                                  ...dukkan,
+                                  alt_kategoriler: {
+                                    ...altKategori,
+                                    kategoriler: anaKategori
+                                  }
+                                };
+                              }
+                              return dukkan;
+                            })
+                          );
+
+                          // Firmaları göster
+                          setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
+
+                          // Modalleri kapat
+                          setAltKategoriModalAcik(false);
+                          modalKapat();
+
+                          // Arama ve filtreleri sıfırla
+                          setAramaMetni('');
+                          setSeciliKategori(0);
+                          setSeciliAltKategori(0);
+                        }}
+                        className="w-full bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border-2 border-gray-200 hover:shadow-lg transition-all hover:border-blue-400 hover:from-blue-50 hover:to-blue-100 cursor-pointer text-left"
                       >
                         <div className="font-bold text-gray-800 mb-1">{altKat.alt_kategori_adi}</div>
-                        <div className="text-xs text-gray-500">ID: {altKat.id}</div>
-                      </div>
+                        <div className="text-xs text-gray-500">Firmaları görmek için tıklayın</div>
+                      </button>
                     ))}
                   </div>
                 )}
