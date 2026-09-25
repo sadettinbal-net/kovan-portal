@@ -1314,32 +1314,65 @@ export default function Home() {
 
                       return (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {filtreliKategoriler.map((kategori: any) => (
-                            <button
-                              key={kategori.id}
-                              onClick={() => {
-                                // Kategori tıklandığında alt kategorileri göster
-                                const altKategoriler = veriler.altKategoriler.filter(
-                                  (ak: any) => ak.kategori_id === kategori.id
-                                );
-                                setSeciliKategoriDetay(kategori);
-                                setAltKategoriListesi(altKategoriler);
-                                setAltKategoriModalAcik(true);
-                              }}
-                              className="w-full bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200 hover:shadow-md hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer text-left"
-                            >
-                              <div className="flex items-center gap-3">
-                                <div className="text-3xl">{kategori.icon || '📦'}</div>
-                                <div className="flex-1">
-                                  <h3 className="font-bold text-gray-800">{kategori.kategori_adi}</h3>
-                                  <div className="text-xs text-gray-500">
-                                    {veriler.altKategoriler.filter((ak: any) => ak.kategori_id === kategori.id).length} alt kategori
+                          {filtreliKategoriler.map((kategori: any) => {
+                            const altKategoriler = veriler.altKategoriler.filter(
+                              (ak: any) => ak.kategori_id === kategori.id
+                            );
+
+                            // Arama yapıldıysa ve alt kategoride eşleşme varsa göster
+                            const eslesenAltKategoriler = modalAramaMetni
+                              ? altKategoriler.filter((ak: any) =>
+                                  ak.alt_kategori_adi?.toLowerCase().includes(modalAramaMetni.toLowerCase())
+                                )
+                              : [];
+
+                            return (
+                              <button
+                                key={kategori.id}
+                                onClick={() => {
+                                  // Kategori tıklandığında alt kategorileri göster
+                                  setSeciliKategoriDetay(kategori);
+                                  setAltKategoriListesi(altKategoriler);
+                                  setAltKategoriModalAcik(true);
+                                }}
+                                className="w-full bg-gradient-to-br from-blue-50 to-indigo-50 p-3 rounded-lg border-2 border-blue-200 hover:shadow-md hover:from-blue-100 hover:to-indigo-100 transition-all cursor-pointer text-left"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="text-3xl">{kategori.icon || '📦'}</div>
+                                  <div className="flex-1">
+                                    <h3 className="font-bold text-gray-800">{kategori.kategori_adi}</h3>
+                                    <div className="text-xs text-gray-500">
+                                      {altKategoriler.length} alt kategori
+                                      {eslesenAltKategoriler.length > 0 && (
+                                        <span className="ml-2 text-green-600 font-bold">
+                                          • {eslesenAltKategoriler.length} eşleşme
+                                        </span>
+                                      )}
+                                    </div>
+                                    {/* Eşleşen alt kategorileri göster */}
+                                    {eslesenAltKategoriler.length > 0 && (
+                                      <div className="mt-1 flex flex-wrap gap-1">
+                                        {eslesenAltKategoriler.slice(0, 3).map((ak: any) => (
+                                          <span
+                                            key={ak.id}
+                                            className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold"
+                                          >
+                                            {ak.alt_kategori_adi}
+                                          </span>
+                                        ))}
+                                        {eslesenAltKategoriler.length > 3 && (
+                                          <span className="text-xs text-gray-500">
+                                            +{eslesenAltKategoriler.length - 3} daha
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
+                                  <div className="text-blue-500 text-xl">→</div>
                                 </div>
-                                <div className="text-blue-500 text-xl">→</div>
-                              </div>
-                            </button>
-                          ))}
+                              </button>
+                            );
+                          })}
                         </div>
                       );
                     })()}
