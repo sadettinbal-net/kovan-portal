@@ -16,6 +16,7 @@ export default function Home() {
   // Modal state'leri
   const [modalAcik, setModalAcik] = useState<'siteler' | 'dukkanlar' | 'kategoriler' | null>(null);
   const [modalVeriler, setModalVeriler] = useState<any[]>([]);
+  const [modalAramaMetni, setModalAramaMetni] = useState('');
 
   // Sokak arama ve pagination state'leri
   const [sokakAramaMetni, setSokakAramaMetni] = useState('');
@@ -408,6 +409,7 @@ export default function Home() {
   const modalKapat = () => {
     setModalAcik(null);
     setModalVeriler([]);
+    setModalAramaMetni('');
   };
 
   // Sokak arama ve pagination için debounced effect
@@ -1045,11 +1047,54 @@ export default function Home() {
               {/* Modal Content */}
               <div className="p-4 overflow-y-auto max-h-[calc(70vh-120px)]">
                 {modalAcik === 'siteler' && (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
+                    {/* Arama Kutusu */}
+                    <div className="sticky top-0 bg-white z-10 pb-2">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="🔍 Sanayi sitesi ara..."
+                          value={modalAramaMetni}
+                          onChange={(e) => setModalAramaMetni(e.target.value)}
+                          className="w-full p-3 pl-10 bg-gray-50 rounded-xl border-2 border-gray-200 font-medium text-gray-700 outline-none focus:border-yellow-400 focus:shadow-lg transition-all placeholder:text-gray-400"
+                        />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-xl">🔍</div>
+                        {modalAramaMetni && (
+                          <button
+                            onClick={() => setModalAramaMetni('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-lg"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     {modalVeriler.length === 0 ? (
                       <div className="text-center text-gray-500 py-8">Henüz sanayi sitesi kaydı yok</div>
-                    ) : (
-                      modalVeriler.map((site: any, index) => (
+                    ) : (() => {
+                      const filtreliSiteler = modalVeriler.filter((site: any) => {
+                        if (!modalAramaMetni) return true;
+                        const aramaKelime = modalAramaMetni.toLowerCase();
+                        return (
+                          site.site_adi?.toLowerCase().includes(aramaKelime) ||
+                          site.il_adi?.toLowerCase().includes(aramaKelime) ||
+                          site.ilce_adi?.toLowerCase().includes(aramaKelime) ||
+                          site.adres?.toLowerCase().includes(aramaKelime)
+                        );
+                      });
+
+                      if (filtreliSiteler.length === 0) {
+                        return (
+                          <div className="text-center py-8">
+                            <div className="text-4xl mb-2">🔍</div>
+                            <div className="text-gray-700 font-bold mb-1">Sonuç bulunamadı</div>
+                            <div className="text-gray-500 text-sm">"{modalAramaMetni}" için sanayi sitesi bulunamadı</div>
+                          </div>
+                        );
+                      }
+
+                      return filtreliSiteler.map((site: any, index) => (
                         <button
                           key={site.id}
                           onClick={async () => {
@@ -1083,8 +1128,8 @@ export default function Home() {
                             </div>
                           </div>
                         </button>
-                      ))
-                    )}
+                      ));
+                    })()}
                   </div>
                 )}
 
