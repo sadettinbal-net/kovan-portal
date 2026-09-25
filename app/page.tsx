@@ -1784,7 +1784,9 @@ export default function Home() {
                   />
                 </div>
                 <div className="flex items-center justify-center gap-2 text-gray-300">
-                  <span className="text-xl">🤖</span>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#3DDC84">
+                    <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-2.86-1.21-6.08-1.21-8.94 0L5.65 5.67c-.19-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85l1.84 3.18C4.25 11.24 2.5 13.96 2.5 17h19c0-3.04-1.75-5.76-3.9-7.52zM7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/>
+                  </svg>
                   <span className="font-semibold">Android</span>
                 </div>
               </div>
