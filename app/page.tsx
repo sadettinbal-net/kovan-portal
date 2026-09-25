@@ -431,68 +431,6 @@ export default function Home() {
   // Toplam sayfa sayısı
   const toplamSokakSayfasi = Math.ceil(toplamSokakSayisi / sokakSayfaBasinaMiktar);
 
-  // Kategoriler modalında alt kategori araması yapıldığında otomatik işlem yap
-  useEffect(() => {
-    if (!modalAcik || modalAcik !== 'kategoriler' || !modalAramaMetni || modalAramaMetni.length < 3) return;
-
-    const timer = setTimeout(async () => {
-      const aramaKelime = modalAramaMetni.toLowerCase().trim();
-
-      // Tüm alt kategorilerde tam eşleşme ara (önce tam eşleşme kontrol et)
-      const tamEslesen = veriler.altKategoriler.find((ak: any) =>
-        ak.alt_kategori_adi?.toLowerCase() === aramaKelime
-      );
-
-      // Sadece tam eşleşme varsa otomatik aç
-      if (tamEslesen) {
-        const altKat = tamEslesen;
-
-        // Alt kategorideki firmaları çek
-        const { data: dukkanlar } = await supabase
-          .from('dukkanlar')
-          .select('*')
-          .eq('alt_kategori_id', altKat.id);
-
-        // Her dükkan için kategori bilgisini ekle
-        const dukkanlarWithKategoriler = await Promise.all(
-          (dukkanlar || []).map(async (dukkan) => {
-            const { data: altKategori } = await supabase
-              .from('alt_kategoriler')
-              .select('id, alt_kategori_adi, kategori_id')
-              .eq('id', dukkan.alt_kategori_id)
-              .single();
-
-            if (altKategori) {
-              const { data: anaKategori } = await supabase
-                .from('kategoriler')
-                .select('id, kategori_adi, icon, renk')
-                .eq('id', altKategori.kategori_id)
-                .single();
-
-              return {
-                ...dukkan,
-                alt_kategoriler: {
-                  ...altKategori,
-                  kategoriler: anaKategori
-                }
-              };
-            }
-            return dukkan;
-          })
-        );
-
-        // Firmaları göster ve modali kapat
-        setVeriler(prev => ({ ...prev, dukkanlar: dukkanlarWithKategoriler }));
-        modalKapat();
-        setAramaMetni('');
-        setSeciliKategori(0);
-        setSeciliAltKategori(0);
-      }
-    }, 800); // 800ms debounce (daha uzun süre bekle)
-
-    return () => clearTimeout(timer);
-  }, [modalAramaMetni, modalAcik]);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 font-sans">
       {/* Navigation Bar */}
