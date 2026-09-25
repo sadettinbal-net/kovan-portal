@@ -1698,108 +1698,108 @@ export default function Home() {
             </div>
           </div>
         )}
+      </div>
 
-        {/* Footer */}
-        <footer className="mt-20 text-white w-full" style={{ backgroundColor: '#1a3a6b' }}>
-          <div className="max-w-full mx-auto px-6 py-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Hakkımızda Bölümü */}
-              <div>
-                <h3 className="text-lg font-bold mb-3 text-yellow-400">ÜMRANİYE SANAYİ SİTESİ</h3>
-                <p className="text-gray-300 text-sm leading-relaxed mb-2">Firmalar Rehberi</p>
-                <p className="text-gray-400 text-xs leading-relaxed">
-                  Ümraniye'deki sanayi sitelerindeki firmaları tek platformda bulun. 1886+ kayıtlı firma ile bölgenin en kapsamlı rehberi.
-                </p>
-              </div>
-
-              {/* Hızlı Erişim */}
-              <div>
-                <h3 className="text-lg font-bold mb-3 text-yellow-400">Hızlı Erişim</h3>
-                <ul className="space-y-1.5 text-sm">
-                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Anasayfa</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Tüm Firmalar</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Özel Firmalar</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">İlanlar</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Firma Ekle</a></li>
-                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">İletişim</a></li>
-                </ul>
-              </div>
-
-              {/* İletişim */}
-              <div>
-                <h3 className="text-lg font-bold mb-3 text-yellow-400">İletişim</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400 mt-0.5">📍</span>
-                    <span className="text-gray-300 text-xs">140 Simcoe Street, Toronto, Ontario, Canada</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">📞</span>
-                    <span className="text-gray-300 text-xs">+1-(647)-561-41-94 (Canada)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">📞</span>
-                    <span className="text-gray-300 text-xs">05353594763 (Türkiye)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">✉️</span>
-                    <a href="mailto:info@umraniyesanayisitesi.com" className="text-gray-300 hover:text-yellow-400 transition-colors text-xs">info@umraniyesanayisitesi.com</a>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-yellow-400">📍</span>
-                    <span className="text-gray-300 text-xs">Ümraniye, İstanbul</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* QR Kodlar */}
-            <div className="mt-6 pt-4 border-t border-gray-700 text-center">
-              <h3 className="text-yellow-400 font-bold text-base mb-3">Mobil Uygulama</h3>
-              <p className="text-gray-400 text-xs mb-4">QR kodu okut, telefona uygulama gibi ekle</p>
-              <div className="flex justify-center gap-6 flex-wrap">
-                {/* iOS QR */}
-                <div className="text-center">
-                  <div className="bg-white p-3 rounded-xl inline-block shadow-lg mb-2">
-                    <img
-                      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
-                      alt="iOS QR Code"
-                      className="w-24 h-24"
-                    />
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-gray-300">
-                    <span className="text-xl">📱</span>
-                    <span className="font-semibold">iPhone</span>
-                  </div>
-                </div>
-
-                {/* Android QR */}
-                <div className="text-center">
-                  <div className="bg-white p-3 rounded-xl inline-block shadow-lg mb-2">
-                    <img
-                      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
-                      alt="Android QR Code"
-                      className="w-24 h-24"
-                    />
-                  </div>
-                  <div className="flex items-center justify-center gap-2 text-gray-300">
-                    <span className="text-xl">🤖</span>
-                    <span className="font-semibold">Android</span>
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-400 text-xs italic mt-3">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
-            </div>
-
-            {/* Copyright */}
-            <div className="mt-6 text-center">
-              <p className="text-gray-400 text-sm">
-                Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
+      {/* Footer */}
+      <footer className="mt-20 text-white w-full" style={{ backgroundColor: '#1a3a6b' }}>
+        <div className="max-w-full mx-auto px-6 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Hakkımızda Bölümü */}
+            <div>
+              <h3 className="text-lg font-bold mb-3 text-yellow-400">ÜMRANİYE SANAYİ SİTESİ</h3>
+              <p className="text-gray-300 text-sm leading-relaxed mb-2">Firmalar Rehberi</p>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Ümraniye'deki sanayi sitelerindeki firmaları tek platformda bulun. 1886+ kayıtlı firma ile bölgenin en kapsamlı rehberi.
               </p>
             </div>
+
+            {/* Hızlı Erişim */}
+            <div>
+              <h3 className="text-lg font-bold mb-3 text-yellow-400">Hızlı Erişim</h3>
+              <ul className="space-y-1.5 text-sm">
+                <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Anasayfa</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Tüm Firmalar</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Özel Firmalar</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">İlanlar</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Firma Ekle</a></li>
+                <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">İletişim</a></li>
+              </ul>
+            </div>
+
+            {/* İletişim */}
+            <div>
+              <h3 className="text-lg font-bold mb-3 text-yellow-400">İletişim</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400 mt-0.5">📍</span>
+                  <span className="text-gray-300 text-xs">140 Simcoe Street, Toronto, Ontario, Canada</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">📞</span>
+                  <span className="text-gray-300 text-xs">+1-(647)-561-41-94 (Canada)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">📞</span>
+                  <span className="text-gray-300 text-xs">05353594763 (Türkiye)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">✉️</span>
+                  <a href="mailto:info@umraniyesanayisitesi.com" className="text-gray-300 hover:text-yellow-400 transition-colors text-xs">info@umraniyesanayisitesi.com</a>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-yellow-400">📍</span>
+                  <span className="text-gray-300 text-xs">Ümraniye, İstanbul</span>
+                </li>
+              </ul>
+            </div>
           </div>
-        </footer>
-      </div>
+
+          {/* QR Kodlar */}
+          <div className="mt-6 pt-4 border-t border-gray-700 text-center">
+            <h3 className="text-yellow-400 font-bold text-base mb-3">Mobil Uygulama</h3>
+            <p className="text-gray-400 text-xs mb-4">QR kodu okut, telefona uygulama gibi ekle</p>
+            <div className="flex justify-center gap-6 flex-wrap">
+              {/* iOS QR */}
+              <div className="text-center">
+                <div className="bg-white p-3 rounded-xl inline-block shadow-lg mb-2">
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
+                    alt="iOS QR Code"
+                    className="w-24 h-24"
+                  />
+                </div>
+                <div className="flex items-center justify-center gap-2 text-gray-300">
+                  <span className="text-xl">📱</span>
+                  <span className="font-semibold">iPhone</span>
+                </div>
+              </div>
+
+              {/* Android QR */}
+              <div className="text-center">
+                <div className="bg-white p-3 rounded-xl inline-block shadow-lg mb-2">
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://umraniyesanayisitesi.com"
+                    alt="Android QR Code"
+                    className="w-24 h-24"
+                  />
+                </div>
+                <div className="flex items-center justify-center gap-2 text-gray-300">
+                  <span className="text-xl">🤖</span>
+                  <span className="font-semibold">Android</span>
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-400 text-xs italic mt-3">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
+          </div>
+
+          {/* Copyright */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-400 text-sm">
+              Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
