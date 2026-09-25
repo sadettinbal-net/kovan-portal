@@ -1700,12 +1700,94 @@ export default function Home() {
         )}
 
         {/* Footer */}
-        <div className="mt-10 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-6 py-3 rounded-full text-xs text-gray-500 font-medium">
-            <span>💼</span>
-            <span>Kovan Portal © 2026</span>
+        <footer className="mt-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+          <div className="max-w-7xl mx-auto px-6 py-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {/* Hakkımızda Bölümü */}
+              <div>
+                <h3 className="text-xl font-bold mb-4 text-yellow-400">ÜMRANİYE SANAYİ SİTESİ</h3>
+                <p className="text-gray-300 text-sm leading-relaxed mb-3">Firmalar Rehberi</p>
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  Ümraniye'deki sanayi sitelerindeki firmaları tek platformda bulun. 1886+ kayıtlı firma ile bölgenin en kapsamlı rehberi.
+                </p>
+              </div>
+
+              {/* Hızlı Erişim */}
+              <div>
+                <h3 className="text-lg font-bold mb-4 text-yellow-400">Hızlı Erişim</h3>
+                <ul className="space-y-2 text-sm">
+                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Anasayfa</a></li>
+                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Tüm Firmalar</a></li>
+                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Özel Firmalar</a></li>
+                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">İlanlar</a></li>
+                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">Firma Ekle</a></li>
+                  <li><a href="#" className="text-gray-300 hover:text-yellow-400 transition-colors">İletişim</a></li>
+                </ul>
+              </div>
+
+              {/* İletişim */}
+              <div>
+                <h3 className="text-lg font-bold mb-4 text-yellow-400">İletişim</h3>
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-400 mt-0.5">📍</span>
+                    <span className="text-gray-300 text-xs">140 Simcoe Street, Toronto, Ontario, Canada</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-400">📞</span>
+                    <span className="text-gray-300 text-xs">+1-(647)-561-41-94 (Canada)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-400">📞</span>
+                    <span className="text-gray-300 text-xs">05353594763 (Türkiye)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-400">✉️</span>
+                    <a href="mailto:info@umraniyesanayisitesi.com" className="text-gray-300 hover:text-yellow-400 transition-colors text-xs">info@umraniyesanayisitesi.com</a>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-yellow-400">📍</span>
+                    <span className="text-gray-300 text-xs">Ümraniye, İstanbul</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Mobil Uygulama */}
+              <div>
+                <h3 className="text-lg font-bold mb-4 text-yellow-400">Mobil Uygulama</h3>
+                <p className="text-gray-400 text-xs mb-4">QR kodu okut, telefona uygulama gibi ekle</p>
+                <div className="space-y-3">
+                  <div className="bg-white p-3 rounded-lg inline-block">
+                    <div className="w-24 h-24 bg-gray-200 flex items-center justify-center rounded">
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">📱</div>
+                        <div className="text-xs text-gray-600 font-bold">iOS</div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-gray-400 text-xs">iPhone</p>
+                  <div className="bg-white p-3 rounded-lg inline-block">
+                    <div className="w-24 h-24 bg-gray-200 flex items-center justify-center rounded">
+                      <div className="text-center">
+                        <div className="text-2xl mb-1">🤖</div>
+                        <div className="text-xs text-gray-600 font-bold">Android</div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-gray-400 text-xs">Android</p>
+                  <p className="text-gray-400 text-xs italic mt-3">Tarayıcıda aç → "Ana Ekrana Ekle"</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Copyright */}
+            <div className="mt-8 pt-6 border-t border-gray-700 text-center">
+              <p className="text-gray-400 text-sm">
+                Copyright ©2026 <span className="text-yellow-400 font-semibold">Appmmel Service Solutions</span> — Tüm Hakları Saklıdır.
+              </p>
+            </div>
           </div>
-        </div>
+        </footer>
       </div>
     </div>
   );
