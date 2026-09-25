@@ -431,6 +431,46 @@ export default function Home() {
   // Toplam sayfa sayısı
   const toplamSokakSayfasi = Math.ceil(toplamSokakSayisi / sokakSayfaBasinaMiktar);
 
+  // Kategoriler modalında alt kategori araması yapıldığında otomatik modal aç
+  useEffect(() => {
+    if (!modalAcik || modalAcik !== 'kategoriler' || !modalAramaMetni || modalAramaMetni.length < 2) return;
+
+    const timer = setTimeout(() => {
+      // Alt kategori araması yap
+      const eslesenKategoriler = modalVeriler.filter((kategori: any) => {
+        const aramaKelime = modalAramaMetni.toLowerCase();
+
+        // Kategori adında eşleşme varsa atla
+        if (kategori.kategori_adi?.toLowerCase().includes(aramaKelime)) {
+          return false;
+        }
+
+        // Alt kategorilerde eşleşme ara
+        const kategoriAltKategoriler = veriler.altKategoriler.filter(
+          (ak: any) => ak.kategori_id === kategori.id
+        );
+
+        return kategoriAltKategoriler.some((ak: any) =>
+          ak.alt_kategori_adi?.toLowerCase().includes(aramaKelime)
+        );
+      });
+
+      // Sadece 1 kategori bulunduysa ve kategori adında eşleşme yoksa direkt aç
+      if (eslesenKategoriler.length === 1) {
+        const kategori = eslesenKategoriler[0];
+        const altKategoriler = veriler.altKategoriler.filter(
+          (ak: any) => ak.kategori_id === kategori.id
+        );
+
+        setSeciliKategoriDetay(kategori);
+        setAltKategoriListesi(altKategoriler);
+        setAltKategoriModalAcik(true);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [modalAramaMetni, modalAcik]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 font-sans">
       {/* Navigation Bar */}
