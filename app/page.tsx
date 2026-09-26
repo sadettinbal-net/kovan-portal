@@ -1021,13 +1021,24 @@ export default function Home() {
                   <span className="text-lg">👤</span>
                   <p className="font-bold text-sm">{dukkan.usta_adi}</p>
                 </div>
-                <a
-                  href={`tel:${dukkan.telefon}`}
-                  className="flex items-center justify-center w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 rounded-2xl font-bold gap-2 hover:from-slate-700 hover:to-slate-800 transition-all shadow-lg hover:shadow-xl active:scale-95 group-hover:shadow-yellow-400/20"
-                >
-                  <span className="text-xl">📞</span>
-                  <span>{dukkan.telefon}</span>
-                </a>
+                <div className="space-y-3">
+                  <a
+                    href={`tel:${dukkan.telefon}`}
+                    className="flex items-center justify-center w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 rounded-2xl font-bold gap-2 hover:from-slate-700 hover:to-slate-800 transition-all shadow-lg hover:shadow-xl active:scale-95 group-hover:shadow-yellow-400/20"
+                  >
+                    <span className="text-xl">📞</span>
+                    <span>{dukkan.telefon}</span>
+                  </a>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${dukkan.dukkan_adi} ${secim.il} ${secim.ilce}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-2xl font-bold gap-2 hover:from-blue-500 hover:to-blue-600 transition-all shadow-lg hover:shadow-xl active:scale-95"
+                  >
+                    <span className="text-xl">🗺️</span>
+                    <span>Google Maps'te Aç</span>
+                  </a>
+                </div>
               </div>
             ))
           ) : veriler.dukkanlar.length > 0 ? (
