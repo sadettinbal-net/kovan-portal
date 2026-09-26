@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/lib/supabase';
 import TurkiyeHaritasi from '@/components/TurkiyeHaritasi';
+import SokakHaritasi from '@/components/SokakHaritasi';
 
 export default function Home() {
   const [aramaTipi, setAramaTipi] = useState<'sanayi' | 'mahalle' | ''>(''); // Yeni: Arama tipi seçimi
@@ -757,6 +758,28 @@ export default function Home() {
             )}
           </div>
         </div>
+
+        {/* Sokak Haritası - Sokak seçildiğinde göster */}
+        {secim.sokak && secim.mahalle && secim.ilce && secim.il && (
+          <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-2xl border border-gray-200/50 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800">
+                📍 Sokak Konumu
+              </h3>
+              <div className="text-xs text-gray-500">
+                © OpenStreetMap contributors
+              </div>
+            </div>
+            <div className="h-96 rounded-2xl overflow-hidden shadow-lg">
+              <SokakHaritasi
+                sokakAdi={veriler.sokaklar.find((s: any) => s.sokak_id.toString() === secim.sokak)?.sokak_adi || ''}
+                mahalleAdi={veriler.mahalleler.find((m: any) => m.mahalle_id.toString() === secim.mahalle)?.mahalle_adi || ''}
+                ilceAdi={secim.ilce}
+                ilAdi={secim.il}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Türkiye Haritası - Gizli (sadece görsel kaldırıldı) */}
         <div style={{ display: 'none' }}>

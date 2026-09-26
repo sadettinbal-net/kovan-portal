@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
 interface OpenStreetMapProps {
   initialCenter?: [number, number];
@@ -15,59 +13,78 @@ export default function OpenStreetMap({
   initialZoom = 6,
   onLocationSelect
 }: OpenStreetMapProps) {
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const markerRef = useRef<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return;
+    if (typeof window === 'undefined') return;
 
-    // Harita oluştur
-    const map = L.map(mapContainerRef.current).setView(initialCenter, initialZoom);
+    const initMap = async () => {
+      // Leaflet'i dinamik olarak yükle
+      const L = (await import('leaflet')).default;
+      await import('leaflet/dist/leaflet.css');
 
-    // OpenStreetMap tile layer ekle
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map);
+      // Marker icon fix
+      delete (L.Icon.Default.prototype as any)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      });
 
-    // Harita tıklama olayı
-    map.on('click', async (e) => {
-      const { lat, lng } = e.latlng;
+      // Harita oluştur
+      const map = L.map(mapContainerRef.current!).setView(initialCenter, initialZoom);
 
-      // Marker ekle/güncelle
-      if (markerRef.current) {
-        markerRef.current.setLatLng([lat, lng]);
-      } else {
-        markerRef.current = L.marker([lat, lng]).addTo(map);
-      }
+      // OpenStreetMap tile layer ekle
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      }).addTo(map);
 
-      // Reverse geocoding - koordinattan adres bul
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
-        );
-        const data = await response.json();
-        const address = data.display_name || 'Adres bulunamadı';
+      // Harita tıklama olayı
+      map.on('click', async (e: any) => {
+        const { lat, lng } = e.latlng;
 
-        markerRef.current?.bindPopup(address).openPopup();
-
-        if (onLocationSelect) {
-          onLocationSelect(lat, lng, address);
+        // Marker ekle/güncelle
+        if (markerRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+        } else {
+          markerRef.current = L.marker([lat, lng]).addTo(map);
         }
-      } catch (error) {
-        console.error('Adres bulunamadı:', error);
-      }
-    });
 
-    mapRef.current = map;
+        // Reverse geocoding - koordinattan adres bul
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+          );
+          const data = await response.json();
+          const address = data.display_name || 'Adres bulunamadı';
+
+          markerRef.current?.bindPopup(address).openPopup();
+
+          if (onLocationSelect) {
+            onLocationSelect(lat, lng, address);
+          }
+        } catch (error) {
+          console.error('Adres bulunamadı:', error);
+        }
+      });
+
+      mapRef.current = map;
+    };
+
+    initMap();
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
     };
   }, [initialCenter, initialZoom, onLocationSelect]);
 
