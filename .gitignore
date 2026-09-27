@@ -41,3 +41,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE settings
+.claude/settings.local.json
+
+# Database check scripts (temporary)
+database/check-adana-mahalleler-yeni.js
+database/check-adana-seyhan-duplicates.js
+database/check-all-adana-mahalleler.js
