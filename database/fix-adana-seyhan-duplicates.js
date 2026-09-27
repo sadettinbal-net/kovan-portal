@@ -1,9 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: '.env.local' });
 
+// SERVICE_ROLE_KEY kullanıyoruz çünkü DELETE işlemi yapacağız (RLS bypass)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 async function fixDuplicates() {
