@@ -9,6 +9,8 @@ export default function YeniFirmaPage() {
     dukkan_adi: '',
     usta_adi: '',
     telefon: '',
+    cep_telefonu: '',
+    whatsapp: '',
     site_id: '',
     mahalle_id: '',
     sokak_id: '',
@@ -109,6 +111,8 @@ export default function YeniFirmaPage() {
           dukkan_adi: formData.dukkan_adi,
           usta_adi: formData.usta_adi,
           telefon: formData.telefon || null,
+          cep_telefonu: formData.cep_telefonu || null,
+          whatsapp: formData.whatsapp || null,
           blok_no: formData.blok_no || null,
           web_sitesi: formData.web_sitesi || null,
           site_id: formData.site_id ? parseInt(formData.site_id) : null,
@@ -190,7 +194,7 @@ export default function YeniFirmaPage() {
             {/* Telefon */}
             <div>
               <label htmlFor="telefon" className="block text-sm font-medium text-gray-700 mb-2">
-                Telefon
+                Sabit Telefon
               </label>
               <input
                 id="telefon"
@@ -199,6 +203,47 @@ export default function YeniFirmaPage() {
                 onChange={(e) => setFormData({ ...formData, telefon: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 placeholder="Örn: 0555 123 45 67"
+              />
+            </div>
+
+            {/* Cep Telefonu */}
+            <div>
+              <label htmlFor="cep_telefonu" className="block text-sm font-medium text-gray-700 mb-2">
+                Cep Telefonu
+              </label>
+              <input
+                id="cep_telefonu"
+                type="tel"
+                value={formData.cep_telefonu}
+                onChange={(e) => setFormData({ ...formData, cep_telefonu: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                placeholder="Örn: 0532 123 45 67"
+              />
+            </div>
+
+            {/* WhatsApp */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="whatsapp" className="block text-sm font-medium text-gray-700">
+                  WhatsApp
+                </label>
+                {formData.cep_telefonu && formData.whatsapp !== formData.cep_telefonu && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, whatsapp: formData.cep_telefonu })}
+                    className="text-xs text-blue-600 hover:text-blue-800"
+                  >
+                    Cep telefonuyla aynı
+                  </button>
+                )}
+              </div>
+              <input
+                id="whatsapp"
+                type="tel"
+                value={formData.whatsapp}
+                onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                placeholder="Örn: 0532 123 45 67"
               />
             </div>
 

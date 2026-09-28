@@ -4,6 +4,14 @@ import { supabase } from '@/lib/supabase';
 import TurkiyeHaritasi from '@/components/TurkiyeHaritasi';
 import SokakHaritasi from '@/components/SokakHaritasi';
 
+// "0532 123 45 67" gibi numaraları wa.me bağlantısına çevirir (Türkiye kodu 90)
+function whatsappLinki(numara: string) {
+  let rakamlar = numara.replace(/\D/g, '');
+  if (rakamlar.startsWith('0')) rakamlar = rakamlar.slice(1);
+  if (rakamlar.length === 10) rakamlar = '90' + rakamlar;
+  return `https://wa.me/${rakamlar}`;
+}
+
 export default function Home() {
   const [aramaTipi, setAramaTipi] = useState<'sanayi' | 'mahalle' | ''>(''); // Yeni: Arama tipi seçimi
   const [secim, setSecim] = useState({ il: '', ilce: '', mahalle: '', sokak: '', site: '' });
@@ -1045,13 +1053,35 @@ export default function Home() {
                   <p className="font-bold text-sm">{dukkan.usta_adi}</p>
                 </div>
                 <div className="space-y-3">
-                  <a
-                    href={`tel:${dukkan.telefon}`}
-                    className="flex items-center justify-center w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 rounded-2xl font-bold gap-2 hover:from-slate-700 hover:to-slate-800 transition-all shadow-lg hover:shadow-xl active:scale-95 group-hover:shadow-yellow-400/20"
-                  >
-                    <span className="text-xl">📞</span>
-                    <span>{dukkan.telefon}</span>
-                  </a>
+                  {dukkan.telefon && (
+                    <a
+                      href={`tel:${dukkan.telefon}`}
+                      className="flex items-center justify-center w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 rounded-2xl font-bold gap-2 hover:from-slate-700 hover:to-slate-800 transition-all shadow-lg hover:shadow-xl active:scale-95 group-hover:shadow-yellow-400/20"
+                    >
+                      <span className="text-xl">📞</span>
+                      <span>{dukkan.telefon}</span>
+                    </a>
+                  )}
+                  {dukkan.cep_telefonu && (
+                    <a
+                      href={`tel:${dukkan.cep_telefonu}`}
+                      className="flex items-center justify-center w-full bg-gradient-to-r from-slate-700 to-slate-800 text-white p-4 rounded-2xl font-bold gap-2 hover:from-slate-600 hover:to-slate-700 transition-all shadow-lg hover:shadow-xl active:scale-95"
+                    >
+                      <span className="text-xl">📱</span>
+                      <span>{dukkan.cep_telefonu}</span>
+                    </a>
+                  )}
+                  {dukkan.whatsapp && (
+                    <a
+                      href={whatsappLinki(dukkan.whatsapp)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-2xl font-bold gap-2 hover:from-green-400 hover:to-green-500 transition-all shadow-lg hover:shadow-xl active:scale-95"
+                    >
+                      <span className="text-xl">💬</span>
+                      <span>WhatsApp&apos;tan Yaz</span>
+                    </a>
+                  )}
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${dukkan.dukkan_adi} ${secim.il} ${secim.ilce}`)}`}
                     target="_blank"
@@ -1348,6 +1378,18 @@ export default function Home() {
                                   <div className="flex items-center gap-2">
                                     <span>📞</span>
                                     <span>{dukkan.telefon}</span>
+                                  </div>
+                                )}
+                                {dukkan.cep_telefonu && (
+                                  <div className="flex items-center gap-2">
+                                    <span>📱</span>
+                                    <a href={`tel:${dukkan.cep_telefonu}`} className="hover:underline">{dukkan.cep_telefonu}</a>
+                                  </div>
+                                )}
+                                {dukkan.whatsapp && (
+                                  <div className="flex items-center gap-2">
+                                    <span>💬</span>
+                                    <a href={whatsappLinki(dukkan.whatsapp)} target="_blank" rel="noopener noreferrer" className="text-green-600 hover:underline">WhatsApp: {dukkan.whatsapp}</a>
                                   </div>
                                 )}
                                 {dukkan.web_sitesi && (
