@@ -51,17 +51,37 @@ export default function Home() {
         altKategoriler: altKatData || []
       }));
 
-      // İstatistikleri yükle
-      const { data: siteData } = await supabase.from('sanayi_siteleri').select('id');
-      const { data: dukkanData } = await supabase.from('dukkanlar').select('id');
-
-      setIstatistikler({
-        toplamSite: siteData?.length || 0,
-        toplamDukkan: dukkanData?.length || 0,
-        toplamKategori: katData?.length || 0
-      });
     }
     ilkYukleme();
+  }, []);
+
+  // İstatistikler: sayfa açılınca ve sekmeye geri dönülünce güncel sayıları çek
+  useEffect(() => {
+    async function istatistikleriYukle() {
+      const [site, dukkan, kategori] = await Promise.all([
+        supabase.from('sanayi_siteleri').select('*', { count: 'exact', head: true }),
+        supabase.from('dukkanlar').select('*', { count: 'exact', head: true }),
+        supabase.from('kategoriler').select('*', { count: 'exact', head: true }),
+      ]);
+
+      setIstatistikler({
+        toplamSite: site.count || 0,
+        toplamDukkan: dukkan.count || 0,
+        toplamKategori: kategori.count || 0
+      });
+    }
+
+    function gorunurOlunca() {
+      if (document.visibilityState === 'visible') istatistikleriYukle();
+    }
+
+    istatistikleriYukle();
+    window.addEventListener('focus', istatistikleriYukle);
+    document.addEventListener('visibilitychange', gorunurOlunca);
+    return () => {
+      window.removeEventListener('focus', istatistikleriYukle);
+      document.removeEventListener('visibilitychange', gorunurOlunca);
+    };
   }, []);
 
   const ilSec = async (ilAdi: string) => {
