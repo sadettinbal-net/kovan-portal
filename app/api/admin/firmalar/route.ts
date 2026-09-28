@@ -15,9 +15,9 @@ export async function GET(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data, error } = await supabase
-      .from('firmalar')
+      .from('dukkanlar')
       .select('*')
-      .order('isletme_adi');
+      .order('dukkan_adi');
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data, error } = await supabase
-      .from('firmalar')
+      .from('dukkanlar')
       .insert([body])
       .select()
       .single();

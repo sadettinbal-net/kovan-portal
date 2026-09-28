@@ -18,7 +18,7 @@ export async function GET(
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data, error } = await supabase
-      .from('firmalar')
+      .from('dukkanlar')
       .select('*')
       .eq('id', (await params).id)
       .single();
@@ -52,7 +52,7 @@ export async function PUT(
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data, error } = await supabase
-      .from('firmalar')
+      .from('dukkanlar')
       .update(body)
       .eq('id', (await params).id)
       .select()
@@ -82,7 +82,7 @@ export async function DELETE(
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { error } = await supabase
-      .from('firmalar')
+      .from('dukkanlar')
       .delete()
       .eq('id', (await params).id);
 

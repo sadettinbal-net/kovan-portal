@@ -5,14 +5,17 @@ import { useRouter } from 'next/navigation';
 
 export default function YeniFirmaPage() {
   const [formData, setFormData] = useState({
-    isletme_adi: '',
-    yetkili_adi: '',
+    dukkan_adi: '',
+    usta_adi: '',
     telefon: '',
-    adres: '',
+    site_id: '',
+    blok_no: '',
+    web_sitesi: '',
     alt_kategori_id: '',
   });
   const [kategoriler, setKategoriler] = useState<any[]>([]);
   const [altKategoriler, setAltKategoriler] = useState<any[]>([]);
+  const [siteler, setSiteler] = useState<any[]>([]);
   const [seciliKategori, setSeciliKategori] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,6 +24,7 @@ export default function YeniFirmaPage() {
   useEffect(() => {
     checkAuth();
     loadKategoriler();
+    loadSiteler();
   }, []);
 
   useEffect(() => {
@@ -54,6 +58,17 @@ export default function YeniFirmaPage() {
     }
   };
 
+  const loadSiteler = async () => {
+    try {
+      const response = await fetch('/api/admin/sanayi-siteleri');
+      if (response.ok) {
+        setSiteler(await response.json());
+      }
+    } catch (error) {
+      console.error('Sanayi sitesi yükleme hatası:', error);
+    }
+  };
+
   const loadAltKategoriler = async (kategoriId: number) => {
     try {
       const response = await fetch(`/api/admin/kategoriler/${kategoriId}/alt-kategoriler`);
@@ -71,7 +86,7 @@ export default function YeniFirmaPage() {
     setError('');
     setLoading(true);
 
-    if (!formData.isletme_adi) {
+    if (!formData.dukkan_adi) {
       setError('İşletme adı zorunludur');
       setLoading(false);
       return;
@@ -82,8 +97,17 @@ export default function YeniFirmaPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
+          dukkan_adi: formData.dukkan_adi,
+          usta_adi: formData.usta_adi,
+          telefon: formData.telefon || null,
+          blok_no: formData.blok_no || null,
+          web_sitesi: formData.web_sitesi || null,
+          site_id: formData.site_id ? parseInt(formData.site_id) : null,
           alt_kategori_id: formData.alt_kategori_id ? parseInt(formData.alt_kategori_id) : null,
+          kategori:
+            altKategoriler.find((a) => a.id.toString() === formData.alt_kategori_id)?.alt_kategori_adi ||
+            kategoriler.find((k) => k.id.toString() === seciliKategori)?.kategori_adi ||
+            null,
         }),
       });
 
@@ -121,32 +145,32 @@ export default function YeniFirmaPage() {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* İşletme Adı */}
+            {/* Dükkan Adı */}
             <div>
-              <label htmlFor="isletme_adi" className="block text-sm font-medium text-gray-700 mb-2">
-                İşletme Adı <span className="text-red-500">*</span>
+              <label htmlFor="dukkan_adi" className="block text-sm font-medium text-gray-700 mb-2">
+                Dükkan Adı <span className="text-red-500">*</span>
               </label>
               <input
-                id="isletme_adi"
+                id="dukkan_adi"
                 type="text"
-                value={formData.isletme_adi}
-                onChange={(e) => setFormData({ ...formData, isletme_adi: e.target.value })}
+                value={formData.dukkan_adi}
+                onChange={(e) => setFormData({ ...formData, dukkan_adi: e.target.value })}
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 placeholder="Örn: Ak Demir Çelik"
               />
             </div>
 
-            {/* Yetkili Adı */}
+            {/* Usta Adı */}
             <div>
-              <label htmlFor="yetkili_adi" className="block text-sm font-medium text-gray-700 mb-2">
-                Yetkili Adı
+              <label htmlFor="usta_adi" className="block text-sm font-medium text-gray-700 mb-2">
+                Usta Adı
               </label>
               <input
-                id="yetkili_adi"
+                id="usta_adi"
                 type="text"
-                value={formData.yetkili_adi}
-                onChange={(e) => setFormData({ ...formData, yetkili_adi: e.target.value })}
+                value={formData.usta_adi}
+                onChange={(e) => setFormData({ ...formData, usta_adi: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 placeholder="Örn: Ahmet Yılmaz"
               />
@@ -212,18 +236,53 @@ export default function YeniFirmaPage() {
               </div>
             )}
 
-            {/* Adres */}
+            {/* Sanayi Sitesi */}
             <div>
-              <label htmlFor="adres" className="block text-sm font-medium text-gray-700 mb-2">
-                Adres
+              <label htmlFor="site_id" className="block text-sm font-medium text-gray-700 mb-2">
+                Sanayi Sitesi
               </label>
-              <textarea
-                id="adres"
-                value={formData.adres}
-                onChange={(e) => setFormData({ ...formData, adres: e.target.value })}
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                placeholder="Tam adres bilgisi..."
+              <select
+                id="site_id"
+                value={formData.site_id}
+                onChange={(e) => setFormData({ ...formData, site_id: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              >
+                <option value="">Sanayi sitesi seçiniz (opsiyonel)</option>
+                {siteler.map((site) => (
+                  <option key={site.id} value={site.id}>
+                    {site.site_adi}{site.il_adi ? ` (${site.il_adi}${site.ilce_adi ? ' / ' + site.ilce_adi : ''})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Blok No */}
+            <div>
+              <label htmlFor="blok_no" className="block text-sm font-medium text-gray-700 mb-2">
+                Blok / Dükkan No
+              </label>
+              <input
+                id="blok_no"
+                type="text"
+                value={formData.blok_no}
+                onChange={(e) => setFormData({ ...formData, blok_no: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                placeholder="Örn: A Blok No: 12"
+              />
+            </div>
+
+            {/* Web Sitesi */}
+            <div>
+              <label htmlFor="web_sitesi" className="block text-sm font-medium text-gray-700 mb-2">
+                Web Sitesi
+              </label>
+              <input
+                id="web_sitesi"
+                type="url"
+                value={formData.web_sitesi}
+                onChange={(e) => setFormData({ ...formData, web_sitesi: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                placeholder="https://..."
               />
             </div>
 

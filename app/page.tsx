@@ -339,8 +339,8 @@ export default function Home() {
     // Arama filtresi
     if (aramaMetni) {
       sonuc = sonuc.filter((d: any) =>
-        d.dukkan_adi.toLowerCase().includes(aramaMetni.toLowerCase()) ||
-        d.usta_adi.toLowerCase().includes(aramaMetni.toLowerCase()) ||
+        d.dukkan_adi?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
+        d.usta_adi?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
         d.alt_kategoriler?.alt_kategori_adi.toLowerCase().includes(aramaMetni.toLowerCase()) ||
         d.alt_kategoriler?.kategoriler?.kategori_adi.toLowerCase().includes(aramaMetni.toLowerCase())
       );

@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 
 interface Firma {
   id: number;
-  isletme_adi: string;
-  yetkili_adi?: string;
+  dukkan_adi: string;
+  usta_adi?: string;
   telefon?: string;
-  adres?: string;
+  kategori?: string;
+  blok_no?: string;
+  site_id?: number;
   alt_kategori_id?: number;
   created_at?: string;
 }
@@ -68,8 +70,8 @@ export default function FirmalarPage() {
   };
 
   const filtreliFirmalar = firmalar.filter(firma =>
-    firma.isletme_adi?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
-    firma.yetkili_adi?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
+    firma.dukkan_adi?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
+    firma.usta_adi?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
     firma.telefon?.includes(aramaMetni)
   );
 
@@ -129,16 +131,16 @@ export default function FirmalarPage() {
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    İşletme Adı
+                    Dükkan Adı
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Yetkili
+                    Usta
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Telefon
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Adres
+                    Kategori
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     İşlemler
@@ -156,16 +158,16 @@ export default function FirmalarPage() {
                   filtreliFirmalar.map((firma) => (
                     <tr key={firma.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{firma.isletme_adi}</div>
+                        <div className="text-sm font-medium text-gray-900">{firma.dukkan_adi}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600">{firma.yetkili_adi || '-'}</div>
+                        <div className="text-sm text-gray-600">{firma.usta_adi || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-600 font-mono">{firma.telefon || '-'}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 max-w-xs truncate">{firma.adres || '-'}</div>
+                        <div className="text-sm text-gray-600 max-w-xs truncate">{firma.kategori || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button

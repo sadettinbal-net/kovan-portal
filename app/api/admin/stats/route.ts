@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     // Firma sayısı
     const { count: firmaCount } = await supabase
-      .from('firmalar')
+      .from('dukkanlar')
       .select('*', { count: 'exact', head: true });
 
     // İl sayısı
