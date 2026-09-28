@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     // Mahalle sayısı
     const { count: mahalleCount } = await supabase
-      .from('mahalleler')
+      .from('mahalleler_yeni')
       .select('*', { count: 'exact', head: true });
 
     return NextResponse.json({
