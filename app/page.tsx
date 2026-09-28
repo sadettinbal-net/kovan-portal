@@ -244,13 +244,16 @@ export default function Home() {
         setVeriler(prev => ({ ...prev, siteler: sitelerData || [] }));
       }
     } else {
-      // MAHALLE İŞLETMESİ: Bu sokaktaki işletmeleri yükle
-      if (secim.sokak) {
-        const { data: sokakDukkanlar } = await supabase
+      // MAHALLE İŞLETMESİ: Sokak seçildiyse o sokaktaki, yoksa mahalledeki tüm işletmeleri yükle
+      if (secim.sokak || secim.mahalle) {
+        let dukkanQuery = supabase
           .from('dukkanlar')
           .select('*')
-          .eq('sokak_id', parseInt(secim.sokak))
           .is('site_id', null);
+        dukkanQuery = secim.sokak
+          ? dukkanQuery.eq('sokak_id', parseInt(secim.sokak))
+          : dukkanQuery.eq('mahalle_id', parseInt(secim.mahalle));
+        const { data: sokakDukkanlar } = await dukkanQuery;
 
         // Sokak işletmelerine kategori bilgisi ekle
         const dukkanlarWithKategoriler = await Promise.all(

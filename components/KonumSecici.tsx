@@ -3,14 +3,16 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-// Admin formlarında dükkanın sokağını seçmek için: il → ilçe → mahalle → sokak
-// Değer olarak sokaklar.sokak_id kullanılır (dukkanlar.sokak_id ile aynı)
-export default function SokakSecici({
+// Admin dükkan formunda konum seçimi: il → ilçe → mahalle (zorunlu) → sokak (isteğe bağlı)
+// mahalleId = mahalleler_yeni.mahalle_id, sokakId = sokaklar.sokak_id
+export default function KonumSecici({
+  mahalleId,
   sokakId,
   onChange,
 }: {
+  mahalleId: string;
   sokakId: string;
-  onChange: (sokakId: string) => void;
+  onChange: (konum: { mahalleId: string; sokakId: string }) => void;
 }) {
   const [iller, setIller] = useState<any[]>([]);
   const [ilceler, setIlceler] = useState<any[]>([]);
@@ -19,7 +21,6 @@ export default function SokakSecici({
 
   const [ilId, setIlId] = useState('');
   const [ilceId, setIlceId] = useState('');
-  const [mahalleId, setMahalleId] = useState('');
   const [sokakArama, setSokakArama] = useState('');
   const [baslangicYuklendi, setBaslangicYuklendi] = useState(false);
 
@@ -31,21 +32,25 @@ export default function SokakSecici({
       .then(({ data }) => setIller(data || []));
   }, []);
 
-  // Düzenleme sayfasında mevcut sokağın il/ilçe/mahallesini doldur
+  // Düzenleme sayfasında mevcut konumun il/ilçesini doldur
   useEffect(() => {
     if (baslangicYuklendi) return;
-    if (!sokakId) {
+    if (!mahalleId && !sokakId) {
       setBaslangicYuklendi(true);
       return;
     }
     // sokaklar.ilce_id / il_id ilceler tablosuyla eşleşmiyor; il ve ilçeyi mahalleler_yeni üzerinden buluyoruz
     (async () => {
-      const { data: sokakData } = await supabase
-        .from('sokaklar')
-        .select('mahalle_id')
-        .eq('sokak_id', parseInt(sokakId))
-        .limit(1);
-      const mahalle_id = sokakData?.[0]?.mahalle_id;
+      let mahalle_id = mahalleId ? parseInt(mahalleId) : null;
+
+      if (!mahalle_id && sokakId) {
+        const { data: sokakData } = await supabase
+          .from('sokaklar')
+          .select('mahalle_id')
+          .eq('sokak_id', parseInt(sokakId))
+          .limit(1);
+        mahalle_id = sokakData?.[0]?.mahalle_id || null;
+      }
 
       if (mahalle_id) {
         const { data: mahalleData } = await supabase
@@ -57,12 +62,12 @@ export default function SokakSecici({
         if (mahalle) {
           setIlId(mahalle.sehir_id?.toString() || '');
           setIlceId(mahalle.ilce_id?.toString() || '');
-          setMahalleId(mahalle_id.toString());
+          if (!mahalleId) onChange({ mahalleId: mahalle_id.toString(), sokakId });
         }
       }
       setBaslangicYuklendi(true);
     })();
-  }, [sokakId, baslangicYuklendi]);
+  }, [mahalleId, sokakId, baslangicYuklendi]);
 
   useEffect(() => {
     if (!ilId) {
@@ -87,7 +92,11 @@ export default function SokakSecici({
       .select('mahalle_id, mahalle_adi')
       .eq('ilce_id', parseInt(ilceId))
       .order('mahalle_adi')
-      .then(({ data }) => setMahalleler(data || []));
+      .then(({ data }) => {
+        // Aynı mahalle birden fazla kayıtla gelebiliyor
+        const tekil = Array.from(new Map((data || []).map((m: any) => [m.mahalle_id, m])).values());
+        setMahalleler(tekil);
+      });
   }, [ilceId]);
 
   useEffect(() => {
@@ -122,9 +131,8 @@ export default function SokakSecici({
         onChange={(e) => {
           setIlId(e.target.value);
           setIlceId('');
-          setMahalleId('');
           setSokakArama('');
-          onChange('');
+          onChange({ mahalleId: '', sokakId: '' });
         }}
         className={selectClass}
       >
@@ -141,9 +149,8 @@ export default function SokakSecici({
           value={ilceId}
           onChange={(e) => {
             setIlceId(e.target.value);
-            setMahalleId('');
             setSokakArama('');
-            onChange('');
+            onChange({ mahalleId: '', sokakId: '' });
           }}
           className={selectClass}
         >
@@ -160,9 +167,8 @@ export default function SokakSecici({
         <select
           value={mahalleId}
           onChange={(e) => {
-            setMahalleId(e.target.value);
             setSokakArama('');
-            onChange('');
+            onChange({ mahalleId: e.target.value, sokakId: '' });
           }}
           className={selectClass}
         >
@@ -181,11 +187,15 @@ export default function SokakSecici({
             type="text"
             value={sokakArama}
             onChange={(e) => setSokakArama(e.target.value)}
-            placeholder="Sokak ara..."
+            placeholder="Sokak ara... (isteğe bağlı)"
             className={selectClass}
           />
-          <select value={sokakId} onChange={(e) => onChange(e.target.value)} className={selectClass}>
-            <option value="">Sokak seçiniz ({sokaklar.length} sokak)</option>
+          <select
+            value={sokakId}
+            onChange={(e) => onChange({ mahalleId, sokakId: e.target.value })}
+            className={selectClass}
+          >
+            <option value="">Sokak seçiniz (isteğe bağlı, {sokaklar.length} sokak)</option>
             {sokaklar.map((sokak) => (
               <option key={sokak.sokak_id} value={sokak.sokak_id}>
                 {sokak.sokak_adi}
@@ -195,19 +205,18 @@ export default function SokakSecici({
         </>
       )}
 
-      {(ilId || sokakId) && (
+      {(ilId || mahalleId || sokakId) && (
         <button
           type="button"
           onClick={() => {
             setIlId('');
             setIlceId('');
-            setMahalleId('');
             setSokakArama('');
-            onChange('');
+            onChange({ mahalleId: '', sokakId: '' });
           }}
           className="text-sm text-red-600 hover:text-red-800"
         >
-          Sokak seçimini temizle
+          Konum seçimini temizle
         </button>
       )}
     </div>

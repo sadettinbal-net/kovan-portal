@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import SokakSecici from '@/components/SokakSecici';
+import KonumSecici from '@/components/KonumSecici';
 import { useRouter } from 'next/navigation';
 
 export default function YeniFirmaPage() {
@@ -10,6 +10,7 @@ export default function YeniFirmaPage() {
     usta_adi: '',
     telefon: '',
     site_id: '',
+    mahalle_id: '',
     sokak_id: '',
     blok_no: '',
     web_sitesi: '',
@@ -89,7 +90,13 @@ export default function YeniFirmaPage() {
     setLoading(true);
 
     if (!formData.dukkan_adi) {
-      setError('İşletme adı zorunludur');
+      setError('Dükkan adı zorunludur');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.mahalle_id && !formData.site_id) {
+      setError('Lütfen dükkanın mahallesini ya da sanayi sitesini seçin');
       setLoading(false);
       return;
     }
@@ -105,6 +112,7 @@ export default function YeniFirmaPage() {
           blok_no: formData.blok_no || null,
           web_sitesi: formData.web_sitesi || null,
           site_id: formData.site_id ? parseInt(formData.site_id) : null,
+          mahalle_id: formData.mahalle_id ? parseInt(formData.mahalle_id) : null,
           sokak_id: formData.sokak_id ? parseInt(formData.sokak_id) : null,
           alt_kategori_id: formData.alt_kategori_id ? parseInt(formData.alt_kategori_id) : null,
           kategori:
@@ -239,17 +247,20 @@ export default function YeniFirmaPage() {
               </div>
             )}
 
-            {/* Sokak */}
+            {/* Konum */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Sokak
+                Konum (Mahalle / Sokak)
               </label>
-              <SokakSecici
+              <KonumSecici
+                mahalleId={formData.mahalle_id}
                 sokakId={formData.sokak_id}
-                onChange={(sokakId) => setFormData((onceki) => ({ ...onceki, sokak_id: sokakId }))}
+                onChange={({ mahalleId, sokakId }) =>
+                  setFormData((onceki) => ({ ...onceki, mahalle_id: mahalleId, sokak_id: sokakId }))
+                }
               />
               <p className="text-xs text-gray-500 mt-2">
-                Dükkanın ana sayfada sokak aramasında görünmesi için sanayi sitesini boş bırakın.
+                Mahalle dükkanları için mahalle seçmek yeterli, sokak isteğe bağlı. Sanayi sitesindeki dükkanlar için aşağıdan sanayi sitesini seçin.
               </p>
             </div>
 

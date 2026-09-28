@@ -51,6 +51,16 @@ export async function PUT(
     const body = await request.json();
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Sokak seçilip mahalle boş geldiyse mahalleyi sokaktan bul
+    if (body.sokak_id && !body.mahalle_id) {
+      const { data: sokak } = await supabase
+        .from('sokaklar')
+        .select('mahalle_id')
+        .eq('sokak_id', body.sokak_id)
+        .limit(1);
+      body.mahalle_id = sokak?.[0]?.mahalle_id ?? null;
+    }
+
     const { data, error } = await supabase
       .from('dukkanlar')
       .update(body)
