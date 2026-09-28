@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // GET - Belirli kategorinin alt kategorilerini getir
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('admin-session')?.value;
@@ -20,7 +20,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('alt_kategoriler')
       .select('*')
-      .eq('kategori_id', params.id)
+      .eq('kategori_id', (await params).id)
       .order('alt_kategori_adi');
 
     if (error) {

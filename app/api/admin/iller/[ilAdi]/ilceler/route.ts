@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // GET - Belirli ilin ilçelerini getir
 export async function GET(
   request: NextRequest,
-  { params }: { params: { ilAdi: string } }
+  { params }: { params: Promise<{ ilAdi: string }> }
 ) {
   try {
     const token = request.cookies.get('admin-session')?.value;
@@ -21,7 +21,7 @@ export async function GET(
     const { data: ilData } = await supabase
       .from('iller')
       .select('id')
-      .eq('sehir_adi', decodeURIComponent(params.ilAdi))
+      .eq('sehir_adi', decodeURIComponent((await params).ilAdi))
       .single();
 
     if (!ilData) {

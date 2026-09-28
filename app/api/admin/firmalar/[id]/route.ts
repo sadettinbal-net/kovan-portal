@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // GET - Tek firma getir
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('admin-session')?.value;
@@ -20,7 +20,7 @@ export async function GET(
     const { data, error } = await supabase
       .from('firmalar')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single();
 
     if (error) {
@@ -40,7 +40,7 @@ export async function GET(
 // PUT - Firma güncelle
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('admin-session')?.value;
@@ -54,7 +54,7 @@ export async function PUT(
     const { data, error } = await supabase
       .from('firmalar')
       .update(body)
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .select()
       .single();
 
@@ -71,7 +71,7 @@ export async function PUT(
 // DELETE - Firma sil
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('admin-session')?.value;
@@ -84,7 +84,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('firmalar')
       .delete()
-      .eq('id', params.id);
+      .eq('id', (await params).id);
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
