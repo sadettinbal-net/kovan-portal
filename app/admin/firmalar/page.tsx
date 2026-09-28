@@ -8,6 +8,8 @@ interface Firma {
   dukkan_adi: string;
   usta_adi?: string;
   telefon?: string;
+  cep_telefonu?: string;
+  whatsapp?: string;
   kategori?: string;
   blok_no?: string;
   site_id?: number;
@@ -72,7 +74,9 @@ export default function FirmalarPage() {
   const filtreliFirmalar = firmalar.filter(firma =>
     firma.dukkan_adi?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
     firma.usta_adi?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
-    firma.telefon?.includes(aramaMetni)
+    firma.telefon?.includes(aramaMetni) ||
+    firma.cep_telefonu?.includes(aramaMetni) ||
+    firma.whatsapp?.includes(aramaMetni)
   );
 
   if (loading) {
@@ -119,7 +123,7 @@ export default function FirmalarPage() {
             type="text"
             value={aramaMetni}
             onChange={(e) => setAramaMetni(e.target.value)}
-            placeholder="Firma adı, yetkili veya telefon ile ara..."
+            placeholder="Dükkan adı, usta veya telefon ile ara..."
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
           />
         </div>
@@ -164,7 +168,15 @@ export default function FirmalarPage() {
                         <div className="text-sm text-gray-600">{firma.usta_adi || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-600 font-mono">{firma.telefon || '-'}</div>
+                        {firma.telefon || firma.cep_telefonu || firma.whatsapp ? (
+                          <div className="text-sm text-gray-600 font-mono space-y-1">
+                            {firma.telefon && <div>📞 {firma.telefon}</div>}
+                            {firma.cep_telefonu && <div>📱 {firma.cep_telefonu}</div>}
+                            {firma.whatsapp && <div className="text-green-700">💬 {firma.whatsapp}</div>}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-600">-</div>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-600 max-w-xs truncate">{firma.kategori || '-'}</div>
