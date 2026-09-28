@@ -142,6 +142,12 @@ export default function AdminDashboard() {
               href="/admin/uyeler"
               icon="👥"
             />
+            <ActionButton
+              title="Yönetici Paneli"
+              description="Yönetici ayarları ve araçları"
+              href="/admin/yonetici"
+              icon="🛡️"
+            />
           </div>
         </div>
 
