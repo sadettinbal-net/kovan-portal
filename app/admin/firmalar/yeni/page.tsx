@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import SokakSecici from '@/components/SokakSecici';
 import { useRouter } from 'next/navigation';
 
 export default function YeniFirmaPage() {
@@ -9,6 +10,7 @@ export default function YeniFirmaPage() {
     usta_adi: '',
     telefon: '',
     site_id: '',
+    sokak_id: '',
     blok_no: '',
     web_sitesi: '',
     alt_kategori_id: '',
@@ -103,6 +105,7 @@ export default function YeniFirmaPage() {
           blok_no: formData.blok_no || null,
           web_sitesi: formData.web_sitesi || null,
           site_id: formData.site_id ? parseInt(formData.site_id) : null,
+          sokak_id: formData.sokak_id ? parseInt(formData.sokak_id) : null,
           alt_kategori_id: formData.alt_kategori_id ? parseInt(formData.alt_kategori_id) : null,
           kategori:
             altKategoriler.find((a) => a.id.toString() === formData.alt_kategori_id)?.alt_kategori_adi ||
@@ -235,6 +238,20 @@ export default function YeniFirmaPage() {
                 </select>
               </div>
             )}
+
+            {/* Sokak */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Sokak
+              </label>
+              <SokakSecici
+                sokakId={formData.sokak_id}
+                onChange={(sokakId) => setFormData((onceki) => ({ ...onceki, sokak_id: sokakId }))}
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Dükkanın ana sayfada sokak aramasında görünmesi için sanayi sitesini boş bırakın.
+              </p>
+            </div>
 
             {/* Sanayi Sitesi */}
             <div>
