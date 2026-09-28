@@ -34,11 +34,17 @@ export async function GET(request: NextRequest) {
       .from('mahalleler_yeni')
       .select('*', { count: 'exact', head: true });
 
+    // Üye sayısı
+    const { count: uyeCount } = await supabase
+      .from('uyeler')
+      .select('*', { count: 'exact', head: true });
+
     return NextResponse.json({
       totalFirmalar: firmaCount || 0,
       totalIller: ilCount || 0,
       totalIlceler: ilceCount || 0,
       totalMahalleler: mahalleCount || 0,
+      totalUyeler: uyeCount || 0,
     });
   } catch (error) {
     console.error('Stats error:', error);

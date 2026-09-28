@@ -9,6 +9,7 @@ export default function AdminDashboard() {
     totalIller: 0,
     totalIlceler: 0,
     totalMahalleler: 0,
+    totalUyeler: 0,
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -74,7 +75,7 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
           <StatCard
             title="Toplam Firma"
             value={stats.totalFirmalar}
@@ -98,6 +99,12 @@ export default function AdminDashboard() {
             value={stats.totalMahalleler}
             icon="🏘️"
             color="purple"
+          />
+          <StatCard
+            title="Toplam Üye"
+            value={stats.totalUyeler}
+            icon="👥"
+            color="pink"
           />
         </div>
 
@@ -129,6 +136,12 @@ export default function AdminDashboard() {
               href="/admin/mahalleler"
               icon="🏘️"
             />
+            <ActionButton
+              title="Üyeler"
+              description="Siteye üye olanları gör"
+              href="/admin/uyeler"
+              icon="👥"
+            />
           </div>
         </div>
 
@@ -148,6 +161,7 @@ function StatCard({ title, value, icon, color }: { title: string; value: number;
     green: 'bg-green-500',
     yellow: 'bg-yellow-500',
     purple: 'bg-purple-500',
+    pink: 'bg-pink-500',
   }[color];
 
   return (
