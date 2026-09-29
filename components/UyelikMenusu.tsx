@@ -7,7 +7,8 @@ import { supabase } from '@/lib/supabase';
 import { googleIleGiris } from '@/lib/uyelik';
 
 // Üst menüdeki üyelik butonları: giriş yapılmadıysa Üye Ol / Giriş Yap / Google, yapıldıysa ad + Çıkış
-export default function UyelikMenusu() {
+// koyu: lacivert üst menüde kullanılır (yazılar beyaz)
+export default function UyelikMenusu({ koyu = false }: { koyu?: boolean }) {
   const [kullanici, setKullanici] = useState<User | null>(null);
   const [ad, setAd] = useState('');
 
@@ -33,6 +34,30 @@ export default function UyelikMenusu() {
         if (data?.ad) setAd(`${data.ad} ${data.soyad || ''}`.trim());
       });
   }, [kullanici]);
+
+  if (koyu) {
+    return kullanici ? (
+      <div className="flex items-center gap-2">
+        <span className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center text-sm">👤</span>
+        <span className="text-sm font-bold text-white max-w-[10rem] truncate">{ad}</span>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="ml-1 px-3 py-1.5 text-xs font-bold text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition"
+        >
+          Çıkış
+        </button>
+      </div>
+    ) : (
+      <div className="flex items-center gap-2">
+        <Link href="/giris" className="px-3 py-2 text-sm font-bold text-white/90 hover:text-white transition">
+          Giriş Yap
+        </Link>
+        <Link href="/uye-ol" className="px-4 py-2 text-sm font-bold text-[#1e3a5f] bg-amber-500 hover:bg-amber-400 rounded-lg transition">
+          Üye Ol
+        </Link>
+      </div>
+    );
+  }
 
   if (kullanici) {
     return (
