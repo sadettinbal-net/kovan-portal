@@ -77,7 +77,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
     : [];
 
   return (
-    <aside className="w-full md:w-44 flex-shrink-0 space-y-3">
+    <aside className="w-full md:w-56 flex-shrink-0 space-y-3">
       <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
         <button
           onClick={() => setSanayiOpen((o) => !o)}
@@ -114,7 +114,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
           <li>
             <Link
               href={firmalarUrl()}
-              className={`flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${!activeSite ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
+              className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-blue-50 transition-colors ${!activeSite ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
             >
               <span>{t.sidebarAll}</span>
               <span className="bg-[#1a3a6b] text-white text-[10px] px-1.5 py-0.5 rounded-full">{toplamFirma}</span>
@@ -124,7 +124,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
           {sanayiSiteleri.map((site) => {
             if (site.baslik) {
               return (
-                <li key={site.id} className="bg-[#eaf3ff] text-[#1a3a6b] px-3 py-1 text-[10px] font-bold uppercase tracking-wide border-b border-[#d0e6ff]">
+                <li key={site.id} className="bg-[#eaf3ff] text-[#1a3a6b] px-3 py-1.5 text-xs font-bold uppercase tracking-wide border-b border-[#d0e6ff]">
                   {site.baslik}
                 </li>
               );
@@ -140,15 +140,15 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
               <li key={site.id}>
                 <Link
                   href={isActive ? firmalarUrl() : firmalarUrl({ site: site.name })}
-                  className={`flex justify-between items-center py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${site.girintili ? "pl-6 pr-3" : "px-3"} ${isActive ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
+                  className={`flex justify-between items-center py-2 text-sm font-semibold border-b border-gray-100 hover:bg-blue-50 transition-colors ${site.girintili ? "pl-6 pr-3" : "px-3"} ${isActive ? "bg-blue-50 text-[#1a3a6b] font-bold" : "text-gray-800"}`}
                 >
                   <span className="leading-tight">
                     {site.girintili && <span className="text-gray-300 mr-1">└</span>}
                     {!!site.altSayisi && <span className="text-[#e8a020] mr-1">{acik ? "▾" : "▸"}</span>}
                     {site.name}
-                    {site.alt && <span className="block text-[10px] text-gray-400 font-normal">{site.alt}</span>}
+                    {site.alt && <span className="block text-xs text-gray-500 font-normal">{site.alt}</span>}
                   </span>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-1 flex-shrink-0 ${isActive ? "bg-[#1a3a6b] text-white" : "bg-gray-200 text-gray-700"}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ml-1 flex-shrink-0 ${isActive ? "bg-[#1a3a6b] text-white" : "bg-gray-200 text-gray-700"}`}>
                     {site.firmCount}
                   </span>
                 </Link>
