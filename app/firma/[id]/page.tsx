@@ -112,7 +112,7 @@ export default function FirmaDetayPage() {
     return (
       <>
         <nav className="text-sm text-gray-500 mb-4">
-          <Link href="/yeni-tasarim" className="hover:text-[#1a3a6b]">Anasayfa</Link>
+          <Link href="/" className="hover:text-[#1a3a6b]">Anasayfa</Link>
           <span className="mx-2">›</span>
           <Link href="/firmalar" className="hover:text-[#1a3a6b]">Firmalar</Link>
           <span className="mx-2">›</span>

@@ -16,7 +16,7 @@ export default function AltBilgi() {
           <ul className="space-y-2">
             <li><Link href="/firmalar" className="hover:text-white">Firmalar</Link></li>
             <li><Link href="/firma-ekle" className="hover:text-white">Firma Ekle</Link></li>
-            <li><Link href="/" className="hover:text-white">Konuma Göre Ara</Link></li>
+            <li><Link href="/konum" className="hover:text-white">Konuma Göre Ara</Link></li>
             <li><Link href="/iletisim" className="hover:text-white">İletişim</Link></li>
           </ul>
         </div>
@@ -25,6 +25,7 @@ export default function AltBilgi() {
           <ul className="space-y-2">
             <li><Link href="/uye-ol" className="hover:text-white">Üye Ol</Link></li>
             <li><Link href="/giris" className="hover:text-white">Giriş Yap</Link></li>
+            <li><Link href="/admin/dashboard" className="hover:text-white">Yönetici Girişi</Link></li>
           </ul>
         </div>
         <div>

@@ -7,9 +7,9 @@ import UyelikMenusu from '@/components/UyelikMenusu';
 
 // Yeni tasarımın lacivert üst menüsü
 export const MENU = [
-  { ad: 'Anasayfa', href: '/yeni-tasarim' },
+  { ad: 'Anasayfa', href: '/' },
   { ad: 'Firmalar', href: '/firmalar' },
-  { ad: 'Konuma Göre Ara', href: '/' },
+  { ad: 'Konuma Göre Ara', href: '/konum' },
   { ad: 'Firma Ekle', href: '/firma-ekle' },
   { ad: 'İletişim', href: '/iletisim' },
 ];
@@ -21,7 +21,7 @@ export default function UstMenu() {
   return (
     <header className="bg-[#1a3a6b] sticky top-0 z-40 shadow-md">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        <Link href="/yeni-tasarim" className="flex items-center gap-2 bg-white rounded-md px-3 py-1.5 shrink-0">
+        <Link href="/" className="flex items-center gap-2 bg-white rounded-md px-3 py-1.5 shrink-0">
           <span className="text-2xl">🐝</span>
           <span className="leading-none">
             <span className="block font-black text-[#1a3a6b] tracking-tight">KOVAN PORTAL</span>
