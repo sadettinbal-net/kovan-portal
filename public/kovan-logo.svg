@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120">
+  <!-- Kovan Portal logosu: turuncu petek + lacivert yazı -->
+  <rect width="240" height="120" rx="10" fill="#ffffff"/>
+  <g transform="translate(14 22)">
+    <polygon points="38,0 76,19 76,57 38,76 0,57 0,19" fill="#e8a020"/>
+    <polygon points="38,12 64,25 64,51 38,64 12,51 12,25" fill="#1a3a6b"/>
+    <polygon points="38,24 52,31 52,45 38,52 24,45 24,31" fill="#e8a020"/>
+  </g>
+  <text x="102" y="62" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="900" fill="#1a3a6b">KOVAN</text>
+  <text x="104" y="92" font-family="Arial, Helvetica, sans-serif" font-size="21" font-weight="700" letter-spacing="4" fill="#e8a020">PORTAL</text>
+</svg>

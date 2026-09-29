@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!firma) return { title: "Firma Bulunamadı" };
 
   return {
-    title: `${firma.ad} — Ümraniye Sanayi Sitesi`,
+    title: `${firma.ad} — Kovan Portal`,
     description: `${firma.ad} firması hakkında bilgi alın. Sektör: ${firma.sektor}. ${firma.sanayi_sitesi} bölgesinde hizmet vermektedir.`,
     alternates: {
       canonical: `/firmalar/${id}`,
@@ -96,7 +96,7 @@ export default async function FirmaKartPage({ params }: PageProps) {
         <div className="relative h-48 bg-gradient-to-br from-[#eaf3ff] to-[#d0e6ff] overflow-hidden select-none">
           <Image
             src={resimUrl}
-            alt={firma.sektor || "Ümraniye Sanayi Sitesi"}
+            alt={firma.sektor || "Kovan Portal"}
             fill
             className="object-cover"
             sizes="(max-width: 640px) 100vw, 576px"

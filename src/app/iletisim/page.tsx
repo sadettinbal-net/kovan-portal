@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { SITE_EPOSTA, SITE_KONUM, SITE_TELEFON } from "@/lib/site";
 
 export default function IletisimPage() {
   const { t } = useLanguage();
@@ -59,8 +60,8 @@ export default function IletisimPage() {
                 </div>
                 <div>
                   <div className="text-xs text-gray-500">{t.phoneTitle}</div>
-                  <a href="tel:05353594763" className="font-semibold text-[#1a3a6b] hover:underline">
-                    0535 359 47 63
+                  <a href={`tel:${SITE_TELEFON.replace(/\s/g, '')}`} className="font-semibold text-[#1a3a6b] hover:underline">
+                    {SITE_TELEFON}
                   </a>
                 </div>
               </div>
@@ -71,10 +72,10 @@ export default function IletisimPage() {
                 <div>
                   <div className="text-xs text-gray-500">{t.emailTitle}</div>
                   <a
-                    href="mailto:info@umraniyesanayisitesi.com"
+                    href={`mailto:${SITE_EPOSTA}`}
                     className="font-semibold text-[#1a3a6b] hover:underline text-sm"
                   >
-                    info@umraniyesanayisitesi.com
+                    {SITE_EPOSTA}
                   </a>
                 </div>
               </div>
@@ -84,7 +85,7 @@ export default function IletisimPage() {
                 </div>
                 <div>
                   <div className="text-xs text-gray-500">{t.locationTitle}</div>
-                  <div className="font-semibold text-[#1a3a6b]">Ümraniye, İstanbul</div>
+                  <div className="font-semibold text-[#1a3a6b]">{SITE_KONUM}</div>
                 </div>
               </div>
             </div>

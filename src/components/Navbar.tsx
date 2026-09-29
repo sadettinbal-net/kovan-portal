@@ -188,9 +188,9 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2 flex-shrink-0">
           <div className="bg-white rounded p-0.5">
             <Image
-              src="/sitelogo.png"
-              alt="Ümraniye Sanayi Sitesi"
-              width={60} height={30}
+              src="/kovan-logo.svg"
+              alt="Kovan Portal"
+              width={72} height={36}
               className={`w-auto transition-all duration-300 ${scrolled ? "h-7" : "h-9"}`}
               unoptimized
             />

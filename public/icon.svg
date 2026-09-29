@@ -1,8 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="80" fill="#1a3a6b"/>
-  <rect y="340" width="512" height="172" rx="0" fill="#0f2548"/>
-  <rect y="300" width="512" height="60" fill="#0f2548"/>
-  <text x="256" y="210" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="148" fill="white" text-anchor="middle" dominant-baseline="middle">ÜSS</text>
-  <text x="256" y="360" font-family="Arial, sans-serif" font-weight="700" font-size="48" fill="#e8a020" text-anchor="middle" dominant-baseline="middle" letter-spacing="6">REHBERİ</text>
-  <text x="256" y="440" font-family="Arial, sans-serif" font-weight="400" font-size="28" fill="#94a3b8" text-anchor="middle" dominant-baseline="middle">umraniyesanayisitesi.com</text>
+  <polygon points="256,56 414,146 414,326 256,416 98,326 98,146" fill="#e8a020"/>
+  <polygon points="256,120 358,178 358,294 256,352 154,294 154,178" fill="#1a3a6b"/>
+  <polygon points="256,184 302,210 302,262 256,288 210,262 210,210" fill="#e8a020"/>
+  <text x="256" y="468" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="54" fill="white" text-anchor="middle" letter-spacing="4">KOVAN</text>
 </svg>

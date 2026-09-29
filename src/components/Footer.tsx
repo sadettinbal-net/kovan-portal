@@ -2,8 +2,8 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { translations, Lang } from "@/lib/translations";
+import { SITE_EPOSTA, SITE_KONUM, SITE_URL } from "@/lib/site";
 
-const SITE_URL = "https://umraniyesanayisitesi.com";
 const QR_BASE = "https://api.qrserver.com/v1/create-qr-code";
 
 function qrUrl(data: string) {
@@ -64,13 +64,13 @@ export default async function Footer({ lang = "tr" }: { lang?: Lang }) {
             </li>
             <li className="flex items-center gap-2">
               <span>✉️</span>
-              <a href="mailto:info@umraniyesanayisitesi.com" className="hover:text-white transition-colors">
-                info@umraniyesanayisitesi.com
+              <a href={`mailto:${SITE_EPOSTA}`} className="hover:text-white transition-colors">
+                {SITE_EPOSTA}
               </a>
             </li>
             <li className="flex items-start gap-2">
               <span>📍</span>
-              <span>Ümraniye, İstanbul</span>
+              <span>{SITE_KONUM}</span>
             </li>
           </ul>
         </div>

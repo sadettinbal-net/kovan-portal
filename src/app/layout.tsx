@@ -9,6 +9,7 @@ import ZiyaretTakip from "@/components/ZiyaretTakip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnlineProvider } from "@/contexts/OnlineContext";
 import type { Lang } from "@/lib/translations";
+import { SITE_ADI, SITE_SLOGAN, SITE_URL } from "@/lib/site";
 
 // AdSense yayıncı ID'nizi buraya da girin (VideoReklam.tsx ile aynı olmalı)
 const ADSENSE_CLIENT = "ca-pub-8884760724680185";
@@ -20,23 +21,20 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Ümraniye Industrial Zone - Business Directory",
+  metadataBase: new URL(SITE_URL),
+  title: `${SITE_ADI} - ${SITE_SLOGAN}`,
   description:
-    "Ümraniye Industrial Zone business directory. Find companies in Küçük Sanayi, Kadosan, Kartal, Güven, Fatih Sultan Mehmet and other industrial zones.",
+    "Türkiye'deki sanayi sitelerindeki firmaları, ustaları ve ilanları tek platformda bulun. Oto tamir, kaporta, boya, elektrik ve daha fazlası.",
   keywords:
-    "umraniye industrial zone, business directory, auto repair, body shop, painter, electrician",
+    "sanayi sitesi, firma rehberi, oto tamir, kaporta, boyacı, oto elektrik, usta, sanayi ilanları",
   manifest: "/manifest.json",
   appleWebApp: {
     statusBarStyle: "default",
-    title: "ÜSS Rehber",
+    title: SITE_ADI,
   },
   icons: {
-    icon: [
-      { url: "/sitelogo.png", type: "image/png" },
-      { url: "/icon.svg", type: "image/svg+xml" },
-    ],
-    shortcut: "/sitelogo.png",
-    apple: [{ url: "/sitelogo.png" }],
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
   },
 };
 

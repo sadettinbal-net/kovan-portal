@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Gizlilik Politikası ve Çerez Politikası | Ümraniye Sanayi Sitesi",
-  description: "Ümraniye Sanayi Sitesi kişisel verilerin korunması, gizlilik politikası ve çerez kullanımı hakkında bilgilendirme.",
+  title: "Gizlilik Politikası ve Çerez Politikası | Kovan Portal",
+  description: "Kovan Portal kişisel verilerin korunması, gizlilik politikası ve çerez kullanımı hakkında bilgilendirme.",
 };
 
 export default function GizlilikPolitikasiPage() {

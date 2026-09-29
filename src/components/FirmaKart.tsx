@@ -51,7 +51,7 @@ export default async function FirmaKart({ firma }: { firma: FirmaKartData }) {
       <div className="relative h-[63px] phone:h-[98px] sm:h-[135px] bg-gradient-to-br from-[#eaf3ff] to-[#d0e6ff] overflow-hidden select-none">
         <Image
           src={resimUrl}
-          alt={firma.sektor || "Ümraniye Sanayi Sitesi"}
+          alt={firma.sektor || "Kovan Portal"}
           fill
           className="object-cover"
           sizes="(max-width: 768px) 33vw, 33vw"

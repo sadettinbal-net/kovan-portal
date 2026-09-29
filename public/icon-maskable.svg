@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Tam dolu arka plan (maskable için köşe yok) -->
+  <!-- Tam dolu arka plan (maskable için köşe yok), içerik güvenli alanda -->
   <rect width="512" height="512" fill="#1a3a6b"/>
-  <rect y="320" width="512" height="192" fill="#0f2548"/>
-  <text x="256" y="210" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="130" fill="white" text-anchor="middle" dominant-baseline="middle">ÜSS</text>
-  <text x="256" y="360" font-family="Arial, sans-serif" font-weight="700" font-size="44" fill="#e8a020" text-anchor="middle" dominant-baseline="middle" letter-spacing="5">REHBERİ</text>
+  <polygon points="256,110 380,180 380,320 256,390 132,320 132,180" fill="#e8a020"/>
+  <polygon points="256,160 336,205 336,295 256,340 176,295 176,205" fill="#1a3a6b"/>
+  <polygon points="256,210 292,230 292,270 256,290 220,270 220,230" fill="#e8a020"/>
 </svg>

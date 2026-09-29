@@ -1,7 +1,7 @@
 {
-  "name": "Ümraniye Sanayi Sitesi Rehberi",
-  "short_name": "ÜSS Rehber",
-  "description": "Ümraniye sanayi sitelerindeki firmaları tek platformda bulun. 500+ kayıtlı firma.",
+  "name": "Kovan Portal - Türkiye Sanayi Firma Rehberi",
+  "short_name": "Kovan Portal",
+  "description": "Türkiye'deki sanayi sitelerindeki firmaları, ustaları ve ilanları tek platformda bulun.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,7 +9,10 @@
   "theme_color": "#1a3a6b",
   "orientation": "portrait-primary",
   "lang": "tr",
-  "categories": ["business", "utilities"],
+  "categories": [
+    "business",
+    "utilities"
+  ],
   "icons": [
     {
       "src": "/icon.svg",

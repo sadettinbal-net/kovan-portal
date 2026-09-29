@@ -1,8 +1,9 @@
 import { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
+import { SITE_URL } from "@/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://www.umraniyesanayisitesi.com";
+  const baseUrl = SITE_URL;
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, priority: 1.0, changeFrequency: "daily" },
