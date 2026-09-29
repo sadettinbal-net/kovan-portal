@@ -25,6 +25,7 @@ export default function UyelerPage() {
   const [uyeler, setUyeler] = useState<Uye[]>([]);
   const [loading, setLoading] = useState(true);
   const [aramaMetni, setAramaMetni] = useState('');
+  const [siliniyor, setSiliniyor] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -53,6 +54,31 @@ export default function UyelerPage() {
       console.error('Üye yükleme hatası:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const uyeSil = async (uyeId: string, adSoyad: string) => {
+    if (!confirm(`${adSoyad} adlı üyeyi silmek istediğinize emin misiniz?`)) {
+      return;
+    }
+
+    setSiliniyor(uyeId);
+    try {
+      const response = await fetch(`/api/admin/uyeler?id=${uyeId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setUyeler(uyeler.filter((u) => u.id !== uyeId));
+        alert('Üye başarıyla silindi');
+      } else {
+        alert('Üye silinirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Silme hatası:', error);
+      alert('Üye silinirken bir hata oluştu');
+    } finally {
+      setSiliniyor(null);
     }
   };
 
@@ -114,12 +140,13 @@ export default function UyelerPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Üyelik</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kayıt / Son Giriş</th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">İşlemler</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filtreliUyeler.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                       {aramaMetni ? 'Arama sonucu bulunamadı' : 'Henüz üye yok'}
                     </td>
                   </tr>
@@ -150,6 +177,15 @@ export default function UyelerPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-600">
                         <div>Kayıt: {tarih(uye.created_at)}</div>
                         <div>Son giriş: {tarih(uye.son_giris)}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={() => uyeSil(uye.id, [uye.ad, uye.soyad].filter(Boolean).join(' ') || uye.email || 'Bu üye')}
+                          disabled={siliniyor === uye.id}
+                          className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-sm rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {siliniyor === uye.id ? 'Siliniyor...' : '🗑️ Sil'}
+                        </button>
                       </td>
                     </tr>
                   ))

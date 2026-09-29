@@ -38,3 +38,44 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
   }
 }
+
+// DELETE - Üye sil
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get('admin-session')?.value;
+    if (!token || token !== 'authenticated') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const uyeId = searchParams.get('id');
+
+    if (!uyeId) {
+      return NextResponse.json({ error: 'Üye ID gerekli' }, { status: 400 });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Önce auth kullanıcısını sil
+    const { error: authError } = await supabase.auth.admin.deleteUser(uyeId);
+    if (authError) {
+      console.error('Auth silme hatası:', authError);
+      // Auth hatası olsa bile devam et, çünkü uyeler tablosunu temizlemeliyiz
+    }
+
+    // Sonra uyeler tablosundan sil
+    const { error: dbError } = await supabase
+      .from('uyeler')
+      .delete()
+      .eq('id', uyeId);
+
+    if (dbError) {
+      return NextResponse.json({ error: dbError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Üye silme hatası:', error);
+    return NextResponse.json({ error: 'Sunucu hatası' }, { status: 500 });
+  }
+}

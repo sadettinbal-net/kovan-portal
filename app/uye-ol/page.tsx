@@ -66,8 +66,10 @@ export default function UyeOlPage() {
         // Supabase, kayıtlı e-postayı güvenlik için hata vermeden döndürür
         setError('Bu e-posta adresiyle zaten üye olunmuş');
       } else if (data.session) {
+        // Session varsa direkt giriş yaptır
         router.push('/');
       } else {
+        // Session yoksa (e-posta onayı bekliyorsa) mesaj göster
         setOnayBekleniyor(true);
       }
     } catch (err) {
@@ -92,14 +94,14 @@ export default function UyeOlPage() {
 
         {onayBekleniyor ? (
           <div className="text-center space-y-4">
-            <div className="text-6xl">📧</div>
-            <p className="text-gray-800 font-bold">Neredeyse bitti!</p>
+            <div className="text-6xl">✅</div>
+            <p className="text-gray-800 font-bold">Üyeliğiniz Onaylandı!</p>
             <p className="text-gray-600 text-sm">
-              <span className="font-semibold">{form.email}</span> adresine bir onay e-postası gönderdik. E-postadaki
-              bağlantıya tıklayınca üyeliğiniz tamamlanır.
+              <span className="font-semibold">{form.email}</span> adresine bir onay mesajı gönderdik.
+              Artık giriş yaparak firmanızı ekleyebilirsiniz.
             </p>
-            <Link href="/" className="inline-block text-yellow-700 font-bold hover:underline">
-              ← Ana sayfaya dön
+            <Link href="/giris" className="inline-block bg-yellow-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-yellow-600 transition">
+              Giriş Yap →
             </Link>
           </div>
         ) : (
