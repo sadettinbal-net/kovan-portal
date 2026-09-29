@@ -49,7 +49,7 @@ export default async function FirmaKartPage({ params }: PageProps) {
 
   const { data: firma } = await supabase
     .from("firmalar")
-    .select("id, ad, sektor, sanayi_sitesi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu")
+    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu")
     .eq("id", id)
     .single();
 
@@ -115,10 +115,18 @@ export default async function FirmaKartPage({ params }: PageProps) {
               <span>🏷️</span>
               <span>{firma.sektor}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span>🏭</span>
-              <span>{firma.sanayi_sitesi}</span>
-            </div>
+            {firma.sanayi_sitesi && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>🏭</span>
+                <span>{firma.sanayi_sitesi}</span>
+              </div>
+            )}
+            {(firma.ilce_adi || firma.il_adi) && (
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>🗺️</span>
+                <span>{[firma.ilce_adi, firma.il_adi].filter(Boolean).join(" / ")}</span>
+              </div>
+            )}
             {firma.adres && (
               <div className="flex items-start gap-2 text-sm text-gray-600">
                 <span>📍</span>

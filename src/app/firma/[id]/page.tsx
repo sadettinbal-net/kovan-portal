@@ -110,7 +110,10 @@ export default async function FirmaDetay({ params }: PageProps) {
             </div>
             <div className="bg-blue-50 rounded-lg p-4">
               <div className="text-xs text-gray-500 mb-1">{t.industrialZoneLabel}</div>
-              <div className="font-semibold text-[#1a3a6b]">{firma.sanayi_sitesi}</div>
+              <div className="font-semibold text-[#1a3a6b]">{firma.sanayi_sitesi || "—"}</div>
+              {(firma.ilce_adi || firma.il_adi) && (
+                <div className="text-sm text-gray-600 mt-0.5">📍 {[firma.ilce_adi, firma.il_adi].filter(Boolean).join(" / ")}</div>
+              )}
               {ortalamaPuan !== null && (
                 <div className="flex items-center gap-1.5 mt-2">
                   <span>
@@ -139,7 +142,7 @@ export default async function FirmaDetay({ params }: PageProps) {
               <span className="text-xl">👤</span>
               <div>
                 <div className="text-xs text-gray-500 mb-0.5">{t.ownerLabel}</div>
-                <div className="text-gray-700 text-sm font-medium">{firma.ad}</div>
+                <div className="text-gray-700 text-sm font-medium">{firma.sahip}</div>
               </div>
             </div>
           )}
@@ -327,9 +330,11 @@ export default async function FirmaDetay({ params }: PageProps) {
               {t.websiteBtn}
             </a>
           )}
-          <Link href={`/firmalar?site=${encodeURIComponent(firma.sanayi_sitesi)}`} className="bg-[#1a3a6b] hover:bg-[#2554a0] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
-            🏭 {firma.sanayi_sitesi} {t.siteCompanies}
-          </Link>
+          {firma.sanayi_sitesi && (
+            <Link href={`/firmalar?site=${encodeURIComponent(firma.sanayi_sitesi)}`} className="bg-[#1a3a6b] hover:bg-[#2554a0] text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              🏭 {firma.sanayi_sitesi} {t.siteCompanies}
+            </Link>
+          )}
         </div>
 
         <FirmaOwnerPanel
