@@ -10,6 +10,7 @@ import { GoogleLogo } from '@/components/UyelikMenusu';
 export default function GirisPage() {
   const [email, setEmail] = useState('');
   const [sifre, setSifre] = useState('');
+  const [sifreGoster, setSifreGoster] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -79,15 +80,25 @@ export default function GirisPage() {
             <label htmlFor="sifre" className="block text-sm font-medium text-gray-700 mb-1">
               Şifre
             </label>
-            <input
-              id="sifre"
-              type="password"
-              autoComplete="current-password"
-              value={sifre}
-              onChange={(e) => setSifre(e.target.value)}
-              required
-              className={inputClass}
-            />
+            <div className="relative">
+              <input
+                id="sifre"
+                type={sifreGoster ? 'text' : 'password'}
+                autoComplete="current-password"
+                value={sifre}
+                onChange={(e) => setSifre(e.target.value)}
+                required
+                className={`${inputClass} pr-20`}
+              />
+              <button
+                type="button"
+                onClick={() => setSifreGoster(!sifreGoster)}
+                aria-label={sifreGoster ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                className="absolute inset-y-0 right-0 px-4 text-sm font-medium text-yellow-700 hover:text-yellow-800"
+              >
+                {sifreGoster ? 'Gizle' : 'Göster'}
+              </button>
+            </div>
           </div>
 
           {error && (
