@@ -81,7 +81,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
       <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
         <button
           onClick={() => setSanayiOpen((o) => !o)}
-          className="w-full bg-[#1a3a6b] text-white px-3 py-1.5 font-semibold text-xs flex items-center justify-between lg:cursor-default"
+          className="w-full bg-[#1a3a6b] text-white px-3 py-2 font-bold text-sm flex items-center justify-between lg:cursor-default"
         >
           {t.industrialZones}
           <svg className={`w-3 h-3 transition-transform duration-200 lg:hidden ${sanayiOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -178,13 +178,13 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
       </div>
 
       <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
-        <div className="bg-[#e8a020] text-white px-3 py-1.5 font-semibold text-xs">{t.listingCategories}</div>
+        <div className="bg-[#e8a020] text-white px-3 py-2 font-bold text-sm">{t.listingCategories}</div>
         <ul>
           {ILAN_KATEGORILERI.map((ilan) => (
             <li key={ilan.id}>
               <Link
                 href={`/ilanlar?tip=${encodeURIComponent(ilan.name)}`}
-                className="flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-yellow-50 transition-colors text-gray-700"
+                className="flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors text-gray-800"
               >
                 <span className="leading-tight">{ilan.name}</span>
               </Link>
