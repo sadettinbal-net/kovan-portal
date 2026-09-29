@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import TurkiyeHaritasi from '@/components/TurkiyeHaritasi';
 import SokakHaritasi from '@/components/SokakHaritasi';
@@ -1048,6 +1049,11 @@ export default function Home() {
                 style={{ animationDelay: `${index * 50}ms` }}
                 className="group bg-white/90 backdrop-blur-sm p-6 rounded-3xl shadow-lg border-2 border-yellow-400/30 animate-in fade-in slide-in-from-bottom-4 duration-500 hover:shadow-2xl hover:scale-[1.02] hover:border-yellow-400 transition-all"
               >
+                {dukkan.kart_resmi && (
+                  <Link href={`/firma/${dukkan.id}`} className="block -mx-6 -mt-6 mb-4">
+                    <img src={dukkan.kart_resmi} alt={dukkan.dukkan_adi} className="w-full h-44 object-cover rounded-t-3xl" />
+                  </Link>
+                )}
                 <div className="flex justify-between items-start mb-3">
                   <h2 className="text-lg font-black text-gray-800 uppercase leading-tight">{dukkan.dukkan_adi}</h2>
                   <div className="flex flex-col gap-1.5 items-end">
@@ -1110,6 +1116,13 @@ export default function Home() {
                     <span className="text-xl">🗺️</span>
                     <span>Google Maps'te Aç</span>
                   </a>
+                  <Link
+                    href={`/firma/${dukkan.id}`}
+                    className="flex items-center justify-center w-full bg-gradient-to-r from-yellow-500 to-amber-500 text-white p-4 rounded-2xl font-bold gap-2 hover:from-yellow-400 hover:to-amber-400 transition-all shadow-lg hover:shadow-xl active:scale-95"
+                  >
+                    <span className="text-xl">📋</span>
+                    <span>Detaylar{dukkan.fotograflar?.length > 0 ? ` ve Fotoğraflar (${dukkan.fotograflar.length})` : ''}</span>
+                  </Link>
                 </div>
               </div>
             ))
