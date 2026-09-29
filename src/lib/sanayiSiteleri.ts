@@ -92,7 +92,8 @@ export async function sanayiSiteleriOzeti(firmalar: FirmaOzeti[]) {
   );
 }
 
-// Üst sitelerin altına alt sitelerini yerleştir; İstanbul'da Anadolu / Avrupa yakası başlıklarıyla grupla
+// Üst sitelerin altına alt sitelerini yerleştir ve başlıklarla grupla:
+// il seçiliyse (İstanbul) Avrupa / Asya yakası; il seçili değilse her il ayrı başlık, İstanbul iki yakaya bölünür
 export function siteSatirlari(siteler: SiteOzeti[], il?: string): SiteSatiri[] {
   const varOlanIdler = new Set(siteler.map((s) => s.id));
   const altlar = new Map<number, SiteOzeti[]>();
@@ -107,15 +108,43 @@ export function siteSatirlari(siteler: SiteOzeti[], il?: string): SiteSatiri[] {
       ...(s.id !== null ? altlar.get(s.id) || [] : []).map((a) => ({ tip: "site" as const, site: a, girintili: true })),
     ]);
 
-  if (!istanbulMu(il)) return agac(ustler);
+  const YAKA_SIRASI = ["Avrupa Yakası", "Asya Yakası", null] as const;
 
-  const satirlar: SiteSatiri[] = [];
-  for (const yaka of ["Anadolu Yakası", "Avrupa Yakası", null] as const) {
-    const grup = ustler.filter((s) => istanbulYakasi(s.ilce) === yaka);
-    if (grup.length === 0) continue;
-    satirlar.push({ tip: "baslik", ad: yaka || "Diğer" }, ...agac(grup));
+  if (il) {
+    if (!istanbulMu(il)) return agac(ustler);
+    return YAKA_SIRASI.flatMap((yaka) => {
+      const grup = ustler.filter((s) => istanbulYakasi(s.ilce) === yaka);
+      return grup.length ? [{ tip: "baslik" as const, ad: yaka || "Diğer" }, ...agac(grup)] : [];
+    });
   }
-  return satirlar;
+
+  // Tüm Türkiye: il başlıkları (en çok firması olan il üstte), İstanbul iki yakaya ayrılır
+  const gruplar = new Map<string, { sira: number; siteler: SiteOzeti[] }>();
+  for (const s of ustler) {
+    const ilAdi = s.il || "Diğer";
+    let ad = ilAdi;
+    let sira = 0;
+    if (istanbulMu(ilAdi)) {
+      const yaka = istanbulYakasi(s.ilce);
+      ad = `${ilAdi} – ${yaka || "Diğer"}`;
+      sira = YAKA_SIRASI.indexOf(yaka);
+    }
+    const grup = gruplar.get(ad) || { sira, siteler: [] };
+    grup.siteler.push(s);
+    gruplar.set(ad, grup);
+  }
+  const ilToplami = new Map<string, number>();
+  for (const s of ustler) ilToplami.set(s.il || "Diğer", (ilToplami.get(s.il || "Diğer") || 0) + s.toplamFirma);
+  const ilOf = (ad: string) => ad.split(" – ")[0];
+
+  return Array.from(gruplar.entries())
+    .sort(
+      ([a, ga], [b, gb]) =>
+        (ilToplami.get(ilOf(b)) || 0) - (ilToplami.get(ilOf(a)) || 0) ||
+        ilOf(a).localeCompare(ilOf(b), "tr") ||
+        ga.sira - gb.sira
+    )
+    .flatMap(([ad, grup]) => [{ tip: "baslik" as const, ad }, ...agac(grup.siteler)]);
 }
 
 // Bir site seçildiğinde firmaları: kendisi + alt siteleri

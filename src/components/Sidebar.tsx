@@ -52,7 +52,8 @@ export default async function Sidebar({ il }: { il?: string }) {
               id: i + 1,
               name: satir.site.name,
               firmCount: satir.site.toplamFirma,
-              alt: satir.girintili ? undefined : il ? satir.site.ilce : satir.site.il,
+              // İl zaten başlıkta yazıyor; altta ilçe
+              alt: satir.girintili ? undefined : satir.site.ilce,
               girintili: satir.girintili,
               // Alt siteler üst site seçilince açılır
               ust: satir.girintili ? ustAdi.get(satir.site.name) : undefined,
