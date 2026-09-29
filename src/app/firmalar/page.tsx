@@ -7,6 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { translations } from "@/lib/translations";
+import { siteVeAltSiteAdlari } from "@/lib/sanayiSiteleri";
 import type { Lang } from "@/lib/translations";
 
 function adminClient() {
@@ -79,7 +80,8 @@ export default async function FirmalarPage(props: PageProps) {
     .order("ad");
 
   if (il) query = query.eq("il_adi", il);
-  if (site) query = query.eq("sanayi_sitesi", site);
+  // Üst site seçildiyse içindeki sitelerin firmaları da gelir
+  if (site) query = query.in("sanayi_sitesi", await siteVeAltSiteAdlari(site));
   if (kategori) query = query.eq("sektor", kategori);
 
   const tumFirmalarArr: import("@/lib/supabase").Firma[] = [];

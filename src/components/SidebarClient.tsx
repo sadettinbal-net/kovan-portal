@@ -7,7 +7,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
 
 
-type SanayiSitesi = { id: number; name: string; firmCount: number; alt?: string };
+// baslik: grup başlığı satırı (ör. Anadolu Yakası); girintili: bir üst sitenin içindeki site
+type SanayiSitesi = { id: number; name: string; firmCount: number; alt?: string; baslik?: string; girintili?: boolean };
 type KategoriSayisi = Record<string, number>;
 
 interface Props {
@@ -111,14 +112,22 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
           </li>
 
           {sanayiSiteleri.map((site) => {
+            if (site.baslik) {
+              return (
+                <li key={site.id} className="bg-[#eaf3ff] text-[#1a3a6b] px-3 py-1 text-[10px] font-bold uppercase tracking-wide border-b border-[#d0e6ff]">
+                  {site.baslik}
+                </li>
+              );
+            }
             const isActive = activeSite === site.name;
             return (
               <li key={site.id}>
                 <Link
                   href={isActive ? firmalarUrl() : firmalarUrl({ site: site.name })}
-                  className={`flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${isActive ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
+                  className={`flex justify-between items-center py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${site.girintili ? "pl-6 pr-3" : "px-3"} ${isActive ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
                 >
                   <span className="leading-tight">
+                    {site.girintili && <span className="text-gray-300 mr-1">└</span>}
                     {site.name}
                     {site.alt && <span className="block text-[10px] text-gray-400 font-normal">{site.alt}</span>}
                   </span>

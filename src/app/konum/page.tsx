@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import FirmaKart from "@/components/FirmaKart";
 import { supabase } from "@/lib/supabase";
 import KonumFiltre from "./KonumFiltre";
-import { onayliFirmaOzetleri, sanayiSiteleriOzeti } from "@/lib/sanayiSiteleri";
+import { onayliFirmaOzetleri, sanayiSiteleriOzeti, siteSatirlari, type SiteOzeti } from "@/lib/sanayiSiteleri";
 import BolgeHaritasi, { type HaritaSorgusu } from "@/components/BolgeHaritasi";
 
 export const dynamic = "force-dynamic";
@@ -44,18 +44,27 @@ export default async function KonumPage(props: PageProps) {
     toplam = count || 0;
   }
 
-  // Seçilen il/ilçedeki sanayi siteleri
-  let siteler: { id: number; site_adi: string; ilce_adi: string | null }[] = [];
+  // Seçilen il/ilçedeki sanayi siteleri: gruplar (İstanbul'da yakalar) → üst siteler → içindeki siteler
+  const buyuk = (s: string) => s.toLocaleUpperCase("tr-TR");
+  const siteGruplari: { baslik: string | null; siteler: { site: SiteOzeti; altlar: SiteOzeti[] }[] }[] = [];
+  let siteSayisi = 0;
   if (il) {
-    let sorgu = supabase
-      .from("sanayi_siteleri")
-      .select("id, site_adi, ilce_adi")
-      .eq("il_adi", il.toLocaleUpperCase("tr-TR"))
-      .order("site_adi");
-    if (ilce) sorgu = sorgu.eq("ilce_adi", ilce.toLocaleUpperCase("tr-TR"));
-    const { data } = await sorgu;
-    siteler = data || [];
+    const tumSiteler = await sanayiSiteleriOzeti(await onayliFirmaOzetleri());
+    const bolgedekiler = tumSiteler.filter(
+      (s) => s.id !== null && buyuk(s.il) === buyuk(il) && (!ilce || buyuk(s.ilce) === buyuk(ilce))
+    );
+    siteSayisi = bolgedekiler.length;
+    for (const satir of siteSatirlari(bolgedekiler, il)) {
+      if (satir.tip === "baslik") siteGruplari.push({ baslik: satir.ad, siteler: [] });
+      else {
+        if (siteGruplari.length === 0) siteGruplari.push({ baslik: null, siteler: [] });
+        const grup = siteGruplari[siteGruplari.length - 1];
+        if (satir.girintili) grup.siteler[grup.siteler.length - 1]?.altlar.push(satir.site);
+        else grup.siteler.push({ site: satir.site, altlar: [] });
+      }
+    }
   }
+  const siteLinki = (ad: string) => `/firmalar?il=${encodeURIComponent(il)}&site=${encodeURIComponent(ad)}`;
 
   const bolge = [ilce, il].filter(Boolean).join(" / ");
 
@@ -137,21 +146,53 @@ export default async function KonumPage(props: PageProps) {
         <div className="space-y-8">
           <BolgeHaritasi sorgular={haritaSorgulari} etiket={haritaEtiketi} />
 
-          {siteler.length > 0 && (
+          {siteSayisi > 0 && (
             <section>
               <h2 className="text-lg font-bold text-[#1a3a6b] mb-3">
-                🏭 {bolge} Sanayi Siteleri <span className="text-sm font-normal text-gray-500">({siteler.length})</span>
+                🏭 {bolge} Sanayi Siteleri <span className="text-sm font-normal text-gray-500">({siteSayisi})</span>
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {siteler.map((s) => (
-                  <Link
-                    key={s.id}
-                    href={`/firmalar?il=${encodeURIComponent(il)}&site=${encodeURIComponent(s.site_adi)}`}
-                    className="bg-white rounded-lg border border-[#dde3ec] hover:border-[#1a3a6b] hover:shadow-sm px-4 py-3 transition"
-                  >
-                    <div className="font-semibold text-[#1a3a6b] text-sm">{s.site_adi}</div>
-                    {s.ilce_adi && !ilce && <div className="text-xs text-gray-500 mt-0.5">{s.ilce_adi}</div>}
-                  </Link>
+              <div className="space-y-5">
+                {siteGruplari.map((grup, gi) => (
+                  <div key={grup.baslik || gi}>
+                    {grup.baslik && (
+                      <h3 className="text-sm font-bold uppercase tracking-wide text-[#2554a0] mb-2">
+                        {grup.baslik} <span className="font-normal text-gray-400">({grup.siteler.reduce((t, s) => t + 1 + s.altlar.length, 0)})</span>
+                      </h3>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {grup.siteler.map(({ site, altlar }) => (
+                        <div
+                          key={`${site.id}-${site.name}`}
+                          className={`bg-white rounded-lg border border-[#dde3ec] ${altlar.length ? "sm:col-span-2 lg:col-span-3" : ""}`}
+                        >
+                          <Link href={siteLinki(site.name)} className="block px-4 py-3 hover:bg-[#f4f6f9] rounded-lg transition">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-semibold text-[#1a3a6b] text-sm">{site.name}</span>
+                              <span className="text-xs text-gray-500 flex-shrink-0">{site.toplamFirma} firma</span>
+                            </div>
+                            {site.ilce && !ilce && <div className="text-xs text-gray-500 mt-0.5">{site.ilce}</div>}
+                          </Link>
+                          {altlar.length > 0 && (
+                            <div className="border-t border-[#dde3ec] px-4 py-3">
+                              <div className="text-xs text-gray-500 mb-2">İçindeki sanayi siteleri ({altlar.length})</div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                                {altlar.map((a) => (
+                                  <Link
+                                    key={`${a.id}-${a.name}`}
+                                    href={siteLinki(a.name)}
+                                    className="flex items-center justify-between gap-2 rounded-md border border-[#dde3ec] hover:border-[#1a3a6b] px-3 py-2 text-sm transition"
+                                  >
+                                    <span className="text-[#1a3a6b]">{a.name}</span>
+                                    <span className="text-xs text-gray-500 flex-shrink-0">{a.firmCount}</span>
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </section>

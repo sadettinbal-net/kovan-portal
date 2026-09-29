@@ -1,10 +1,23 @@
 import { supabase } from "@/lib/supabase";
+import { istanbulMu, istanbulYakasi } from "@/lib/istanbul";
 
 // Kovan'ın sanayi siteleri listesi (sanayi_siteleri tablosu) + her sitedeki onaylı firma sayısı.
 // Firmaların sanayi_sitesi alanı site adını tutar; tabloda olmayan site adları da (ör. aktarılan firmalar) listeye eklenir.
+// Bir site başka bir sitenin içinde olabilir (ust_site_id); üst sitenin toplamına alt sitelerin firmaları da sayılır.
 
-export type SiteOzeti = { id: number | null; name: string; il: string; ilce: string; firmCount: number };
+export type SiteOzeti = {
+  id: number | null;
+  name: string;
+  il: string;
+  ilce: string;
+  ustId: number | null;
+  firmCount: number; // sadece bu sitede kayıtlı firmalar
+  toplamFirma: number; // alt siteler dahil
+};
 export type FirmaOzeti = { sanayi_sitesi: string | null; sektor: string | null; il_adi: string | null };
+
+// Listede gösterilecek satır: grup başlığı (ör. Anadolu Yakası) ya da site (alt siteler girintili)
+export type SiteSatiri = { tip: "baslik"; ad: string } | { tip: "site"; site: SiteOzeti; girintili: boolean };
 
 export async function onayliFirmaOzetleri() {
   const tumData: FirmaOzeti[] = [];
@@ -40,7 +53,7 @@ function ilceYazimi(buyuk: string | null) {
 
 export async function sanayiSiteleriOzeti(firmalar: FirmaOzeti[]) {
   const [{ data: siteler }, { data: iller }] = await Promise.all([
-    supabase.from("sanayi_siteleri").select("id, site_adi, il_adi, ilce_adi"),
+    supabase.from("sanayi_siteleri").select("id, site_adi, il_adi, ilce_adi, ust_site_id"),
     supabase.from("iller").select("sehir_adi"),
   ]);
   const ilAdi = ilAdiEslestirici(iller || []);
@@ -58,16 +71,57 @@ export async function sanayiSiteleriOzeti(firmalar: FirmaOzeti[]) {
     name: s.site_adi,
     il: ilAdi(s.il_adi),
     ilce: ilceYazimi(s.ilce_adi),
+    ustId: s.ust_site_id ?? null,
     firmCount: firmaSayisi.get(s.site_adi) || 0,
+    toplamFirma: 0,
   }));
 
   // Tabloda olmayan ama firmalarda geçen site adları
   const bilinen = new Set(sonuc.map((s) => s.name));
   for (const [name, firmCount] of firmaSayisi) {
-    if (!bilinen.has(name)) sonuc.push({ id: null, name, il: firmaIli.get(name) || "", ilce: "", firmCount });
+    if (!bilinen.has(name)) sonuc.push({ id: null, name, il: firmaIli.get(name) || "", ilce: "", ustId: null, firmCount, toplamFirma: 0 });
   }
 
+  // Toplam = kendi firmaları + alt sitelerin firmaları
+  const altToplam = new Map<number, number>();
+  for (const s of sonuc) if (s.ustId !== null) altToplam.set(s.ustId, (altToplam.get(s.ustId) || 0) + s.firmCount);
+  for (const s of sonuc) s.toplamFirma = s.firmCount + (s.id !== null ? altToplam.get(s.id) || 0 : 0);
+
   return sonuc.sort(
-    (a, b) => b.firmCount - a.firmCount || a.il.localeCompare(b.il, "tr") || a.name.localeCompare(b.name, "tr")
+    (a, b) => b.toplamFirma - a.toplamFirma || a.il.localeCompare(b.il, "tr") || a.name.localeCompare(b.name, "tr")
   );
+}
+
+// Üst sitelerin altına alt sitelerini yerleştir; İstanbul'da Anadolu / Avrupa yakası başlıklarıyla grupla
+export function siteSatirlari(siteler: SiteOzeti[], il?: string): SiteSatiri[] {
+  const varOlanIdler = new Set(siteler.map((s) => s.id));
+  const altlar = new Map<number, SiteOzeti[]>();
+  for (const s of siteler) {
+    if (s.ustId !== null && varOlanIdler.has(s.ustId)) altlar.set(s.ustId, [...(altlar.get(s.ustId) || []), s]);
+  }
+  const ustler = siteler.filter((s) => s.ustId === null || !varOlanIdler.has(s.ustId));
+
+  const agac = (liste: SiteOzeti[]): SiteSatiri[] =>
+    liste.flatMap((s) => [
+      { tip: "site" as const, site: s, girintili: false },
+      ...(s.id !== null ? altlar.get(s.id) || [] : []).map((a) => ({ tip: "site" as const, site: a, girintili: true })),
+    ]);
+
+  if (!istanbulMu(il)) return agac(ustler);
+
+  const satirlar: SiteSatiri[] = [];
+  for (const yaka of ["Anadolu Yakası", "Avrupa Yakası", null] as const) {
+    const grup = ustler.filter((s) => istanbulYakasi(s.ilce) === yaka);
+    if (grup.length === 0) continue;
+    satirlar.push({ tip: "baslik", ad: yaka || "Diğer" }, ...agac(grup));
+  }
+  return satirlar;
+}
+
+// Bir site seçildiğinde firmaları: kendisi + alt siteleri
+export async function siteVeAltSiteAdlari(siteAdi: string) {
+  const { data: site } = await supabase.from("sanayi_siteleri").select("id").eq("site_adi", siteAdi).limit(1).maybeSingle();
+  if (!site) return [siteAdi];
+  const { data: altlar } = await supabase.from("sanayi_siteleri").select("site_adi").eq("ust_site_id", site.id);
+  return [siteAdi, ...(altlar || []).map((a) => a.site_adi)];
 }

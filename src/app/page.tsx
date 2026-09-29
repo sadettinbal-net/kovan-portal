@@ -28,7 +28,8 @@ export default async function Home() {
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
   const t = translations[lang];
   const tumSiteler = await sanayiSiteleriOzeti(await onayliFirmaOzetleri());
-  const sanayiSiteleri = tumSiteler.slice(0, ANASAYFA_SITE_SAYISI);
+  // Sadece ana siteler (başka bir sitenin içinde olmayanlar); sayılarına alt siteler dahil
+  const sanayiSiteleri = tumSiteler.filter((s) => s.ustId === null).slice(0, ANASAYFA_SITE_SAYISI);
 
   const { data: ozelFirmalar } = await supabase
     .from("firmalar")
@@ -132,7 +133,7 @@ export default async function Home() {
                     {site.il && (
                       <div className="text-xs text-gray-400 mt-0.5">{[site.ilce, site.il].filter(Boolean).join(" / ")}</div>
                     )}
-                    <div className="text-sm text-gray-500 mt-1">{site.firmCount} {t.companiesWord}</div>
+                    <div className="text-sm text-gray-500 mt-1">{site.toplamFirma} {t.companiesWord}</div>
                   </Link>
                 ))}
               </div>
