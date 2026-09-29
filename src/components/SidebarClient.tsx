@@ -1,0 +1,178 @@
+"use client";
+
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
+
+
+type SanayiSitesi = { id: number; name: string; firmCount: number };
+type KategoriSayisi = Record<string, number>;
+
+interface Props {
+  sanayiSiteleri: SanayiSitesi[];
+  kategoriSayilariPerSite: Record<string, KategoriSayisi>;
+  tumKategoriler: string[];
+  toplamFirma: number;
+}
+
+export default function SidebarClient({ sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, toplamFirma }: Props) {
+  const { t } = useLanguage();
+  const ILAN_KATEGORILERI = [
+    { id: "arac", name: t.catVehicle },
+    { id: "dukkan", name: t.catShop },
+    { id: "elaman", name: t.catJob },
+    { id: "yedekparca-arayan", name: t.catPartsWanted },
+    { id: "yedekparca-satan", name: t.catPartsSelling },
+    { id: "imalat", name: t.catManufacturing },
+  ];
+  const searchParams = useSearchParams();
+  const activeSite = searchParams.get("site") || "";
+  const activeKategori = searchParams.get("kategori") || "";
+  const [sanayiOpen, setSanayiOpen] = useState(false);
+
+  useEffect(() => {
+    setSanayiOpen(window.innerWidth >= 768);
+  }, []);
+
+  // Yöneticinin tanımladığı kenar çubuğu reklamı (varsa Google yerine bu gösterilir)
+  const { reklam: sbReklam, yuklendi: sbYuklendi } = useOzelReklam("sidebar", activeKategori || undefined);
+  const sbPushed = useRef(false);
+  useEffect(() => {
+    if (!sbYuklendi || sbReklam) return;
+    if (sbPushed.current) return;
+    sbPushed.current = true;
+    try {
+      (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch {
+      // AdSense scripti henüz yüklenmedi
+    }
+  }, [sbYuklendi, sbReklam]);
+
+  const kategoriSayilari = activeSite ? (kategoriSayilariPerSite[activeSite] || {}) : {};
+  const gorunurKategoriler = activeSite
+    ? tumKategoriler.filter((k) => (kategoriSayilari[k] || 0) > 0)
+    : [];
+
+  return (
+    <aside className="w-full md:w-44 flex-shrink-0 space-y-3">
+      <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
+        <button
+          onClick={() => setSanayiOpen((o) => !o)}
+          className="w-full bg-[#1a3a6b] text-white px-3 py-1.5 font-semibold text-xs flex items-center justify-between lg:cursor-default"
+        >
+          {t.industrialZones}
+          <svg className={`w-3 h-3 transition-transform duration-200 lg:hidden ${sanayiOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        <ul className={`${sanayiOpen ? "block" : "hidden"} lg:block`}>
+          <li>
+            <Link
+              href="/firmalar"
+              className={`flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${!activeSite ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
+            >
+              <span>{t.sidebarAll}</span>
+              <span className="bg-[#1a3a6b] text-white text-[10px] px-1.5 py-0.5 rounded-full">{toplamFirma}</span>
+            </Link>
+          </li>
+
+          {sanayiSiteleri.map((site) => {
+            const isActive = activeSite === site.name;
+            return (
+              <li key={site.id}>
+                <Link
+                  href={isActive ? "/firmalar" : `/firmalar?site=${encodeURIComponent(site.name)}`}
+                  className={`flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${isActive ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
+                >
+                  <span className="leading-tight">{site.name}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-1 flex-shrink-0 ${isActive ? "bg-[#1a3a6b] text-white" : "bg-gray-200 text-gray-700"}`}>
+                    {site.firmCount}
+                  </span>
+                </Link>
+
+                {isActive && gorunurKategoriler.length > 0 && (
+                  <ul className="bg-blue-100 border-b border-blue-200">
+                    {gorunurKategoriler.map((kat) => (
+                      <li key={kat}>
+                        <Link
+                          href={`/firmalar?site=${encodeURIComponent(activeSite)}&kategori=${encodeURIComponent(kat)}`}
+                          className={`flex justify-between items-center pl-5 pr-2 py-1.5 text-[10px] border-b border-blue-200/70 hover:bg-blue-200 transition-colors ${activeKategori === kat ? "text-[#1a3a6b] font-semibold bg-blue-200" : "text-gray-700"}`}
+                        >
+                          <span className="leading-tight">{kat}</span>
+                          <span className="bg-white text-gray-600 text-[9px] px-1 py-0.5 rounded-full ml-1 flex-shrink-0 border border-blue-300">
+                            {kategoriSayilari[kat]}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
+        <div className="bg-[#e8a020] text-white px-3 py-1.5 font-semibold text-xs">{t.listingCategories}</div>
+        <ul>
+          {ILAN_KATEGORILERI.map((ilan) => (
+            <li key={ilan.id}>
+              <Link
+                href={`/ilanlar?tip=${encodeURIComponent(ilan.name)}`}
+                className="flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-yellow-50 transition-colors text-gray-700"
+              >
+                <span className="leading-tight">{ilan.name}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Reklam Alanı (özel reklam varsa Google yerine o gösterilir) */}
+      <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
+        <div className="bg-gray-100 text-gray-500 px-3 py-1.5 font-semibold text-xs text-center border-b border-[#dde3ec]">
+          Reklam
+        </div>
+        <div className="p-2">
+          {sbReklam ? (
+            sbReklam.link_url ? (
+              <a
+                href={sbReklam.link_url}
+                target="_blank"
+                rel="noopener sponsored"
+                onClick={() => reklamTikla(sbReklam.id)}
+              >
+                <img
+                  src={sbReklam.gorsel_url}
+                  alt={sbReklam.baslik || "Reklam"}
+                  className="w-full h-auto rounded"
+                  loading="lazy"
+                />
+              </a>
+            ) : (
+              <img
+                src={sbReklam.gorsel_url}
+                alt={sbReklam.baslik || "Reklam"}
+                className="w-full h-auto rounded"
+                loading="lazy"
+              />
+            )
+          ) : sbYuklendi ? (
+            <ins
+              className="adsbygoogle"
+              style={{ display: "block" }}
+              data-ad-client="ca-pub-8884760724680185"
+              data-ad-slot="7684004731"
+              data-ad-format="auto"
+              data-full-width-responsive="true"
+            />
+          ) : null}
+        </div>
+      </div>
+    </aside>
+  );
+}

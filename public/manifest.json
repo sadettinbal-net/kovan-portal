@@ -1,0 +1,44 @@
+{
+  "name": "Ümraniye Sanayi Sitesi Rehberi",
+  "short_name": "ÜSS Rehber",
+  "description": "Ümraniye sanayi sitelerindeki firmaları tek platformda bulun. 500+ kayıtlı firma.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1a3a6b",
+  "theme_color": "#1a3a6b",
+  "orientation": "portrait-primary",
+  "lang": "tr",
+  "categories": ["business", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tüm Firmalar",
+      "url": "/firmalar",
+      "description": "Sanayi sitesi firma listesi"
+    },
+    {
+      "name": "İlanlar",
+      "url": "/ilanlar",
+      "description": "Güncel ilanlar"
+    },
+    {
+      "name": "Firma Ekle",
+      "url": "/firma-ekle",
+      "description": "Firmanı sisteme ekle"
+    }
+  ]
+}
