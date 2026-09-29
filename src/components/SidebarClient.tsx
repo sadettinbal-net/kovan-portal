@@ -8,7 +8,17 @@ import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
 
 
 // baslik: grup başlığı satırı (ör. Anadolu Yakası); girintili: bir üst sitenin içindeki site
-type SanayiSitesi = { id: number; name: string; firmCount: number; alt?: string; baslik?: string; girintili?: boolean };
+// ust: içinde bulunduğu sitenin adı (o site ya da kardeşlerinden biri seçiliyken görünür); altSayisi: içindeki site sayısı
+type SanayiSitesi = {
+  id: number;
+  name: string;
+  firmCount: number;
+  alt?: string;
+  baslik?: string;
+  girintili?: boolean;
+  ust?: string;
+  altSayisi?: number;
+};
 type KategoriSayisi = Record<string, number>;
 
 interface Props {
@@ -120,6 +130,12 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
               );
             }
             const isActive = activeSite === site.name;
+            // Alt site: sadece üst sitesi ya da aynı üstün başka bir alt sitesi seçiliyken göster
+            const acikUst =
+              activeSite !== "" &&
+              (activeSite === site.ust || sanayiSiteleri.some((s) => s.name === activeSite && s.ust === site.ust));
+            if (site.girintili && !acikUst) return null;
+            const acik = !!site.altSayisi && (isActive || sanayiSiteleri.some((s) => s.name === activeSite && s.ust === site.name));
             return (
               <li key={site.id}>
                 <Link
@@ -128,6 +144,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
                 >
                   <span className="leading-tight">
                     {site.girintili && <span className="text-gray-300 mr-1">└</span>}
+                    {!!site.altSayisi && <span className="text-[#e8a020] mr-1">{acik ? "▾" : "▸"}</span>}
                     {site.name}
                     {site.alt && <span className="block text-[10px] text-gray-400 font-normal">{site.alt}</span>}
                   </span>

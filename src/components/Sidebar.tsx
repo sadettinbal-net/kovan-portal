@@ -54,6 +54,9 @@ export default async function Sidebar({ il }: { il?: string }) {
               firmCount: satir.site.toplamFirma,
               alt: satir.girintili ? undefined : il ? satir.site.ilce : satir.site.il,
               girintili: satir.girintili,
+              // Alt siteler üst site seçilince açılır
+              ust: satir.girintili ? ustAdi.get(satir.site.name) : undefined,
+              altSayisi: satir.site.id !== null ? tumSiteler.filter((s) => s.ustId === satir.site.id).length : 0,
             }
       )}
       kategoriSayilariPerSite={kategoriPerSite}

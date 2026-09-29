@@ -173,9 +173,12 @@ export default async function KonumPage(props: PageProps) {
                             {site.ilce && !ilce && <div className="text-xs text-gray-500 mt-0.5">{site.ilce}</div>}
                           </Link>
                           {altlar.length > 0 && (
-                            <div className="border-t border-[#dde3ec] px-4 py-3">
-                              <div className="text-xs text-gray-500 mb-2">İçindeki sanayi siteleri ({altlar.length})</div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            <details className="group border-t border-[#dde3ec] px-4 py-3">
+                              <summary className="cursor-pointer list-none text-sm font-semibold text-[#e8a020] hover:text-[#c8851a] select-none">
+                                <span className="inline-block transition-transform group-open:rotate-90 mr-1">▸</span>
+                                İçindeki sanayi siteleri ({altlar.length})
+                              </summary>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-3">
                                 {altlar.map((a) => (
                                   <Link
                                     key={`${a.id}-${a.name}`}
@@ -187,7 +190,7 @@ export default async function KonumPage(props: PageProps) {
                                   </Link>
                                 ))}
                               </div>
-                            </div>
+                            </details>
                           )}
                         </div>
                       ))}
