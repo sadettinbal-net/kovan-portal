@@ -19,7 +19,6 @@ export default function UyeOlPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [onayBekleniyor, setOnayBekleniyor] = useState(false);
   const router = useRouter();
 
   const alan = (key: keyof typeof form) => ({
@@ -46,31 +45,37 @@ export default function UyeOlPage() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
+      // Hesap sunucuda e-posta onayı beklemeden açılır
+      const response = await fetch('/api/uye-ol', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ad: form.ad,
+          soyad: form.soyad,
+          telefon: form.telefon,
+          cep_telefonu: form.cep_telefonu,
+          email: form.email,
+          sifre: form.sifre,
+        }),
+      });
+      const sonuc = await response.json();
+
+      if (!response.ok) {
+        setError(uyelikHatasi(sonuc.error || 'Bir hata oluştu'));
+        return;
+      }
+
+      // Direkt giriş yaptır
+      const { error } = await supabase.auth.signInWithPassword({
         email: form.email.trim(),
         password: form.sifre,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: {
-            ad: form.ad.trim(),
-            soyad: form.soyad.trim(),
-            telefon: form.telefon.trim(),
-            cep_telefonu: form.cep_telefonu.trim(),
-          },
-        },
       });
 
       if (error) {
         setError(uyelikHatasi(error.message));
-      } else if (data.user && data.user.identities?.length === 0) {
-        // Supabase, kayıtlı e-postayı güvenlik için hata vermeden döndürür
-        setError('Bu e-posta adresiyle zaten üye olunmuş');
-      } else if (data.session) {
-        // Session varsa direkt giriş yaptır
-        router.push('/');
       } else {
-        // Session yoksa (e-posta onayı bekliyorsa) mesaj göster
-        setOnayBekleniyor(true);
+        router.push('/');
+        router.refresh();
       }
     } catch (err) {
       setError('Bir hata oluştu');
@@ -92,20 +97,7 @@ export default function UyeOlPage() {
           <p className="text-gray-600 mt-2">Üye Ol</p>
         </div>
 
-        {onayBekleniyor ? (
-          <div className="text-center space-y-4">
-            <div className="text-6xl">✅</div>
-            <p className="text-gray-800 font-bold">Üyeliğiniz Onaylandı!</p>
-            <p className="text-gray-600 text-sm">
-              <span className="font-semibold">{form.email}</span> adresine bir onay mesajı gönderdik.
-              Artık giriş yaparak firmanızı ekleyebilirsiniz.
-            </p>
-            <Link href="/giris" className="inline-block bg-yellow-500 text-white px-6 py-3 rounded-lg font-bold hover:bg-yellow-600 transition">
-              Giriş Yap →
-            </Link>
-          </div>
-        ) : (
-          <>
+        <>
             <button
               type="button"
               onClick={googleIleGiris}
@@ -220,7 +212,6 @@ export default function UyeOlPage() {
               </Link>
             </p>
           </>
-        )}
       </div>
     </div>
   );
