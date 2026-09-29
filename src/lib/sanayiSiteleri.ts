@@ -108,7 +108,7 @@ export function siteSatirlari(siteler: SiteOzeti[], il?: string): SiteSatiri[] {
       ...(s.id !== null ? altlar.get(s.id) || [] : []).map((a) => ({ tip: "site" as const, site: a, girintili: true })),
     ]);
 
-  const YAKA_SIRASI = ["Avrupa Yakası", "Asya Yakası", null] as const;
+  const YAKA_SIRASI = ["Avrupa Yakası", "Anadolu Yakası", null] as const;
 
   if (il) {
     if (!istanbulMu(il)) return agac(ustler);

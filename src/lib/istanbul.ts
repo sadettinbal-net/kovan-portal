@@ -9,7 +9,7 @@ const ANADOLU_YAKASI = new Set([
   'SULTANBEYLİ', 'ŞİLE', 'TUZLA', 'ÜMRANİYE', 'ÜSKÜDAR',
 ]);
 
-export type Yaka = 'Asya Yakası' | 'Avrupa Yakası';
+export type Yaka = 'Anadolu Yakası' | 'Avrupa Yakası';
 
 export function istanbulMu(il: string | null | undefined) {
   return !!il && il.toLocaleUpperCase('tr-TR') === 'İSTANBUL';
@@ -18,7 +18,7 @@ export function istanbulMu(il: string | null | undefined) {
 export function istanbulYakasi(ilce: string | null | undefined): Yaka | null {
   if (!ilce) return null;
   const buyuk = ilce.toLocaleUpperCase('tr-TR');
-  if (ANADOLU_YAKASI.has(buyuk)) return 'Asya Yakası';
+  if (ANADOLU_YAKASI.has(buyuk)) return 'Anadolu Yakası';
   if (AVRUPA_YAKASI.has(buyuk)) return 'Avrupa Yakası';
   return null;
 }
