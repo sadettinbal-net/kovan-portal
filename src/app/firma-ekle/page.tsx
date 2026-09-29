@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { SEKTORLER } from '@/lib/sektorler';
+import KonumSecici, { BOS_KONUM, type Konum } from '@/components/KonumSecici';
 
 type Durum = { tip: 'basari' | 'hata'; mesaj: string } | null;
 
@@ -21,8 +22,7 @@ export default function FirmaEklePage() {
   const kartRef = useRef<HTMLInputElement>(null);
   const detayRef = useRef<HTMLInputElement>(null);
 
-  const [iller, setIller] = useState<{ id: number; sehir_adi: string }[]>([]);
-  const [ilceler, setIlceler] = useState<{ id: number; ilce_adi: string }[]>([]);
+  const [konum, setKonum] = useState<Konum>(BOS_KONUM);
   const [sanayiSiteleri, setSanayiSiteleri] = useState<{ id: number; site_adi: string; ilce_adi: string | null }[]>([]);
   const [kategoriler, setKategoriler] = useState<string[]>(SEKTORLER);
   const [gonderiyor, setGonderiyor] = useState(false);
@@ -35,7 +35,7 @@ export default function FirmaEklePage() {
   const [detayOnizlemeler, setDetayOnizlemeler] = useState<string[]>([]);
 
   const [form, setForm] = useState({
-    ad: '', sahip: '', il_adi: '', ilce_adi: '', site_id: '', sektor: '',
+    ad: '', sahip: '', site_id: '', sektor: '',
     telefon: '', mobil_telefon: '', adres: '', web_sitesi: '', hizmetler: '',
   });
 
@@ -46,10 +46,8 @@ export default function FirmaEklePage() {
       .catch(() => setKullanici(null));
   }, []);
 
-  // İller ve kategoriler (sabit sektörler + firmalarda kullanılan diğerleri)
+  // Kategoriler (sabit sektörler + firmalarda kullanılan diğerleri)
   useEffect(() => {
-    supabase.from('iller').select('id, sehir_adi').order('sehir_adi')
-      .then(({ data }) => setIller(data || []));
     supabase
       .from('firmalar')
       .select('sektor')
@@ -61,21 +59,25 @@ export default function FirmaEklePage() {
       });
   }, []);
 
-  // İl seçilince ilçeler ve o ildeki sanayi siteleri
+  // İl seçilince o ildeki sanayi siteleri
   useEffect(() => {
-    const il = iller.find(i => i.sehir_adi === form.il_adi);
-    if (!il) { setIlceler([]); setSanayiSiteleri([]); return; }
-    supabase.from('ilceler').select('id, ilce_adi').eq('sehir_id', il.id).order('ilce_adi')
-      .then(({ data }) => setIlceler(data || []));
+    if (!konum.il) { setSanayiSiteleri([]); return; }
     supabase.from('sanayi_siteleri').select('id, site_adi, ilce_adi')
-      .eq('il_adi', il.sehir_adi.toLocaleUpperCase('tr-TR')).order('site_adi')
+      .eq('il_adi', konum.il.toLocaleUpperCase('tr-TR')).order('site_adi')
       .then(({ data }) => setSanayiSiteleri(data || []));
-  }, [form.il_adi, iller]);
+  }, [konum.il]);
 
   // İlçe seçildiyse sadece o ilçedeki siteler
-  const gorunenSiteler = form.ilce_adi
-    ? sanayiSiteleri.filter(s => s.ilce_adi === form.ilce_adi.toLocaleUpperCase('tr-TR'))
+  const gorunenSiteler = konum.ilce
+    ? sanayiSiteleri.filter(s => s.ilce_adi === konum.ilce.toLocaleUpperCase('tr-TR'))
     : sanayiSiteleri;
+
+  function konumSec(yeni: Konum) {
+    // İl veya ilçe değişince seçili sanayi sitesi geçersiz olur
+    if (yeni.il !== konum.il || yeni.ilce !== konum.ilce) setForm(prev => ({ ...prev, site_id: '' }));
+    setKonum(yeni);
+    setDurum(null);
+  }
 
   function setField(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -121,7 +123,7 @@ export default function FirmaEklePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.ad.trim() || !form.il_adi || !form.ilce_adi || !form.sektor || !form.telefon.trim()) {
+    if (!form.ad.trim() || !konum.il || !konum.ilce || !form.sektor || !form.telefon.trim()) {
       setDurum({ tip: 'hata', mesaj: 'Lütfen yıldızlı zorunlu alanları doldurun.' });
       return;
     }
@@ -131,6 +133,10 @@ export default function FirmaEklePage() {
 
     const fd = new FormData();
     Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+    fd.append('il_adi', konum.il);
+    fd.append('ilce_adi', konum.ilce);
+    fd.append('mahalle_id', konum.mahalleId);
+    fd.append('sokak_id', konum.sokakId);
     if (kartResmi) fd.append('kart_resmi', kartResmi);
     detayFotolar.forEach(f => fd.append('detay_fotograflar', f));
 
@@ -262,35 +268,16 @@ export default function FirmaEklePage() {
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
           </div>
 
-          {/* İl + İlçe yan yana */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">İl <span className="text-red-500">*</span></label>
-              <select value={form.il_adi}
-                onChange={e => setForm(prev => ({ ...prev, il_adi: e.target.value, ilce_adi: '', site_id: '' }))}
-                className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors bg-white">
-                <option value="">Seçin...</option>
-                {iller.map(i => <option key={i.id} value={i.sehir_adi}>{i.sehir_adi}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">İlçe <span className="text-red-500">*</span></label>
-              <select value={form.ilce_adi} disabled={!form.il_adi}
-                onChange={e => setForm(prev => ({ ...prev, ilce_adi: e.target.value, site_id: '' }))}
-                className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors bg-white disabled:bg-gray-50">
-                <option value="">{form.il_adi ? 'Seçin...' : 'Önce il seçin'}</option>
-                {ilceler.map(i => <option key={i.id} value={i.ilce_adi}>{i.ilce_adi}</option>)}
-              </select>
-            </div>
-          </div>
+          {/* İl, İlçe, Mahalle, Sokak */}
+          <KonumSecici deger={konum} onChange={konumSec} zorunluIlIlce />
 
           {/* Sanayi Sitesi + Kategori yan yana */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Sanayi Sitesi</label>
-              <select value={form.site_id} onChange={e => setField('site_id', e.target.value)} disabled={!form.il_adi}
+              <select value={form.site_id} onChange={e => setField('site_id', e.target.value)} disabled={!konum.il}
                 className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors bg-white disabled:bg-gray-50">
-                <option value="">{gorunenSiteler.length ? 'Sanayi sitesi dışında / listede yok' : form.il_adi ? 'Bu bölgede kayıtlı site yok' : 'Önce il seçin'}</option>
+                <option value="">{gorunenSiteler.length ? 'Sanayi sitesi dışında / listede yok' : konum.il ? 'Bu bölgede kayıtlı site yok' : 'Önce il seçin'}</option>
                 {gorunenSiteler.map(s => <option key={s.id} value={s.id}>{s.site_adi}</option>)}
               </select>
             </div>

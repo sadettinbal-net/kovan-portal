@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
     const il_adi       = (formData.get('il_adi') as string)?.trim();
     const ilce_adi     = (formData.get('ilce_adi') as string)?.trim() || null;
     const siteIdRaw    = parseInt((formData.get('site_id') as string) || '');
+    const mahalle_id   = parseInt((formData.get('mahalle_id') as string) || '') || null;
+    const sokak_id     = parseInt((formData.get('sokak_id') as string) || '') || null;
     const sektor       = (formData.get('sektor') as string)?.trim();
     const telefon      = (formData.get('telefon') as string)?.trim();
     const mobil_telefon = (formData.get('mobil_telefon') as string)?.trim() || null;
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest) {
     const { data: firma, error: insertError } = await supabase
       .from('firmalar')
       .insert({
-        ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, sektor, telefon, mobil_telefon, adres, web_sitesi,
+        ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, mahalle_id, sokak_id, sektor, telefon, mobil_telefon, adres, web_sitesi,
         hizmetler, ozel_firma: false,
         fotograf_url: null, detay_fotograflar: [],
         onay_durumu: 'beklemede',

@@ -174,6 +174,7 @@ export default function Navbar() {
   const linksOnce = [
     { href: "/", label: t.navHome },
     { href: "/firmalar", label: t.navCompanies },
+    { href: "/konum", label: t.navLocation },
     { href: "/ozel-firmalar", label: t.navFeatured },
     { href: "/ilanlar", label: t.navListings },
     { href: "/firma-ekle", label: t.navAddCompany },
