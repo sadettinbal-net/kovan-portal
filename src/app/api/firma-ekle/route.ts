@@ -35,7 +35,9 @@ export async function POST(request: NextRequest) {
 
     const ad           = (formData.get('ad') as string)?.trim();
     const sahip        = (formData.get('sahip') as string)?.trim() || null;
-    const sanayi_sitesi = (formData.get('sanayi_sitesi') as string)?.trim();
+    const il_adi       = (formData.get('il_adi') as string)?.trim();
+    const ilce_adi     = (formData.get('ilce_adi') as string)?.trim() || null;
+    const siteIdRaw    = parseInt((formData.get('site_id') as string) || '');
     const sektor       = (formData.get('sektor') as string)?.trim();
     const telefon      = (formData.get('telefon') as string)?.trim();
     const mobil_telefon = (formData.get('mobil_telefon') as string)?.trim() || null;
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
     const kartResmi    = formData.get('kart_resmi') as File | null;
     const detayFiles   = formData.getAll('detay_fotograflar') as File[];
 
-    if (!ad || !sanayi_sitesi || !sektor || !telefon) {
+    if (!ad || !il_adi || !sektor || !telefon) {
       return NextResponse.json({ error: 'Zorunlu alanlar eksik.' }, { status: 400 });
     }
 
@@ -54,11 +56,22 @@ export async function POST(request: NextRequest) {
 
     const supabase = getAdmin();
 
+    // Sanayi sitesi adı formdan değil, seçilen sitenin kaydından alınır
+    let site_id: number | null = null;
+    let sanayi_sitesi: string | null = null;
+    if (!isNaN(siteIdRaw)) {
+      const { data: site } = await supabase.from('sanayi_siteleri').select('id, site_adi').eq('id', siteIdRaw).maybeSingle();
+      if (site) {
+        site_id = site.id;
+        sanayi_sitesi = site.site_adi;
+      }
+    }
+
     // 1. Firmayı kaydet (fotoğraf URL'leri olmadan)
     const { data: firma, error: insertError } = await supabase
       .from('firmalar')
       .insert({
-        ad, sahip, sanayi_sitesi, sektor, telefon, mobil_telefon, adres, web_sitesi,
+        ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, sektor, telefon, mobil_telefon, adres, web_sitesi,
         hizmetler, ozel_firma: false,
         fotograf_url: null, detay_fotograflar: [],
         onay_durumu: 'beklemede',
@@ -128,8 +141,8 @@ export async function POST(request: NextRequest) {
                   <td style="padding:10px 14px">${ad}</td>
                 </tr>
                 <tr>
-                  <td style="padding:10px 14px;font-weight:bold">Sanayi Sitesi</td>
-                  <td style="padding:10px 14px">${sanayi_sitesi}</td>
+                  <td style="padding:10px 14px;font-weight:bold">Konum</td>
+                  <td style="padding:10px 14px">${[sanayi_sitesi, ilce_adi, il_adi].filter(Boolean).join(' / ')}</td>
                 </tr>
                 <tr style="background:#f5f7fa">
                   <td style="padding:10px 14px;font-weight:bold">Kategori</td>

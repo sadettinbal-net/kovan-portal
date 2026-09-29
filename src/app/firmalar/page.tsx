@@ -21,6 +21,7 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   searchParams: Promise<{
+    il?: string;
     site?: string;
     kategori?: string;
     ara?: string;
@@ -62,7 +63,7 @@ export default async function FirmalarPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
   const t = translations[lang];
-  const { site, kategori, ara } = searchParams;
+  const { il, site, kategori, ara } = searchParams;
   const rawLimit = parseInt(searchParams.limit || "") || DEFAULT_LIMIT;
   const limit = LIMIT_OPTIONS.includes(rawLimit) ? rawLimit : DEFAULT_LIMIT;
   const sayfa = Math.max(parseInt(searchParams.sayfa || "") || 1, 1);
@@ -77,6 +78,7 @@ export default async function FirmalarPage(props: PageProps) {
     .eq("onay_durumu", "onaylandi")
     .order("ad");
 
+  if (il) query = query.eq("il_adi", il);
   if (site) query = query.eq("sanayi_sitesi", site);
   if (kategori) query = query.eq("sektor", kategori);
 
@@ -169,11 +171,11 @@ export default async function FirmalarPage(props: PageProps) {
   const normalSayfaFirmalar = normalFirmalar.slice(gercekBaslangic, gercekBaslangic + limit);
   const sayfaFirmalar = [...sayfadakiSabitler, ...normalSayfaFirmalar];
 
-  const baslik = site || kategori || (ara ? t.resultsFor(ara) : t.allCompanies);
+  const baslik = site || kategori || (ara ? t.resultsFor(ara) : il || t.allCompanies);
 
   // URL oluşturucu — mevcut filtreleri korur
   const url = (extra: Record<string, string | undefined>) =>
-    buildUrl({ site, kategori, ara, limit: String(limit), ...extra });
+    buildUrl({ il, site, kategori, ara, limit: String(limit), ...extra });
 
   // Sayfa numarası listesi (max 7 sayfa göster)
   const sayfaNumaralari = () => {
@@ -194,7 +196,7 @@ export default async function FirmalarPage(props: PageProps) {
     <div className="max-w-7xl mx-auto px-4 py-6">
       <div className="flex flex-col md:flex-row gap-6">
         <Suspense fallback={<div className="w-64 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-          <Sidebar />
+          <Sidebar il={il} />
         </Suspense>
 
         <div className="flex-1 min-w-0">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
@@ -11,13 +11,14 @@ type SanayiSitesi = { id: number; name: string; firmCount: number };
 type KategoriSayisi = Record<string, number>;
 
 interface Props {
+  iller: { name: string; firmCount: number }[];
   sanayiSiteleri: SanayiSitesi[];
   kategoriSayilariPerSite: Record<string, KategoriSayisi>;
   tumKategoriler: string[];
   toplamFirma: number;
 }
 
-export default function SidebarClient({ sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, toplamFirma }: Props) {
+export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, toplamFirma }: Props) {
   const { t } = useLanguage();
   const ILAN_KATEGORILERI = [
     { id: "arac", name: t.catVehicle },
@@ -28,8 +29,17 @@ export default function SidebarClient({ sanayiSiteleri, kategoriSayilariPerSite,
     { id: "imalat", name: t.catManufacturing },
   ];
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const activeIl = searchParams.get("il") || "";
   const activeSite = searchParams.get("site") || "";
   const activeKategori = searchParams.get("kategori") || "";
+
+  // Firmalar sayfası bağlantısı; seçili il korunur
+  const firmalarUrl = (extra: Record<string, string> = {}) => {
+    const q = new URLSearchParams({ ...(activeIl ? { il: activeIl } : {}), ...extra });
+    const s = q.toString();
+    return `/firmalar${s ? `?${s}` : ""}`;
+  };
   const [sanayiOpen, setSanayiOpen] = useState(false);
 
   useEffect(() => {
@@ -68,10 +78,31 @@ export default function SidebarClient({ sanayiSiteleri, kategoriSayilariPerSite,
           </svg>
         </button>
 
+        {iller.length > 0 && (
+          <div className={`${sanayiOpen ? "block" : "hidden"} lg:block p-2 border-b border-gray-100`}>
+            <select
+              value={activeIl}
+              onChange={(e) => {
+                const il = e.target.value;
+                router.push(il ? `/firmalar?il=${encodeURIComponent(il)}` : "/firmalar");
+              }}
+              aria-label="İl seçin"
+              className="w-full border border-[#dde3ec] rounded px-2 py-1.5 text-xs bg-white outline-none focus:border-[#1a3a6b]"
+            >
+              <option value="">Tüm Türkiye</option>
+              {iller.map((il) => (
+                <option key={il.name} value={il.name}>
+                  {il.name} ({il.firmCount})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <ul className={`${sanayiOpen ? "block" : "hidden"} lg:block`}>
           <li>
             <Link
-              href="/firmalar"
+              href={firmalarUrl()}
               className={`flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${!activeSite ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
             >
               <span>{t.sidebarAll}</span>
@@ -84,7 +115,7 @@ export default function SidebarClient({ sanayiSiteleri, kategoriSayilariPerSite,
             return (
               <li key={site.id}>
                 <Link
-                  href={isActive ? "/firmalar" : `/firmalar?site=${encodeURIComponent(site.name)}`}
+                  href={isActive ? firmalarUrl() : firmalarUrl({ site: site.name })}
                   className={`flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${isActive ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
                 >
                   <span className="leading-tight">{site.name}</span>
@@ -98,7 +129,7 @@ export default function SidebarClient({ sanayiSiteleri, kategoriSayilariPerSite,
                     {gorunurKategoriler.map((kat) => (
                       <li key={kat}>
                         <Link
-                          href={`/firmalar?site=${encodeURIComponent(activeSite)}&kategori=${encodeURIComponent(kat)}`}
+                          href={firmalarUrl({ site: activeSite, kategori: kat })}
                           className={`flex justify-between items-center pl-5 pr-2 py-1.5 text-[10px] border-b border-blue-200/70 hover:bg-blue-200 transition-colors ${activeKategori === kat ? "text-[#1a3a6b] font-semibold bg-blue-200" : "text-gray-700"}`}
                         >
                           <span className="leading-tight">{kat}</span>
