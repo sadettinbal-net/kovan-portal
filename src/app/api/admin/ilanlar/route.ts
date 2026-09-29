@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/utils/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 
-const ADMIN_EMAILS = ["sadettinbal@gmail.com", "mustafabal93@gmail.com"];
+import { ADMIN_EMAILS } from "@/lib/admin";
 
 // Admin İlan Yönetimi sekmesi için TÜM ilanları döner.
 //

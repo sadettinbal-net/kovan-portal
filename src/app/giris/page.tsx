@@ -11,10 +11,36 @@ function GirisContent() {
   const error = searchParams.get('error');
   const msg = searchParams.get('msg');
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [sifre, setSifre] = useState('');
+  const [sifreGoster, setSifreGoster] = useState(false);
+  const [sifreHata, setSifreHata] = useState('');
 
   const handleGoogleLogin = () => {
     setIsLoading(true);
     window.location.href = '/api/auth/google';
+  };
+
+  const handleSifreGiris = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSifreHata('');
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/sifre-giris', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, sifre }),
+      });
+      if (res.ok) {
+        // Oturum çerezleri sunucuda yazıldı; sayfayı baştan yükle ki menü girişi görsün
+        window.location.href = '/';
+        return;
+      }
+      setSifreHata((await res.json()).error || 'Giriş yapılamadı.');
+    } catch {
+      setSifreHata('Giriş yapılamadı.');
+    }
+    setIsLoading(false);
   };
 
   const getErrorMessage = (errorCode: string | null) => {
@@ -78,6 +104,53 @@ function GirisContent() {
               </>
             )}
           </button>
+
+          {/* E-posta ve şifre ile giriş */}
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400">veya e-posta ile</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+          <form onSubmit={handleSifreGiris} className="space-y-3">
+            <input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="E-posta"
+              aria-label="E-posta"
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a3a6b] focus:border-transparent outline-none"
+            />
+            <div className="relative">
+              <input
+                type={sifreGoster ? 'text' : 'password'}
+                autoComplete="current-password"
+                value={sifre}
+                onChange={(e) => setSifre(e.target.value)}
+                placeholder="Şifre"
+                aria-label="Şifre"
+                required
+                className="w-full px-4 py-3 pr-20 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1a3a6b] focus:border-transparent outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setSifreGoster(!sifreGoster)}
+                aria-label={sifreGoster ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                className="absolute inset-y-0 right-0 px-4 text-sm font-medium text-[#1a3a6b] hover:text-[#e8a020]"
+              >
+                {sifreGoster ? 'Gizle' : 'Göster'}
+              </button>
+            </div>
+            {sifreHata && <p className="text-sm text-red-600">{sifreHata}</p>}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-[#1a3a6b] hover:bg-[#0f2548] text-white font-semibold py-3 rounded-lg transition disabled:opacity-50"
+            >
+              {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+            </button>
+          </form>
 
           {/* Info Text */}
           <p className="mt-6 text-xs text-gray-500 text-center">

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-const ADMIN_EMAILS = ['sadettinbal@gmail.com', 'mustafabal93@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/admin';
 
 function getAdmin() {
   return createClient(

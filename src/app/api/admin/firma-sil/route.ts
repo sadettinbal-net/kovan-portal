@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
-const ADMIN_EMAILS = ['sadettinbal@gmail.com', 'mustafabal93@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/admin';
 const BUCKET = 'firma-fotograflari';
 
 export async function DELETE(request: NextRequest) {

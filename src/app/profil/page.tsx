@@ -3,7 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase, Firma } from '@/lib/supabase';
+import type { Firma } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
+
+// Oturumlu okuma: kendi onay bekleyen firmalarını da görebilsin
+const supabase = createClient();
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type User = {

@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, {
               ...options,
-              httpOnly: true,
+              // httpOnly değil: tarayıcıdaki Supabase istemcisi oturumu okuyup veritabanı kurallarından geçebilsin
               secure: process.env.NODE_ENV === 'production',
               sameSite: 'lax',
               path: '/',

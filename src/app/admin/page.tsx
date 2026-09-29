@@ -1,10 +1,14 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { supabase, Firma } from '@/lib/supabase';
+import type { Firma } from '@/lib/supabase';
+import { createClient } from '@/utils/supabase/client';
+
+// Oturumlu okuma: yönetici, onay bekleyen firma ve ilanları da görebilsin (veritabanı kuralları)
+const supabase = createClient();
 import ActiveUsers from '@/components/ActiveUsers';
 
-const ADMIN_EMAILS = ['sadettinbal@gmail.com', 'mustafabal93@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/admin';
 
 type AuthState = 'loading' | 'unauthenticated' | 'unauthorized' | 'authorized';
 
