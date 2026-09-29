@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import FirmaOnaylari from '@/components/FirmaOnaylari';
 
 // Yönetici Paneli sekmeleri: içerikleri daha sonra doldurulacak
 const SEKMELER = [
@@ -72,18 +73,13 @@ export default function YoneticiPaneliPage() {
         </div>
 
         {/* Sekme içeriği */}
+        {sekme.id === 'firma-onaylari' ? (
+          <FirmaOnaylari gomulu />
+        ) : (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <div className="text-6xl mb-4">{sekme.ikon}</div>
           <h2 className="text-xl font-bold text-gray-800 mb-2">{sekme.baslik}</h2>
           <p className="text-gray-600">Bu bölümün içeriği hazırlanıyor.</p>
-          {sekme.id === 'firma-onaylari' && (
-            <button
-              onClick={() => router.push('/admin/firma-onaylari')}
-              className="mt-6 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-            >
-              Firma Onayları sayfasını aç →
-            </button>
-          )}
           {sekme.id === 'uyeler' && (
             <button
               onClick={() => router.push('/admin/uyeler')}
@@ -93,6 +89,7 @@ export default function YoneticiPaneliPage() {
             </button>
           )}
         </div>
+        )}
       </main>
     </div>
   );

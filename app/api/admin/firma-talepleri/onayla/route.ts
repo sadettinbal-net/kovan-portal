@@ -46,11 +46,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Admin firma formundaki gibi kategori adını da yaz
+    const { data: altKategori } = talep.alt_kategori_id
+      ? await supabase.from('alt_kategoriler').select('alt_kategori_adi').eq('id', talep.alt_kategori_id).maybeSingle()
+      : { data: null };
+
     // Firmayı dukkanlar tablosuna ekle
     const { data: yeniFirma, error: firmaError } = await supabase
       .from('dukkanlar')
       .insert([
         {
+          kategori: altKategori?.alt_kategori_adi || null,
           dukkan_adi: talep.dukkan_adi,
           usta_adi: talep.usta_adi,
           telefon: talep.telefon,
