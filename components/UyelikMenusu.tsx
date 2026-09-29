@@ -52,7 +52,7 @@ export default function UyelikMenusu({ koyu = false }: { koyu?: boolean }) {
         <Link href="/giris" className="px-3 py-2 text-sm font-bold text-white/90 hover:text-white transition">
           Giriş Yap
         </Link>
-        <Link href="/uye-ol" className="px-4 py-2 text-sm font-bold text-[#1e3a5f] bg-amber-500 hover:bg-amber-400 rounded-lg transition">
+        <Link href="/uye-ol" className="px-4 py-2 text-sm font-bold text-white bg-[#e8a020] hover:bg-[#c8851a] rounded-md transition">
           Üye Ol
         </Link>
       </div>
