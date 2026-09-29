@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import FirmaKart from "@/components/FirmaKart";
 import { supabase } from "@/lib/supabase";
 import KonumFiltre from "./KonumFiltre";
+import { onayliFirmaOzetleri, sanayiSiteleriOzeti } from "@/lib/sanayiSiteleri";
 import BolgeHaritasi, { type HaritaSorgusu } from "@/components/BolgeHaritasi";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,24 @@ export default async function KonumPage(props: PageProps) {
 
   const bolge = [ilce, il].filter(Boolean).join(" / ");
 
+  // İl seçilmemişse: illere göre sanayi sitesi ve firma sayıları
+  const ilOzetleri: { il: string; siteCount: number; firmCount: number }[] = [];
+  if (!il) {
+    const ozet = new Map<string, { siteCount: number; firmCount: number }>();
+    for (const s of await sanayiSiteleriOzeti(await onayliFirmaOzetleri())) {
+      if (!s.il) continue;
+      const x = ozet.get(s.il) || { siteCount: 0, firmCount: 0 };
+      if (s.id !== null) x.siteCount++;
+      x.firmCount += s.firmCount;
+      ozet.set(s.il, x);
+    }
+    ilOzetleri.push(
+      ...Array.from(ozet, ([ad, x]) => ({ il: ad, ...x })).sort(
+        (a, b) => b.firmCount - a.firmCount || b.siteCount - a.siteCount || a.il.localeCompare(b.il, "tr")
+      )
+    );
+  }
+
   // Harita: en ayrıntılı adresten başlayıp genele doğru aranır
   const [mahalleSonuc, sokakSonuc] = await Promise.all([
     mahalleId
@@ -94,9 +113,26 @@ export default async function KonumPage(props: PageProps) {
       </div>
 
       {!il ? (
-        <div className="bg-white rounded-xl border border-[#dde3ec] p-10 text-center text-gray-500">
-          Aramaya başlamak için bir il seçin.
-        </div>
+        <section>
+          <h2 className="text-lg font-bold text-[#1a3a6b] mb-3">
+            🏭 İllere Göre Sanayi Siteleri{" "}
+            <span className="text-sm font-normal text-gray-500">({ilOzetleri.reduce((t, i) => t + i.siteCount, 0)} site)</span>
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {ilOzetleri.map((i) => (
+              <Link
+                key={i.il}
+                href={`/konum?il=${encodeURIComponent(i.il)}`}
+                className="bg-white rounded-lg border border-[#dde3ec] hover:border-[#1a3a6b] hover:shadow-sm px-4 py-3 transition"
+              >
+                <div className="font-semibold text-[#1a3a6b] text-sm">{i.il}</div>
+                <div className="text-xs text-gray-500 mt-0.5">
+                  {i.siteCount} sanayi sitesi{i.firmCount ? ` · ${i.firmCount} firma` : ""}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
       ) : (
         <div className="space-y-8">
           <BolgeHaritasi sorgular={haritaSorgulari} etiket={haritaEtiketi} />

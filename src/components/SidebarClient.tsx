@@ -7,11 +7,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
 
 
-type SanayiSitesi = { id: number; name: string; firmCount: number };
+type SanayiSitesi = { id: number; name: string; firmCount: number; alt?: string };
 type KategoriSayisi = Record<string, number>;
 
 interface Props {
-  iller: { name: string; firmCount: number }[];
+  iller: { name: string; siteCount: number; firmCount: number }[];
   sanayiSiteleri: SanayiSitesi[];
   kategoriSayilariPerSite: Record<string, KategoriSayisi>;
   tumKategoriler: string[];
@@ -92,14 +92,14 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
               <option value="">Tüm Türkiye</option>
               {iller.map((il) => (
                 <option key={il.name} value={il.name}>
-                  {il.name} ({il.firmCount})
+                  {il.name} ({il.siteCount} site{il.firmCount ? `, ${il.firmCount} firma` : ""})
                 </option>
               ))}
             </select>
           </div>
         )}
 
-        <ul className={`${sanayiOpen ? "block" : "hidden"} lg:block`}>
+        <ul className={`${sanayiOpen ? "block" : "hidden"} lg:block max-h-[28rem] overflow-y-auto`}>
           <li>
             <Link
               href={firmalarUrl()}
@@ -118,7 +118,10 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
                   href={isActive ? firmalarUrl() : firmalarUrl({ site: site.name })}
                   className={`flex justify-between items-center px-3 py-1.5 text-xs border-b border-gray-100 hover:bg-blue-50 transition-colors ${isActive ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
                 >
-                  <span className="leading-tight">{site.name}</span>
+                  <span className="leading-tight">
+                    {site.name}
+                    {site.alt && <span className="block text-[10px] text-gray-400 font-normal">{site.alt}</span>}
+                  </span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full ml-1 flex-shrink-0 ${isActive ? "bg-[#1a3a6b] text-white" : "bg-gray-200 text-gray-700"}`}>
                     {site.firmCount}
                   </span>

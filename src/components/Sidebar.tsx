@@ -1,70 +1,45 @@
-import { supabase } from "@/lib/supabase";
 import SidebarClient from "@/components/SidebarClient";
-
-type FirmaOzet = { sanayi_sitesi: string | null; sektor: string | null; il_adi: string | null };
-
-async function tumFirmalariCek() {
-  const tumData: FirmaOzet[] = [];
-  const CHUNK = 1000;
-  let from = 0;
-
-  while (true) {
-    const { data, error } = await supabase
-      .from("firmalar")
-      .select("sanayi_sitesi, sektor, il_adi")
-      .not("ad", "ilike", "(Firma%")
-      .eq("onay_durumu", "onaylandi")
-      .range(from, from + CHUNK - 1);
-
-    if (error || !data || data.length === 0) break;
-    tumData.push(...data);
-    if (data.length < CHUNK) break;
-    from += CHUNK;
-  }
-
-  return tumData;
-}
-
-// Sanayi siteleri ve her sitedeki kategori sayıları (verilen firmalardan)
-function siteOzeti(firmalar: FirmaOzet[]) {
-  const sanayiMap: Record<string, number> = {};
-  const kategoriPerSite: Record<string, Record<string, number>> = {};
-
-  for (const f of firmalar) {
-    const site = f.sanayi_sitesi || "Diğer";
-    sanayiMap[site] = (sanayiMap[site] || 0) + 1;
-    if (f.sektor) {
-      if (!kategoriPerSite[site]) kategoriPerSite[site] = {};
-      kategoriPerSite[site][f.sektor] = (kategoriPerSite[site][f.sektor] || 0) + 1;
-    }
-  }
-
-  const sanayiSiteleri = Object.entries(sanayiMap)
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, firmCount], i) => ({ id: i + 1, name, firmCount }));
-
-  return { sanayiSiteleri, kategoriPerSite };
-}
+import { onayliFirmaOzetleri, sanayiSiteleriOzeti } from "@/lib/sanayiSiteleri";
 
 export default async function Sidebar({ il }: { il?: string }) {
-  const tumFirmalar = await tumFirmalariCek();
+  const tumFirmalar = await onayliFirmaOzetleri();
+  const tumSiteler = await sanayiSiteleriOzeti(tumFirmalar);
 
-  // İl listesi (firması olan iller, çoktan aza)
-  const ilSayilari: Record<string, number> = {};
-  for (const f of tumFirmalar) if (f.il_adi) ilSayilari[f.il_adi] = (ilSayilari[f.il_adi] || 0) + 1;
-  const iller = Object.entries(ilSayilari)
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "tr"))
-    .map(([name, firmCount]) => ({ name, firmCount }));
+  // İl listesi: sanayi sitesi ya da firması olan iller, alfabetik
+  const ilSayilari = new Map<string, { siteCount: number; firmCount: number }>();
+  for (const s of tumSiteler) {
+    if (!s.il) continue;
+    const x = ilSayilari.get(s.il) || { siteCount: 0, firmCount: 0 };
+    if (s.id !== null) x.siteCount++;
+    ilSayilari.set(s.il, x);
+  }
+  for (const f of tumFirmalar) {
+    if (!f.il_adi) continue;
+    const x = ilSayilari.get(f.il_adi) || { siteCount: 0, firmCount: 0 };
+    x.firmCount++;
+    ilSayilari.set(f.il_adi, x);
+  }
+  const iller = Array.from(ilSayilari, ([name, sayilar]) => ({ name, ...sayilar })).sort((a, b) =>
+    a.name.localeCompare(b.name, "tr")
+  );
 
-  // İl seçildiyse sanayi siteleri ve sayılar sadece o ilden
+  // İl seçildiyse sadece o ilin siteleri ve firmaları
   const firmalar = il ? tumFirmalar.filter((f) => f.il_adi === il) : tumFirmalar;
-  const { sanayiSiteleri, kategoriPerSite } = siteOzeti(firmalar);
+  const siteler = il ? tumSiteler.filter((s) => s.il === il) : tumSiteler;
+
+  const kategoriPerSite: Record<string, Record<string, number>> = {};
+  for (const f of firmalar) {
+    if (!f.sektor) continue;
+    const site = f.sanayi_sitesi || "Diğer";
+    kategoriPerSite[site] = kategoriPerSite[site] || {};
+    kategoriPerSite[site][f.sektor] = (kategoriPerSite[site][f.sektor] || 0) + 1;
+  }
   const tumKategoriler = Array.from(new Set(firmalar.map((f) => f.sektor).filter(Boolean) as string[])).sort();
 
   return (
     <SidebarClient
       iller={iller}
-      sanayiSiteleri={sanayiSiteleri}
+      sanayiSiteleri={siteler.map((s, i) => ({ id: i + 1, name: s.name, firmCount: s.firmCount, alt: il ? s.ilce : s.il }))}
       kategoriSayilariPerSite={kategoriPerSite}
       tumKategoriler={tumKategoriler}
       toplamFirma={firmalar.length}
