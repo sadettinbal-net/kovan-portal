@@ -7,6 +7,7 @@ import { createClient } from '@/utils/supabase/client';
 // Oturumlu okuma: yönetici, onay bekleyen firma ve ilanları da görebilsin (veritabanı kuralları)
 const supabase = createClient();
 import ActiveUsers from '@/components/ActiveUsers';
+import SanayiSiteleriYonetimi from '@/components/admin/SanayiSiteleriYonetimi';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
 
@@ -1744,7 +1745,7 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
 
 // ─── Admin Panel ─────────────────────────────────────────────────────────────
 function AdminPanel() {
-  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar'>('bekleyen');
+  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri'>('bekleyen');
   const [bekleyenSayi, setBekleyenSayi] = useState(0);
   const [bekleyenIlanSayi, setBekleyenIlanSayi] = useState(0);
   const [bekleyenGuncellemeSayi, setBekleyenGuncellemeSayi] = useState(0);
@@ -2090,8 +2091,18 @@ function AdminPanel() {
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'reklamlar' ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             📢 Reklamlar
           </button>
+          <button onClick={() => setAktifSekme('sanayi-siteleri')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'sanayi-siteleri' ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            🏭 Sanayi Siteleri
+          </button>
         </div>
       </div>
+
+      {aktifSekme === 'sanayi-siteleri' && (
+        <div className="max-w-7xl mx-auto p-6">
+          <SanayiSiteleriYonetimi />
+        </div>
+      )}
 
       {aktifSekme === 'guncelleme-talepleri' && (
         <div className="max-w-7xl mx-auto p-6">
