@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import FirmaOnaylari from '@/components/FirmaOnaylari';
+import IletisimMesajlari from '@/components/IletisimMesajlari';
 
 // Yönetici Paneli sekmeleri: içerikleri daha sonra doldurulacak
 const SEKMELER = [
@@ -10,6 +11,7 @@ const SEKMELER = [
   { id: 'ilan-onaylari', baslik: 'İlan Onayları', ikon: '📝' },
   { id: 'ilan-yonetimi', baslik: 'İlan Yönetimi', ikon: '📋' },
   { id: 'uyeler', baslik: 'Üyeler', ikon: '👥' },
+  { id: 'iletisim-mesajlari', baslik: 'İletişim Mesajları', ikon: '✉️' },
   { id: 'guncelleme-talepleri', baslik: 'Güncelleme Talepleri', ikon: '🔄' },
   { id: 'istatistikler', baslik: 'İstatistikler', ikon: '📊' },
   { id: 'site-kullanimi', baslik: 'Site Kullanımı', ikon: '🌐' },
@@ -75,6 +77,8 @@ export default function YoneticiPaneliPage() {
         {/* Sekme içeriği */}
         {sekme.id === 'firma-onaylari' ? (
           <FirmaOnaylari gomulu />
+        ) : sekme.id === 'iletisim-mesajlari' ? (
+          <IletisimMesajlari />
         ) : (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
           <div className="text-6xl mb-4">{sekme.ikon}</div>
