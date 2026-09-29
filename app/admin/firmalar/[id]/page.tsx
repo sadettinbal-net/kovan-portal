@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import KonumSecici from '@/components/KonumSecici';
+import FirmaEkBilgiler, { type EkBilgiler } from '@/components/FirmaEkBilgiler';
 import { useRouter, useParams } from 'next/navigation';
 
 export default function FirmaDuzenlePage() {
@@ -21,6 +22,7 @@ export default function FirmaDuzenlePage() {
     web_sitesi: '',
     alt_kategori_id: '',
   });
+  const [ekBilgiler, setEkBilgiler] = useState<EkBilgiler>({ hizmetler: '', kart_resmi: null, fotograflar: [] });
   const [kategoriler, setKategoriler] = useState<any[]>([]);
   const [altKategoriler, setAltKategoriler] = useState<any[]>([]);
   const [siteler, setSiteler] = useState<any[]>([]);
@@ -109,6 +111,11 @@ export default function FirmaDuzenlePage() {
           web_sitesi: firma.web_sitesi || '',
           alt_kategori_id: firma.alt_kategori_id?.toString() || '',
         });
+        setEkBilgiler({
+          hizmetler: firma.hizmetler || '',
+          kart_resmi: firma.kart_resmi || null,
+          fotograflar: firma.fotograflar || [],
+        });
 
         // Eğer firma alt kategorisi varsa, onun kategorisini bul
         if (firma.alt_kategori_id) {
@@ -157,6 +164,9 @@ export default function FirmaDuzenlePage() {
           whatsapp: formData.whatsapp || null,
           blok_no: formData.blok_no || null,
           web_sitesi: formData.web_sitesi || null,
+          hizmetler: ekBilgiler.hizmetler.trim() || null,
+          kart_resmi: ekBilgiler.kart_resmi,
+          fotograflar: ekBilgiler.fotograflar,
           site_id: formData.site_id ? parseInt(formData.site_id) : null,
           mahalle_id: formData.mahalle_id ? parseInt(formData.mahalle_id) : null,
           sokak_id: formData.sokak_id ? parseInt(formData.sokak_id) : null,
@@ -405,6 +415,9 @@ export default function FirmaDuzenlePage() {
                 placeholder="https://..."
               />
             </div>
+
+            {/* Hizmetler ve Resimler */}
+            <FirmaEkBilgiler deger={ekBilgiler} onChange={setEkBilgiler} />
 
             {/* Error Message */}
             {error && (

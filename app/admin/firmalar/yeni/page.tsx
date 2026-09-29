@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import KonumSecici from '@/components/KonumSecici';
+import FirmaEkBilgiler, { type EkBilgiler } from '@/components/FirmaEkBilgiler';
 import { useRouter } from 'next/navigation';
 
 export default function YeniFirmaPage() {
@@ -18,6 +19,7 @@ export default function YeniFirmaPage() {
     web_sitesi: '',
     alt_kategori_id: '',
   });
+  const [ekBilgiler, setEkBilgiler] = useState<EkBilgiler>({ hizmetler: '', kart_resmi: null, fotograflar: [] });
   const [kategoriler, setKategoriler] = useState<any[]>([]);
   const [altKategoriler, setAltKategoriler] = useState<any[]>([]);
   const [siteler, setSiteler] = useState<any[]>([]);
@@ -115,6 +117,9 @@ export default function YeniFirmaPage() {
           whatsapp: formData.whatsapp || null,
           blok_no: formData.blok_no || null,
           web_sitesi: formData.web_sitesi || null,
+          hizmetler: ekBilgiler.hizmetler.trim() || null,
+          kart_resmi: ekBilgiler.kart_resmi,
+          fotograflar: ekBilgiler.fotograflar,
           site_id: formData.site_id ? parseInt(formData.site_id) : null,
           mahalle_id: formData.mahalle_id ? parseInt(formData.mahalle_id) : null,
           sokak_id: formData.sokak_id ? parseInt(formData.sokak_id) : null,
@@ -358,6 +363,9 @@ export default function YeniFirmaPage() {
                 placeholder="https://..."
               />
             </div>
+
+            {/* Hizmetler ve Resimler */}
+            <FirmaEkBilgiler deger={ekBilgiler} onChange={setEkBilgiler} />
 
             {/* Error Message */}
             {error && (
