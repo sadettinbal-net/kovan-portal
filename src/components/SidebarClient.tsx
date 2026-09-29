@@ -153,7 +153,8 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
                   </span>
                 </Link>
 
-                {isActive && gorunurKategoriler.length > 0 && (
+                {/* İçinde site olan sitede kategoriler yerine alt siteler açılır */}
+                {isActive && !site.altSayisi && gorunurKategoriler.length > 0 && (
                   <ul className="bg-blue-100 border-b border-blue-200">
                     {gorunurKategoriler.map((kat) => (
                       <li key={kat}>
