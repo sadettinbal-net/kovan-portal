@@ -10,7 +10,8 @@ const SEKMELER = [
   { id: 'ilan-yonetimi', baslik: 'İlan Yönetimi', ikon: '📋' },
   { id: 'uyeler', baslik: 'Üyeler', ikon: '👥' },
   { id: 'guncelleme-talepleri', baslik: 'Güncelleme Talepleri', ikon: '🔄' },
-  { id: 'istatistikler', baslik: 'İstatistikler ve Site Kullanımı', ikon: '📊' },
+  { id: 'istatistikler', baslik: 'İstatistikler', ikon: '📊' },
+  { id: 'site-kullanimi', baslik: 'Site Kullanımı', ikon: '🌐' },
   { id: 'reklamlar', baslik: 'Reklamlar', ikon: '📢' },
 ];
 
