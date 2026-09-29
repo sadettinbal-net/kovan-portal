@@ -12,6 +12,9 @@ interface FirmaTalebi {
   whatsapp: string;
   web_sitesi: string;
   blok_no: string;
+  hizmetler: string | null;
+  kart_resmi: string | null;
+  fotograflar: string[];
   durum: string;
   olusturulma_tarihi: string;
   kullanici_id: string;
@@ -252,6 +255,29 @@ export default function FirmaOnaylariPage() {
                     {talep.blok_no ? ` • ${talep.blok_no}` : ''}
                   </span>
                 </div>
+
+                {talep.hizmetler && (
+                  <div className="text-sm mb-4">
+                    <span className="text-gray-600">Hizmetler:</span>
+                    <span className="ml-2 font-medium">{talep.hizmetler}</span>
+                  </div>
+                )}
+
+                {(talep.kart_resmi || talep.fotograflar?.length > 0) && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {talep.kart_resmi && (
+                      <a href={talep.kart_resmi} target="_blank" rel="noopener noreferrer" className="relative">
+                        <img src={talep.kart_resmi} alt="Kart resmi" className="w-24 h-20 object-cover rounded-lg border border-gray-200" />
+                        <span className="absolute bottom-1 left-1 bg-yellow-500 text-white text-[10px] font-bold px-1.5 rounded">KART</span>
+                      </a>
+                    )}
+                    {talep.fotograflar?.map((url) => (
+                      <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt="Detay fotoğrafı" className="w-24 h-20 object-cover rounded-lg border border-gray-200" />
+                      </a>
+                    ))}
+                  </div>
+                )}
 
                 <div className="text-xs text-gray-500 mb-4">
                   Talep Tarihi: {formatTarih(talep.olusturulma_tarihi)}

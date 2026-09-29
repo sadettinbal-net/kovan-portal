@@ -1,15 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 // Firma talebi oluşturma
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
 
-    // Kullanıcı ID kontrolü
-    if (!data.kullanici_id) {
+    // Giriş yapmış üyeyi oturum anahtarından doğrula
+    const anahtar = request.headers.get('authorization')?.replace('Bearer ', '');
+    const yonetici = createClient(supabaseUrl, supabaseServiceKey);
+    const kullanici = anahtar ? (await yonetici.auth.getUser(anahtar)).data.user : null;
+
+    if (!kullanici) {
       return NextResponse.json(
-        { error: 'Kullanıcı bilgisi bulunamadı' },
+        { error: 'Firma eklemek için giriş yapmalısınız' },
         { status: 401 }
       );
     }
@@ -36,12 +44,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Resimler sadece üyenin kendi klasöründen kabul edilir
+    const resimKlasoru = `${supabaseUrl}/storage/v1/object/public/firma-resimleri/${kullanici.id}/`;
+    const kendiResmi = (url: unknown): url is string => typeof url === 'string' && url.startsWith(resimKlasoru);
+    const fotograflar = Array.isArray(data.fotograflar) ? data.fotograflar.filter(kendiResmi).slice(0, 5) : [];
+
     // Firma talebini kaydet
-    const { data: talep, error } = await supabase
+    const { data: talep, error } = await yonetici
       .from('firma_talepleri')
       .insert([
         {
-          kullanici_id: data.kullanici_id,
+          kullanici_id: kullanici.id,
           dukkan_adi: data.dukkan_adi,
           usta_adi: data.usta_adi || null,
           telefon: data.telefon || null,
@@ -52,6 +65,9 @@ export async function POST(request: NextRequest) {
           sokak_id: data.sokak_id || null,
           blok_no: data.blok_no || null,
           web_sitesi: data.web_sitesi || null,
+          hizmetler: data.hizmetler?.trim() || null,
+          kart_resmi: kendiResmi(data.kart_resmi) ? data.kart_resmi : null,
+          fotograflar,
           alt_kategori_id: parseInt(data.alt_kategori_id),
           durum: 'beklemede',
         },
@@ -101,9 +117,7 @@ export async function GET(request: NextRequest) {
           alt_kategori_adi,
           kategoriler (kategori_adi)
         ),
-        sanayi_siteleri (site_adi),
-        mahalleler (mahalle_adi),
-        sokaklar (sokak_adi)
+        sanayi_siteleri (site_adi)
       `)
       .eq('kullanici_id', kullanici_id)
       .order('olusturulma_tarihi', { ascending: false });

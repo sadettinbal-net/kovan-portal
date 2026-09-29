@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Yönetici işlemleri güvenlik kurallarına takılmadan tam yetkiyle çalışır
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 // Firma talebini onayla ve firmalar tablosuna ekle
 export async function POST(request: NextRequest) {
   try {
     // Admin kontrolü
     const adminSession = request.cookies.get('admin-session')?.value;
-    if (!adminSession) {
+    if (adminSession !== 'authenticated') {
       return NextResponse.json(
         { error: 'Yetkisiz erişim' },
         { status: 401 }
@@ -58,6 +61,9 @@ export async function POST(request: NextRequest) {
           sokak_id: talep.sokak_id,
           blok_no: talep.blok_no,
           web_sitesi: talep.web_sitesi,
+          hizmetler: talep.hizmetler,
+          kart_resmi: talep.kart_resmi,
+          fotograflar: talep.fotograflar || [],
           alt_kategori_id: talep.alt_kategori_id,
         },
       ])

@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+// Yönetici işlemleri güvenlik kurallarına takılmadan tam yetkiyle çalışır
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
 // Firma talebini reddet
 export async function POST(request: NextRequest) {
   try {
     // Admin kontrolü
     const adminSession = request.cookies.get('admin-session')?.value;
-    if (!adminSession) {
+    if (adminSession !== 'authenticated') {
       return NextResponse.json(
         { error: 'Yetkisiz erişim' },
         { status: 401 }
