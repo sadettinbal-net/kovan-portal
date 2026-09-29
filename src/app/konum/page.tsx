@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import FirmaKart from "@/components/FirmaKart";
 import { supabase } from "@/lib/supabase";
 import KonumFiltre from "./KonumFiltre";
+import BolgeHaritasi, { type HaritaSorgusu } from "@/components/BolgeHaritasi";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,24 @@ export default async function KonumPage(props: PageProps) {
 
   const bolge = [ilce, il].filter(Boolean).join(" / ");
 
+  // Harita: en ayrıntılı adresten başlayıp genele doğru aranır
+  const [mahalleSonuc, sokakSonuc] = await Promise.all([
+    mahalleId
+      ? supabase.from("mahalleler_yeni").select("mahalle_adi").eq("mahalle_id", mahalleId).limit(1).maybeSingle()
+      : Promise.resolve({ data: null }),
+    sokakId
+      ? supabase.from("sokaklar").select("sokak_adi").eq("sokak_id", sokakId).limit(1).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const mahalleAdi = (mahalleSonuc.data as { mahalle_adi?: string } | null)?.mahalle_adi;
+  const sokakAdi = (sokakSonuc.data as { sokak_adi?: string } | null)?.sokak_adi;
+  const haritaSorgulari: HaritaSorgusu[] = [];
+  if (sokakAdi && mahalleAdi) haritaSorgulari.push({ adres: `${sokakAdi}, ${mahalleAdi}, ${ilce}, ${il}`, yakinlik: 17 });
+  if (mahalleAdi) haritaSorgulari.push({ adres: `${mahalleAdi}, ${ilce}, ${il}`, yakinlik: 15 });
+  if (ilce) haritaSorgulari.push({ adres: `${ilce}, ${il}`, yakinlik: 12 });
+  if (il) haritaSorgulari.push({ adres: il, yakinlik: 9 });
+  const haritaEtiketi = [sokakAdi, mahalleAdi, ilce, il].filter(Boolean).join(", ");
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
       <nav className="text-sm text-gray-500 mb-4">
@@ -80,6 +99,8 @@ export default async function KonumPage(props: PageProps) {
         </div>
       ) : (
         <div className="space-y-8">
+          <BolgeHaritasi sorgular={haritaSorgulari} etiket={haritaEtiketi} />
+
           {siteler.length > 0 && (
             <section>
               <h2 className="text-lg font-bold text-[#1a3a6b] mb-3">

@@ -10,6 +10,7 @@ import FirmaOwnerPanel from "@/components/FirmaOwnerPanel";
 import YorumBolumu from "@/components/YorumBolumu";
 import VideoReklamLink from "@/components/VideoReklamLink";
 import FotoGaleri from "@/components/FotoGaleri";
+import BolgeHaritasi, { type HaritaSorgusu } from "@/components/BolgeHaritasi";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,15 @@ export default async function FirmaDetay({ params }: PageProps) {
     : null;
 
   const hasSosyal = firma.instagram || firma.facebook || firma.twitter || firma.youtube || firma.linkedin || firma.tiktok;
+
+  // Harita: önce açık adres, sonra sanayi sitesi, sonra ilçe ve il aranır
+  const bolgeEki = [firma.ilce_adi, firma.il_adi].filter(Boolean).join(", ");
+  const ekle = (metin: string) => [metin, bolgeEki].filter(Boolean).join(", ");
+  const haritaSorgulari: HaritaSorgusu[] = [
+    ...(firma.adres ? [{ adres: ekle(firma.adres), yakinlik: 17 }] : []),
+    ...(firma.sanayi_sitesi ? [{ adres: ekle(firma.sanayi_sitesi), yakinlik: 16 }] : []),
+    ...(firma.ilce_adi && firma.il_adi ? [{ adres: bolgeEki, yakinlik: 13 }] : []),
+  ];
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
@@ -297,6 +307,12 @@ export default async function FirmaDetay({ params }: PageProps) {
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {haritaSorgulari.length > 0 && (
+            <div className="mt-5">
+              <BolgeHaritasi sorgular={haritaSorgulari} etiket={firma.ad} yukseklik={260} />
             </div>
           )}
         </div>
