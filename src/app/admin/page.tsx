@@ -9,6 +9,7 @@ const supabase = createClient();
 import ActiveUsers from '@/components/ActiveUsers';
 import SanayiSiteleriYonetimi from '@/components/admin/SanayiSiteleriYonetimi';
 import KategoriYonetimi from '@/components/admin/KategoriYonetimi';
+import FirmaEkleFormu from '@/components/FirmaEkleFormu';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
 
@@ -1774,7 +1775,7 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
 
 // ─── Admin Panel ─────────────────────────────────────────────────────────────
 function AdminPanel() {
-  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri'>('bekleyen');
+  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri' | 'kategoriler' | 'firma-ekle'>('bekleyen');
   const [bekleyenSayi, setBekleyenSayi] = useState(0);
   const [bekleyenIlanSayi, setBekleyenIlanSayi] = useState(0);
   const [bekleyenGuncellemeSayi, setBekleyenGuncellemeSayi] = useState(0);
@@ -2093,6 +2094,10 @@ function AdminPanel() {
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'firmalar' ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             Firma Yönetimi
           </button>
+          <button onClick={() => setAktifSekme('firma-ekle')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'firma-ekle' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            ➕ Firma Ekle
+          </button>
           <button onClick={() => setAktifSekme('ilan-yonetimi')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'ilan-yonetimi' ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             İlan Yönetimi
@@ -2134,6 +2139,12 @@ function AdminPanel() {
       {aktifSekme === 'sanayi-siteleri' && (
         <div className="max-w-7xl mx-auto p-6">
           <SanayiSiteleriYonetimi />
+        </div>
+      )}
+
+      {aktifSekme === 'firma-ekle' && (
+        <div className="max-w-7xl mx-auto p-6">
+          <FirmaEkleFormu yonetici />
         </div>
       )}
 

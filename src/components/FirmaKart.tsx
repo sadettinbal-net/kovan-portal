@@ -48,13 +48,13 @@ export default async function FirmaKart({ firma }: { firma: FirmaKartData }) {
         </div>
       )}
 
-      <div className="relative h-[63px] phone:h-[98px] sm:h-[135px] bg-gradient-to-br from-[#eaf3ff] to-[#d0e6ff] overflow-hidden select-none">
+      <div className="relative h-[63px] phone:h-[98px] sm:h-auto sm:aspect-[3/2] bg-gradient-to-br from-[#eaf3ff] to-[#d0e6ff] overflow-hidden select-none">
         <Image
           src={resimUrl}
           alt={firma.sektor || "Kovan Portal"}
           fill
           className="object-cover"
-          sizes="(max-width: 768px) 33vw, 33vw"
+          sizes="(max-width: 768px) 33vw, 400px"
         />
         <span className="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 text-white font-black leading-none tracking-widest text-[12px] phone:text-[15px] sm:text-[21px] bg-[#1a3a6b]/70 px-1 sm:px-1.5 py-0.5 rounded">
           {basHarfler}

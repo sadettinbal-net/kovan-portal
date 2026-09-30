@@ -37,6 +37,7 @@ export type Firma = {
   hedef_sayfa?: number | null;
   yeni_kategori?: boolean | null;
   yeni_kategori_tipi?: string | null;
+  plus_code?: string | null;
   created_at: string;
 };
 

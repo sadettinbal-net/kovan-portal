@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/utils/supabase/server';
+import { revalidatePath } from 'next/cache';
+import { yoneticiMi } from '@/lib/admin';
 
 const BUCKET = 'firma-fotograflari';
 
@@ -29,9 +31,15 @@ export async function POST(request: NextRequest) {
   try {
     const supabaseAuth = await createServerClient();
     const { data: { user: authUser } } = await supabaseAuth.auth.getUser();
-    const kullanici_email = authUser?.email ?? null;
-
     const formData = await request.formData();
+
+    // Yönetici panelinden gelen kayıt onay beklemeden yayına girer
+    const yonetici = formData.get('yonetici') === '1';
+    if (yonetici && !yoneticiMi(authUser?.email)) {
+      return NextResponse.json({ error: 'Yetkisiz.' }, { status: 403 });
+    }
+    // Yöneticinin eklediği firma yöneticinin profiline bağlanmasın
+    const kullanici_email = yonetici ? null : authUser?.email ?? null;
 
     const ad           = (formData.get('ad') as string)?.trim();
     const sahip        = (formData.get('sahip') as string)?.trim() || null;
@@ -44,7 +52,8 @@ export async function POST(request: NextRequest) {
     const telefon      = (formData.get('telefon') as string)?.trim();
     const mobil_telefon = (formData.get('mobil_telefon') as string)?.trim() || null;
     const adres        = (formData.get('adres') as string)?.trim() || null;
-    const web_sitesi   = (formData.get('web_sitesi') as string)?.trim() || null;
+    const plus_code    = (formData.get('plus_code') as string)?.trim() || null;
+    const web_sitesi   =(formData.get('web_sitesi') as string)?.trim() || null;
     const hizmetlerRaw = (formData.get('hizmetler') as string) || '';
     const kartResmi    = formData.get('kart_resmi') as File | null;
     const detayFiles   = formData.getAll('detay_fotograflar') as File[];
@@ -75,10 +84,10 @@ export async function POST(request: NextRequest) {
     const { data: firma, error: insertError } = await supabase
       .from('firmalar')
       .insert({
-        ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, mahalle_id, sokak_id, sektor, telefon, mobil_telefon, adres, web_sitesi,
+        ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, mahalle_id, sokak_id, sektor, telefon, mobil_telefon, adres, plus_code, web_sitesi,
         hizmetler, ozel_firma: false,
         fotograf_url: null, detay_fotograflar: [],
-        onay_durumu: 'beklemede',
+        onay_durumu: yonetici ? 'onaylandi' : 'beklemede',
         kullanici_email: kullanici_email,
         yeni_kategori: yeniKategori,
         yeni_kategori_tipi: yeniKategoriTipi,
@@ -123,6 +132,12 @@ export async function POST(request: NextRequest) {
     if (kullanici_email) updates.kullanici_email = kullanici_email;
     if (Object.keys(updates).length > 0) {
       await supabase.from('firmalar').update(updates).eq('id', id);
+    }
+
+    if (yonetici) {
+      revalidatePath('/');
+      revalidatePath('/firmalar');
+      return NextResponse.json({ success: true, id });
     }
 
     // Mail gönder

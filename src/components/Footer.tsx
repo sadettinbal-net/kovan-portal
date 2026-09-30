@@ -117,7 +117,21 @@ export default async function Footer({ lang = "tr" }: { lang?: Lang }) {
 
       {/* Bottom bar */}
       <div className="bg-[#0f2548] py-3 px-4 text-center text-xs text-gray-400">
-        {t.footerCopyright}
+        {t.footerCopyright.split("Melbarrel").map((parca, i) => (
+          <span key={i}>
+            {i > 0 && (
+              <a
+                href="https://melbarrel.com/tr"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mx-1 px-2 py-0.5 rounded bg-[#e8a020] hover:bg-[#f0b340] text-white font-semibold transition-colors"
+              >
+                Melbarrel
+              </a>
+            )}
+            {parca}
+          </span>
+        ))}
       </div>
     </footer>
   );

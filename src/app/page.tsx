@@ -74,8 +74,8 @@ export default async function Home() {
     <>
       <AramaKutusu count={count} />
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row gap-6">
+      <div className="max-w-[1600px] mx-auto px-4 py-6">
+        <div className="flex flex-col md:flex-row gap-4">
           <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
             <Sidebar />
           </Suspense>
