@@ -48,6 +48,8 @@ export async function POST(request: NextRequest) {
     const hizmetlerRaw = (formData.get('hizmetler') as string) || '';
     const kartResmi    = formData.get('kart_resmi') as File | null;
     const detayFiles   = formData.getAll('detay_fotograflar') as File[];
+    const yeniKategori = formData.get('yeni_kategori') === '1';
+    const yeniKategoriTipi = (formData.get('yeni_kategori_tipi') as string) || null;
 
     if (!ad || !il_adi || !sektor || !telefon) {
       return NextResponse.json({ error: 'Zorunlu alanlar eksik.' }, { status: 400 });
@@ -78,6 +80,8 @@ export async function POST(request: NextRequest) {
         fotograf_url: null, detay_fotograflar: [],
         onay_durumu: 'beklemede',
         kullanici_email: kullanici_email,
+        yeni_kategori: yeniKategori,
+        yeni_kategori_tipi: yeniKategoriTipi,
       })
       .select('id')
       .single();

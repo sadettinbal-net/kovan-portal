@@ -6,6 +6,7 @@ import type { Lang } from "@/lib/translations";
 
 export const dynamic = "force-dynamic";
 import Sidebar from "@/components/Sidebar";
+import RightSidebarWrapper from "@/components/RightSidebarWrapper";
 import FirmaKart from "@/components/FirmaKart";
 import VideoReklam from "@/components/VideoReklam";
 import { supabase } from "@/lib/supabase";
@@ -75,7 +76,7 @@ export default async function Home() {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row gap-6">
-          <Suspense fallback={<div className="w-64 animate-pulse bg-gray-200 rounded-lg h-96" />}>
+          <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
             <Sidebar />
           </Suspense>
 
@@ -148,6 +149,10 @@ export default async function Home() {
 
             <VideoReklam />
           </div>
+
+          <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
+            <RightSidebarWrapper />
+          </Suspense>
         </div>
       </div>
     </>

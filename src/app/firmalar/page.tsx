@@ -24,6 +24,7 @@ interface PageProps {
   searchParams: Promise<{
     il?: string;
     site?: string;
+    sanayi_sitesi?: string;
     kategori?: string;
     ara?: string;
     sayfa?: string;
@@ -64,7 +65,7 @@ export default async function FirmalarPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
   const t = translations[lang];
-  const { il, site, kategori, ara } = searchParams;
+  const { il, site, sanayi_sitesi, kategori, ara } = searchParams;
   const rawLimit = parseInt(searchParams.limit || "") || DEFAULT_LIMIT;
   const limit = LIMIT_OPTIONS.includes(rawLimit) ? rawLimit : DEFAULT_LIMIT;
   const sayfa = Math.max(parseInt(searchParams.sayfa || "") || 1, 1);
@@ -80,8 +81,10 @@ export default async function FirmalarPage(props: PageProps) {
     .order("ad");
 
   if (il) query = query.eq("il_adi", il);
+  // Sanayi sitesi olmayan firmalar
+  if (sanayi_sitesi === "yok") query = query.or("sanayi_sitesi.is.null,sanayi_sitesi.eq.");
   // Üst site seçildiyse içindeki sitelerin firmaları da gelir
-  if (site) query = query.in("sanayi_sitesi", await siteVeAltSiteAdlari(site));
+  else if (site) query = query.in("sanayi_sitesi", await siteVeAltSiteAdlari(site));
   if (kategori) query = query.eq("sektor", kategori);
 
   const tumFirmalarArr: import("@/lib/supabase").Firma[] = [];

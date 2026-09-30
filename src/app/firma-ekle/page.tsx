@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { SEKTORLER } from '@/lib/sektorler';
+import { SEKTORLER_SITELI } from '@/lib/sektorler-siteli';
+import { SEKTORLER_SITESIZ } from '@/lib/sektorler-sitesiz';
 import KonumSecici, { BOS_KONUM, type Konum } from '@/components/KonumSecici';
 
 type Durum = { tip: 'basari' | 'hata'; mesaj: string } | null;
@@ -24,7 +25,8 @@ export default function FirmaEklePage() {
 
   const [konum, setKonum] = useState<Konum>(BOS_KONUM);
   const [sanayiSiteleri, setSanayiSiteleri] = useState<{ id: number; site_adi: string; ilce_adi: string | null }[]>([]);
-  const [kategoriler, setKategoriler] = useState<string[]>(SEKTORLER);
+  const [firmaTipi, setFirmaTipi] = useState<'siteli' | 'sitesiz'>('siteli');
+  const [kategoriler, setKategoriler] = useState<string[]>(SEKTORLER_SITELI);
   const [gonderiyor, setGonderiyor] = useState(false);
   const [durum, setDurum] = useState<Durum>(null);
   const [kullanici, setKullanici] = useState<{ email: string } | null | 'yukleniyor'>('yukleniyor');
@@ -39,6 +41,9 @@ export default function FirmaEklePage() {
     telefon: '', mobil_telefon: '', adres: '', web_sitesi: '', hizmetler: '',
   });
 
+  const [yeniKategoriModu, setYeniKategoriModu] = useState(false);
+  const [yeniKategori, setYeniKategori] = useState('');
+
   useEffect(() => {
     fetch('/api/auth/me')
       .then(r => r.json())
@@ -46,18 +51,29 @@ export default function FirmaEklePage() {
       .catch(() => setKullanici(null));
   }, []);
 
-  // Kategoriler (sabit sektörler + firmalarda kullanılan diğerleri)
+  // Firma tipi değişince kategori listesini güncelle
   useEffect(() => {
+    const baseKategoriler = firmaTipi === 'siteli' ? SEKTORLER_SITELI : SEKTORLER_SITESIZ;
+
+    // Veritabanındaki diğer kategorileri de ekle
     supabase
       .from('firmalar')
-      .select('sektor')
+      .select('sektor, sanayi_sitesi')
       .not('ad', 'ilike', '(Firma%')
       .then(({ data }) => {
-        const k = new Set<string>(SEKTORLER);
-        for (const f of data || []) if (f.sektor) k.add(f.sektor);
+        const k = new Set<string>(baseKategoriler);
+        for (const f of data || []) {
+          if (!f.sektor) continue;
+          const firmaninSitesi = f.sanayi_sitesi && f.sanayi_sitesi.trim() !== '';
+          if (firmaTipi === 'siteli' && firmaninSitesi) k.add(f.sektor);
+          else if (firmaTipi === 'sitesiz' && !firmaninSitesi) k.add(f.sektor);
+        }
         setKategoriler(Array.from(k).sort((a, b) => a.localeCompare(b, 'tr')));
       });
-  }, []);
+
+    // Firma tipi değiştiğinde sektör seçimini sıfırla
+    setForm(prev => ({ ...prev, sektor: '' }));
+  }, [firmaTipi]);
 
   // İl seçilince o ildeki sanayi siteleri
   useEffect(() => {
@@ -123,7 +139,21 @@ export default function FirmaEklePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.ad.trim() || !konum.il || !konum.ilce || !form.sektor || !form.telefon.trim()) {
+
+    // Sanayi sitesi içindeyse site_id zorunlu
+    if (firmaTipi === 'siteli' && !form.site_id) {
+      setDurum({ tip: 'hata', mesaj: 'Lütfen bir sanayi sitesi seçin.' });
+      return;
+    }
+
+    // Kategori kontrolü
+    const kategoriDegeri = yeniKategoriModu ? yeniKategori.trim() : form.sektor;
+    if (!kategoriDegeri) {
+      setDurum({ tip: 'hata', mesaj: 'Lütfen bir kategori seçin veya yeni kategori yazın.' });
+      return;
+    }
+
+    if (!form.ad.trim() || !konum.il || !konum.ilce || !form.telefon.trim()) {
       setDurum({ tip: 'hata', mesaj: 'Lütfen yıldızlı zorunlu alanları doldurun.' });
       return;
     }
@@ -133,6 +163,14 @@ export default function FirmaEklePage() {
 
     const fd = new FormData();
     Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+
+    // Eğer yeni kategori modundaysa, kategoriyi ve bilgiyi gönder
+    if (yeniKategoriModu) {
+      fd.set('sektor', kategoriDegeri);
+      fd.append('yeni_kategori', '1');
+      fd.append('yeni_kategori_tipi', firmaTipi);
+    }
+
     fd.append('il_adi', konum.il);
     fd.append('ilce_adi', konum.ilce);
     fd.append('mahalle_id', konum.mahalleId);
@@ -271,24 +309,91 @@ export default function FirmaEklePage() {
           {/* İl, İlçe, Mahalle, Sokak */}
           <KonumSecici deger={konum} onChange={konumSec} zorunluIlIlce />
 
-          {/* Sanayi Sitesi + Kategori yan yana */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Firma Tipi Seçimi */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Firma Konumu <span className="text-red-500">*</span></label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => { setFirmaTipi('siteli'); setForm(prev => ({ ...prev, site_id: '' })); }}
+                className={`px-4 py-3 rounded-lg border-2 font-medium text-sm transition-all ${
+                  firmaTipi === 'siteli'
+                    ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-[#1a3a6b]'
+                }`}
+              >
+                🏗️ Sanayi Sitesi İçinde
+              </button>
+              <button
+                type="button"
+                onClick={() => { setFirmaTipi('sitesiz'); setForm(prev => ({ ...prev, site_id: '' })); }}
+                className={`px-4 py-3 rounded-lg border-2 font-medium text-sm transition-all ${
+                  firmaTipi === 'sitesiz'
+                    ? 'border-[#e8a020] bg-[#e8a020] text-white'
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-[#e8a020]'
+                }`}
+              >
+                🏪 Sanayi Sitesi Dışında
+              </button>
+            </div>
+          </div>
+
+          {/* Sanayi Sitesi Seçimi (sadece siteli için) */}
+          {firmaTipi === 'siteli' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sanayi Sitesi</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sanayi Sitesi <span className="text-red-500">*</span></label>
               <select value={form.site_id} onChange={e => setField('site_id', e.target.value)} disabled={!konum.il}
                 className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors bg-white disabled:bg-gray-50">
-                <option value="">{gorunenSiteler.length ? 'Sanayi sitesi dışında / listede yok' : konum.il ? 'Bu bölgede kayıtlı site yok' : 'Önce il seçin'}</option>
+                <option value="">{gorunenSiteler.length ? 'Seçiniz...' : konum.il ? 'Bu bölgede kayıtlı site yok' : 'Önce il seçin'}</option>
                 {gorunenSiteler.map(s => <option key={s.id} value={s.id}>{s.site_adi}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Kategori <span className="text-red-500">*</span></label>
-              <select value={form.sektor} onChange={e => setField('sektor', e.target.value)}
-                className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors bg-white">
-                <option value="">Seçin...</option>
-                {kategoriler.map(k => <option key={k} value={k}>{k}</option>)}
-              </select>
-            </div>
+          )}
+
+          {/* Kategori */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kategori <span className="text-red-500">*</span></label>
+
+            {!yeniKategoriModu ? (
+              <>
+                <select
+                  value={form.sektor}
+                  onChange={e => setField('sektor', e.target.value)}
+                  className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors bg-white">
+                  <option value="">Seçin...</option>
+                  {kategoriler.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => { setYeniKategoriModu(true); setField('sektor', ''); }}
+                  className="mt-2 text-xs text-[#1a3a6b] hover:underline flex items-center gap-1"
+                >
+                  ➕ Kategori bulamadınız mı? Yeni kategori ekleyin
+                </button>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800 mb-2">
+                    <strong>Yeni Kategori:</strong> Kategori adını yazın, yönetici onayından sonra sisteme eklenecek.
+                  </p>
+                  <input
+                    type="text"
+                    value={yeniKategori}
+                    onChange={e => setYeniKategori(e.target.value.toUpperCase())}
+                    placeholder="Örn: YAZILIM & BİLİŞİM"
+                    className="w-full border border-[#dde3ec] rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setYeniKategoriModu(false); setYeniKategori(''); }}
+                  className="text-xs text-gray-600 hover:underline"
+                >
+                  ← Mevcut kategorilerden seç
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Telefon + Adres yan yana */}

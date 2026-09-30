@@ -47,7 +47,7 @@ export default async function RootLayout({
 
   return (
     <html lang={lang}>
-      <body className="min-h-screen flex flex-col bg-[#f4f6f9]">
+      <body className="min-h-screen flex flex-col bg-[#f4f6f9]" suppressHydrationWarning>
         {!ADSENSE_CLIENT.includes("XXXX") && (
           <Script
             async

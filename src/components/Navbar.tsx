@@ -187,12 +187,12 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 bg-[#1a3a6b] shadow-md">
       <div className="max-w-7xl mx-auto px-4 flex items-center gap-3 transition-all duration-300 py-2">
         <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-          <div className="bg-white rounded p-0.5">
+          <div className="bg-white rounded px-3 py-1">
             <Image
               src="/kovan-logo.svg"
               alt="Kovan Portal"
-              width={72} height={36}
-              className={`w-auto transition-all duration-300 ${scrolled ? "h-7" : "h-9"}`}
+              width={120} height={48}
+              className={`w-auto transition-all duration-300 ${scrolled ? "h-8" : "h-12"}`}
               unoptimized
             />
           </div>

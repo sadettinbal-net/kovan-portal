@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 120" width="240" height="120">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 120" width="260" height="120">
   <!-- Kovan Portal logosu: turuncu petek + lacivert yazı -->
-  <rect width="240" height="120" rx="10" fill="#ffffff"/>
+  <rect width="260" height="120" rx="10" fill="#ffffff"/>
   <g transform="translate(14 22)">
     <polygon points="38,0 76,19 76,57 38,76 0,57 0,19" fill="#e8a020"/>
     <polygon points="38,12 64,25 64,51 38,64 12,51 12,25" fill="#1a3a6b"/>

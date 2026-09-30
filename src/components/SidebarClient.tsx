@@ -52,9 +52,40 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
     return `/firmalar${s ? `?${s}` : ""}`;
   };
   const [sanayiOpen, setSanayiOpen] = useState(false);
+  const [aramaMetni, setAramaMetni] = useState("");
+  const [aramaSonuclari, setAramaSonuclari] = useState<any[]>([]);
+  const [aramaAcik, setAramaAcik] = useState(false);
+  const aramaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setSanayiOpen(window.innerWidth >= 768);
+  }, []);
+
+  // Arama debounce
+  useEffect(() => {
+    if (aramaMetni.length < 2) {
+      setAramaSonuclari([]);
+      setAramaAcik(false);
+      return;
+    }
+    const timeout = setTimeout(async () => {
+      const res = await fetch(`/api/arama-sanayi-siteleri?q=${encodeURIComponent(aramaMetni)}`);
+      const data = await res.json();
+      setAramaSonuclari(data.sonuclar || []);
+      setAramaAcik(true);
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [aramaMetni]);
+
+  // Click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (aramaRef.current && !aramaRef.current.contains(e.target as Node)) {
+        setAramaAcik(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   // Yöneticinin tanımladığı kenar çubuğu reklamı (varsa Google yerine bu gösterilir)
@@ -77,7 +108,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
     : [];
 
   return (
-    <aside className="w-full md:w-56 flex-shrink-0 space-y-3">
+    <aside className="w-full md:w-72 flex-shrink-0 space-y-3">
       <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
         <button
           onClick={() => setSanayiOpen((o) => !o)}
@@ -88,6 +119,41 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
+
+        {/* Arama Kutusu */}
+        <div className={`${sanayiOpen ? "block" : "hidden"} lg:block p-2 border-b border-gray-100`} ref={aramaRef}>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs">🔍</span>
+            <input
+              type="text"
+              value={aramaMetni}
+              onChange={(e) => setAramaMetni(e.target.value)}
+              onFocus={() => aramaSonuclari.length > 0 && setAramaAcik(true)}
+              placeholder="Site veya firma ara..."
+              className="w-full border border-[#dde3ec] rounded pl-6 pr-2 py-1.5 text-xs bg-white outline-none focus:border-[#1a3a6b]"
+            />
+            {aramaAcik && aramaSonuclari.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] max-h-64 overflow-y-auto">
+                {aramaSonuclari.map((sonuc, i) => (
+                  <Link
+                    key={i}
+                    href={sonuc.url}
+                    onClick={() => { setAramaAcik(false); setAramaMetni(""); }}
+                    className="flex items-start gap-2 px-3 py-2 text-xs hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
+                  >
+                    <span className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 text-white text-[10px] font-bold ${sonuc.tip === 'site' ? 'bg-[#1a3a6b]' : 'bg-[#e8a020]'}`}>
+                      {sonuc.tip === 'site' ? '🏗️' : sonuc.baslik.charAt(0)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-gray-800 truncate">{sonuc.baslik}</div>
+                      {sonuc.altBaslik && <div className="text-[10px] text-gray-400 truncate">{sonuc.altBaslik}</div>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {iller.length > 0 && (
           <div className={`${sanayiOpen ? "block" : "hidden"} lg:block p-2 border-b border-gray-100`}>
@@ -146,7 +212,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
                     {site.girintili && <span className="text-gray-300 mr-1">└</span>}
                     {!!site.altSayisi && <span className="text-[#e8a020] mr-1">{acik ? "▾" : "▸"}</span>}
                     {site.name}
-                    {site.alt && <span className="block text-xs text-gray-500 font-normal">{site.alt}</span>}
+                    {site.alt && <span className="text-xs text-gray-500 font-normal ml-1">({site.alt})</span>}
                   </span>
                   <span className={`text-xs px-2 py-0.5 rounded-full ml-1 flex-shrink-0 ${isActive ? "bg-[#1a3a6b] text-white" : "bg-gray-200 text-gray-700"}`}>
                     {site.firmCount}

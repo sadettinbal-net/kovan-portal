@@ -8,6 +8,7 @@ import { createClient } from '@/utils/supabase/client';
 const supabase = createClient();
 import ActiveUsers from '@/components/ActiveUsers';
 import SanayiSiteleriYonetimi from '@/components/admin/SanayiSiteleriYonetimi';
+import KategoriYonetimi from '@/components/admin/KategoriYonetimi';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
 
@@ -257,6 +258,15 @@ function BekleyenFirmalar() {
   }, []);
 
   async function guncelle(id: number, durum: 'onaylandi' | 'reddedildi') {
+    // Onaylamadan önce yeni kategori kontrolü
+    if (durum === 'onaylandi') {
+      const firma = bekleyenler.find(f => f.id === id);
+      if (firma?.yeni_kategori) {
+        alert(`⚠️ DİKKAT!\n\nBu firma yeni bir kategori önermiş: "${firma.sektor}"\n\nÖnce "Kategoriler" sekmesinden bu kategoriyi sisteme ekleyin, sonra firmayı onaylayın.`);
+        return;
+      }
+    }
+
     setIslem(id);
     const res = await fetch('/api/admin/firma-durum', {
       method: 'PATCH',
@@ -281,15 +291,34 @@ function BekleyenFirmalar() {
   return (
     <div className="space-y-4">
       {bekleyenler.map(firma => (
-        <div key={firma.id} className="bg-white border border-gray-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div key={firma.id} className={`bg-white rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4 ${firma.yeni_kategori ? 'border-2 border-orange-400' : 'border border-gray-200'}`}>
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-[#1a3a6b] text-base">{firma.ad}</h3>
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-bold text-[#1a3a6b] text-base">{firma.ad}</h3>
+              {firma.yeni_kategori && (
+                <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                  ⚠️ YENİ KATEGORİ
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
               <span>🏭 {firma.sanayi_sitesi}</span>
-              <span>🏷️ {firma.sektor}</span>
+              <span className={firma.yeni_kategori ? 'text-orange-600 font-semibold' : ''}>
+                🏷️ {firma.sektor}
+                {firma.yeni_kategori && (
+                  <span className="text-xs ml-1">({firma.yeni_kategori_tipi === 'siteli' ? 'Sanayi Sitesi İçi' : 'Sanayi Sitesi Dışı'})</span>
+                )}
+              </span>
               {firma.telefon && <span>📞 {firma.telefon}</span>}
               {firma.sahip && <span>👤 {firma.sahip}</span>}
             </div>
+            {firma.yeni_kategori && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 mt-2">
+                <p className="text-xs text-orange-800">
+                  <strong>⚠️ Dikkat:</strong> Bu firma sistemde olmayan yeni bir kategori önermiş. Firmayı onaylamadan önce "Kategoriler" sekmesinden bu kategoriyi sisteme eklemelisiniz.
+                </p>
+              </div>
+            )}
             {firma.adres && <p className="text-xs text-gray-400 mt-1">📍 {firma.adres}</p>}
             <p className="text-xs text-gray-300 mt-1">{new Date(firma.created_at).toLocaleString('tr-TR')}</p>
           </div>
@@ -2095,12 +2124,22 @@ function AdminPanel() {
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'sanayi-siteleri' ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             🏭 Sanayi Siteleri
           </button>
+          <button onClick={() => setAktifSekme('kategoriler')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'kategoriler' ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            📂 Kategoriler
+          </button>
         </div>
       </div>
 
       {aktifSekme === 'sanayi-siteleri' && (
         <div className="max-w-7xl mx-auto p-6">
           <SanayiSiteleriYonetimi />
+        </div>
+      )}
+
+      {aktifSekme === 'kategoriler' && (
+        <div className="max-w-7xl mx-auto p-6">
+          <KategoriYonetimi />
         </div>
       )}
 

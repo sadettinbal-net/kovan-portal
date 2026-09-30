@@ -35,6 +35,8 @@ export type Firma = {
   bekleyen_degisiklikler?: Record<string, unknown> | null;
   guncelleme_talep_tarihi?: string | null;
   hedef_sayfa?: number | null;
+  yeni_kategori?: boolean | null;
+  yeni_kategori_tipi?: string | null;
   created_at: string;
 };
 
