@@ -10,6 +10,7 @@ import { translations } from "@/lib/translations";
 import { siteVeAltSiteAdlari } from "@/lib/sanayiSiteleri";
 import type { Lang } from "@/lib/translations";
 import KategoriSuzgeci from "@/components/KategoriSuzgeci";
+import RightSidebarWrapper from "@/components/RightSidebarWrapper";
 import { aktifKategoriler, adinKategoriIdleri, KATEGORI_TIPI, type FirmaTipi } from "@/lib/firmaKategorileri";
 
 function adminClient() {
@@ -224,8 +225,8 @@ export default async function FirmalarPage(props: PageProps) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <div className="flex flex-col md:flex-row gap-6">
+    <div className="max-w-[1600px] mx-auto px-4 py-6">
+      <div className="flex flex-col md:flex-row gap-4">
         <Suspense fallback={<div className="w-64 animate-pulse bg-gray-200 rounded-lg h-96" />}>
           <Sidebar il={il} />
         </Suspense>
@@ -400,6 +401,11 @@ export default async function FirmalarPage(props: PageProps) {
             </div>
           )}
         </div>
+
+        {/* Sağ menü: ana sayfadaki gibi Sanayi Dışı / Kurumsal kategoriler */}
+        <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
+          <RightSidebarWrapper />
+        </Suspense>
       </div>
     </div>
   );
