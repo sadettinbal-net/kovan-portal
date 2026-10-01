@@ -1895,6 +1895,7 @@ function AdminPanel() {
       telefon: seciliFirma.telefon,
       mobil_telefon: seciliFirma.mobil_telefon ?? '',
       adres: seciliFirma.adres,
+      plus_code: seciliFirma.plus_code ?? '',
       web_sitesi: seciliFirma.web_sitesi,
       hizmetler: seciliFirma.hizmetler,
       ozel_firma: seciliFirma.ozel_firma,
@@ -2280,6 +2281,7 @@ function AdminPanel() {
                       </p>
                     </div>
                     <div className="col-span-2"><span className="text-gray-400 text-xs">Adres</span><p className="text-gray-800">{seciliFirma.adres || '—'}</p></div>
+                    <div className="col-span-2"><span className="text-gray-400 text-xs">📍 Plus Code</span><p className="text-gray-800">{seciliFirma.plus_code || '—'}</p></div>
                     {seciliFirma.hizmetler?.length > 0 && (
                       <div className="col-span-2">
                         <span className="text-gray-400 text-xs">Hizmetler</span>
@@ -2406,6 +2408,13 @@ function AdminPanel() {
                       <label className="text-xs font-semibold text-gray-600 block mb-1">Adres</label>
                       <textarea value={duzenleForm.adres || ''} onChange={e => setDuzenleForm(f => ({ ...f, adres: e.target.value }))} rows={2}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] resize-none" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 block mb-1">📍 Plus Code <span className="font-normal text-gray-400">(Google Haritalar)</span></label>
+                      <input value={(duzenleForm as Record<string, unknown>).plus_code as string || ''} onChange={e => setDuzenleForm(f => ({ ...f, plus_code: e.target.value }))}
+                        placeholder="Örn: 8GHC+2X Ümraniye, İstanbul"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]" />
+                      <p className="text-xs text-gray-400 mt-1">Google Haritalar&apos;da firmanın yerine dokunun, adresin altında çıkan kısa kodu kopyalayın.</p>
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 block mb-1">Web Sitesi</label>
