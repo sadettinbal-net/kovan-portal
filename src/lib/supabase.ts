@@ -31,6 +31,9 @@ export type Firma = {
   youtube?: string | null;
   linkedin?: string | null;
   kullanici_email?: string | null;
+  eposta?: string | null;
+  tiktok?: string | null;
+  nsosyal?: string | null;
   yeniden_gonderildi?: boolean | null;
   bekleyen_degisiklikler?: Record<string, unknown> | null;
   guncelleme_talep_tarihi?: string | null;

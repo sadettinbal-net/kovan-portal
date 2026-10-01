@@ -58,6 +58,11 @@ export async function POST(request: NextRequest) {
     const adres        = (formData.get('adres') as string)?.trim() || null;
     const plus_code    = (formData.get('plus_code') as string)?.trim() || null;
     const web_sitesi   =(formData.get('web_sitesi') as string)?.trim() || null;
+    const eposta       = (formData.get('eposta') as string)?.trim().toLowerCase() || null;
+    const instagram    = (formData.get('instagram') as string)?.trim() || null;
+    const facebook     = (formData.get('facebook') as string)?.trim() || null;
+    const tiktok       = (formData.get('tiktok') as string)?.trim() || null;
+    const nsosyal      = (formData.get('nsosyal') as string)?.trim() || null;
     const hizmetlerRaw = (formData.get('hizmetler') as string) || '';
     const kartResmi    = formData.get('kart_resmi') as File | null;
     const detayFiles   = formData.getAll('detay_fotograflar') as File[];
@@ -113,7 +118,7 @@ export async function POST(request: NextRequest) {
       .from('firmalar')
       .insert({
         ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, mahalle_id, sokak_id, sektor, kategori_id, firma_tipi,
-        telefon, mobil_telefon, adres, plus_code, web_sitesi,
+        telefon, mobil_telefon, adres, plus_code, web_sitesi, eposta, instagram, facebook, tiktok, nsosyal,
         hizmetler, ozel_firma: false,
         fotograf_url: null, detay_fotograflar: [],
         onay_durumu: yonetici ? 'onaylandi' : 'beklemede',

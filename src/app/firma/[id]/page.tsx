@@ -62,7 +62,7 @@ export default async function FirmaDetay({ params }: PageProps) {
     ? Math.round((puanlar!.reduce((t, y) => t + y.puan, 0) / yorumSayisi) * 10) / 10
     : null;
 
-  const hasSosyal = firma.instagram || firma.facebook || firma.twitter || firma.youtube || firma.linkedin || firma.tiktok;
+  const hasSosyal = firma.instagram || firma.facebook || firma.twitter || firma.youtube || firma.linkedin || firma.tiktok || firma.nsosyal;
 
   // Harita: önce açık adres, sonra sanayi sitesi, sonra ilçe ve il aranır
   const bolgeEki = [firma.ilce_adi, firma.il_adi].filter(Boolean).join(", ");
@@ -208,6 +208,18 @@ export default async function FirmaDetay({ params }: PageProps) {
             </div>
           )}
 
+          {firma.eposta && (
+            <div className="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg">
+              <span className="text-xl">✉️</span>
+              <div>
+                <div className="text-xs text-gray-500 mb-0.5">{t.emailLabel}</div>
+                <a href={`mailto:${firma.eposta}`} className="text-[#1a3a6b] font-semibold hover:underline text-sm break-all">
+                  {firma.eposta}
+                </a>
+              </div>
+            </div>
+          )}
+
           {firma.plus_code && (
             <div className="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg">
               <span className="text-xl">📍</span>
@@ -307,6 +319,17 @@ export default async function FirmaDetay({ params }: PageProps) {
                         <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.19 8.19 0 004.79 1.53V6.77a4.85 4.85 0 01-1.02-.08z"/>
                       </svg>
                       TikTok
+                    </a>
+                  )}
+                  {firma.nsosyal && (
+                    <a
+                      href={normalizeUrl(firma.nsosyal)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 bg-[#e30a17] text-white text-xs font-semibold px-3 py-1.5 rounded-full hover:opacity-90 transition-opacity"
+                    >
+                      <span className="w-3.5 h-3.5 flex items-center justify-center font-black text-[11px] leading-none flex-shrink-0">N</span>
+                      N Sosyal
                     </a>
                   )}
                 </div>
