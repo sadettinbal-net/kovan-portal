@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { SEKTORLER_SITELI } from '@/lib/sektorler-siteli';
 import { SEKTORLER_SITESIZ } from '@/lib/sektorler-sitesiz';
+import { TUM_KURUMSAL_ALT_KATEGORILER } from '@/lib/kategoriler-kurumsal';
 import KonumSecici, { BOS_KONUM, type Konum } from '@/components/KonumSecici';
 
 type Durum = { tip: 'basari' | 'hata'; mesaj: string } | null;
@@ -26,7 +27,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
   const [konum, setKonum] = useState<Konum>(BOS_KONUM);
   const [sanayiSiteleri, setSanayiSiteleri] = useState<{ id: number; site_adi: string; ilce_adi: string | null }[]>([]);
-  const [firmaTipi, setFirmaTipi] = useState<'siteli' | 'sitesiz'>('siteli');
+  const [firmaTipi, setFirmaTipi] = useState<'siteli' | 'sitesiz' | 'kurumsal'>('siteli');
   const [kategoriler, setKategoriler] = useState<string[]>(SEKTORLER_SITELI);
   const [gonderiyor, setGonderiyor] = useState(false);
   const [durum, setDurum] = useState<Durum>(null);
@@ -68,20 +69,34 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
   // Firma tipi değişince kategori listesini güncelle
   useEffect(() => {
-    const baseKategoriler = firmaTipi === 'siteli' ? SEKTORLER_SITELI : SEKTORLER_SITESIZ;
+    let baseKategoriler: string[];
+    if (firmaTipi === 'siteli') {
+      baseKategoriler = SEKTORLER_SITELI;
+    } else if (firmaTipi === 'kurumsal') {
+      baseKategoriler = TUM_KURUMSAL_ALT_KATEGORILER;
+    } else {
+      baseKategoriler = SEKTORLER_SITESIZ;
+    }
 
     // Veritabanındaki diğer kategorileri de ekle
     supabase
       .from('firmalar')
-      .select('sektor, sanayi_sitesi')
+      .select('sektor, sanayi_sitesi, firma_tipi')
       .not('ad', 'ilike', '(Firma%')
       .then(({ data }) => {
         const k = new Set<string>(baseKategoriler);
         for (const f of data || []) {
           if (!f.sektor) continue;
-          const firmaninSitesi = f.sanayi_sitesi && f.sanayi_sitesi.trim() !== '';
-          if (firmaTipi === 'siteli' && firmaninSitesi) k.add(f.sektor);
-          else if (firmaTipi === 'sitesiz' && !firmaninSitesi) k.add(f.sektor);
+
+          if (firmaTipi === 'siteli') {
+            const firmaninSitesi = f.sanayi_sitesi && f.sanayi_sitesi.trim() !== '';
+            if (firmaninSitesi) k.add(f.sektor);
+          } else if (firmaTipi === 'kurumsal') {
+            if (f.firma_tipi === 'kurumsal') k.add(f.sektor);
+          } else if (firmaTipi === 'sitesiz') {
+            const firmaninSitesi = f.sanayi_sitesi && f.sanayi_sitesi.trim() !== '';
+            if (!firmaninSitesi && f.firma_tipi !== 'kurumsal') k.add(f.sektor);
+          }
         }
         setKategoriler(Array.from(k).sort((a, b) => a.localeCompare(b, 'tr')));
       });
@@ -189,6 +204,9 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
       }
     }
     if (yonetici) fd.append('yonetici', '1');
+
+    // Firma tipini gönder
+    fd.append('firma_tipi', firmaTipi);
 
     fd.append('il_adi', konum.il);
     fd.append('ilce_adi', konum.ilce);
@@ -364,8 +382,8 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* Firma Tipi Seçimi */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Firma Konumu <span className="text-red-500">*</span></label>
-            <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Firma Tipi <span className="text-red-500">*</span></label>
+            <div className={`grid gap-3 ${yonetici ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <button
                 type="button"
                 onClick={() => { setFirmaTipi('siteli'); setForm(prev => ({ ...prev, site_id: '' })); }}
@@ -375,7 +393,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
                     : 'border-gray-300 bg-white text-gray-700 hover:border-[#1a3a6b]'
                 }`}
               >
-                🏗️ Sanayi Sitesi İçinde
+                🏗️ Sanayi Sitesi
               </button>
               <button
                 type="button"
@@ -386,8 +404,21 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
                     : 'border-gray-300 bg-white text-gray-700 hover:border-[#e8a020]'
                 }`}
               >
-                🏪 Sanayi Sitesi Dışında
+                🏪 Sanayi Dışı
               </button>
+              {yonetici && (
+                <button
+                  type="button"
+                  onClick={() => { setFirmaTipi('kurumsal'); setForm(prev => ({ ...prev, site_id: '' })); }}
+                  className={`px-4 py-3 rounded-lg border-2 font-medium text-sm transition-all ${
+                    firmaTipi === 'kurumsal'
+                      ? 'border-[#059669] bg-[#059669] text-white'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-[#059669]'
+                  }`}
+                >
+                  🏢 Kurumsal
+                </button>
+              )}
             </div>
           </div>
 

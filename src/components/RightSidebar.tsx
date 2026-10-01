@@ -10,17 +10,27 @@ type KategoriSayisi = {
   sayi: number;
 };
 
+type KurumsalKategoriSayisi = {
+  ana: string;
+  altKategoriler: { kategori: string; sayi: number }[];
+  toplam: number;
+};
+
 interface Props {
   kategoriler: KategoriSayisi[];
   toplamFirma: number;
+  kurumsalKategoriler?: KurumsalKategoriSayisi[];
+  toplamKurumsal?: number;
 }
 
-export default function RightSidebar({ kategoriler, toplamFirma }: Props) {
+export default function RightSidebar({ kategoriler, toplamFirma, kurumsalKategoriler = [], toplamKurumsal = 0 }: Props) {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeKategori = searchParams.get("kategori") || "";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sekme, setSekme] = useState<'sitesiz' | 'kurumsal'>('sitesiz');
+  const [acikAnaKategoriler, setAcikAnaKategoriler] = useState<Set<string>>(new Set());
   const [aramaMetni, setAramaMetni] = useState("");
   const [aramaSonuclari, setAramaSonuclari] = useState<any[]>([]);
   const [aramaAcik, setAramaAcik] = useState(false);
@@ -30,6 +40,19 @@ export default function RightSidebar({ kategoriler, toplamFirma }: Props) {
     setMenuOpen(window.innerWidth >= 768);
   }, []);
 
+  // Ana kategori aç/kapa
+  const toggleAnaKategori = (ana: string) => {
+    setAcikAnaKategoriler(prev => {
+      const yeni = new Set(prev);
+      if (yeni.has(ana)) {
+        yeni.delete(ana);
+      } else {
+        yeni.add(ana);
+      }
+      return yeni;
+    });
+  };
+
   // Arama debounce
   useEffect(() => {
     if (aramaMetni.length < 2) {
@@ -38,13 +61,14 @@ export default function RightSidebar({ kategoriler, toplamFirma }: Props) {
       return;
     }
     const timeout = setTimeout(async () => {
-      const res = await fetch(`/api/arama-sitesiz?q=${encodeURIComponent(aramaMetni)}`);
+      const apiUrl = sekme === 'sitesiz' ? '/api/arama-sitesiz' : '/api/arama-kurumsal';
+      const res = await fetch(`${apiUrl}?q=${encodeURIComponent(aramaMetni)}`);
       const data = await res.json();
       setAramaSonuclari(data.sonuclar || []);
       setAramaAcik(true);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [aramaMetni]);
+  }, [aramaMetni, sekme]);
 
   // Click outside
   useEffect(() => {
@@ -60,12 +84,38 @@ export default function RightSidebar({ kategoriler, toplamFirma }: Props) {
   return (
     <aside className="w-full md:w-72 flex-shrink-0">
       <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
+        {/* Sekme Başlıkları */}
+        <div className="flex">
+          <button
+            onClick={() => { setSekme('sitesiz'); setMenuOpen(true); }}
+            className={`flex-1 px-3 py-2 font-bold text-sm transition-colors ${
+              sekme === 'sitesiz'
+                ? 'bg-[#e8a020] text-white'
+                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+            }`}
+          >
+            Sanayi Dışı
+          </button>
+          <button
+            onClick={() => { setSekme('kurumsal'); setMenuOpen(true); }}
+            className={`flex-1 px-3 py-2 font-bold text-sm transition-colors ${
+              sekme === 'kurumsal'
+                ? 'bg-[#1a3a6b] text-white'
+                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+            }`}
+          >
+            Kurumsal
+          </button>
+        </div>
+
         <button
           onClick={() => setMenuOpen((o) => !o)}
-          className="w-full bg-[#e8a020] text-white px-3 py-2 font-bold text-sm flex items-center justify-between lg:cursor-default"
+          className={`w-full px-3 py-1.5 font-semibold text-xs flex items-center justify-between lg:hidden ${
+            sekme === 'sitesiz' ? 'bg-[#f5b855] text-gray-800' : 'bg-[#2554a0] text-white'
+          }`}
         >
-          Sanayi Sitesi Dışındaki Firmalar
-          <svg className={`w-3 h-3 transition-transform duration-200 lg:hidden ${menuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          {menuOpen ? 'Gizle' : 'Göster'}
+          <svg className={`w-3 h-3 transition-transform duration-200 ${menuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
@@ -105,34 +155,90 @@ export default function RightSidebar({ kategoriler, toplamFirma }: Props) {
           </div>
         </div>
 
-        <ul className={`${menuOpen ? "block" : "hidden"} lg:block max-h-[28rem] overflow-y-auto`}>
-          <li>
-            <Link
-              href="/firmalar?sanayi_sitesi=yok"
-              className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors ${!activeKategori ? "bg-yellow-50 text-[#e8a020] font-semibold" : "text-gray-700"}`}
-            >
-              <span>Tümü</span>
-              <span className="bg-[#e8a020] text-white text-[10px] px-1.5 py-0.5 rounded-full">{toplamFirma}</span>
-            </Link>
-          </li>
+        {/* Sanayi Dışı Kategoriler */}
+        {sekme === 'sitesiz' && (
+          <ul className={`${menuOpen ? "block" : "hidden"} lg:block max-h-[28rem] overflow-y-auto`}>
+            <li>
+              <Link
+                href="/firmalar?firma_tipi=sitesiz"
+                className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors ${!activeKategori ? "bg-yellow-50 text-[#e8a020] font-semibold" : "text-gray-700"}`}
+              >
+                <span>Tümü</span>
+                <span className="bg-[#e8a020] text-white text-[10px] px-1.5 py-0.5 rounded-full">{toplamFirma}</span>
+              </Link>
+            </li>
 
-          {kategoriler.map((kat) => {
-            const isActive = activeKategori === kat.kategori;
-            return (
-              <li key={kat.kategori}>
-                <Link
-                  href={`/firmalar?sanayi_sitesi=yok&kategori=${encodeURIComponent(kat.kategori)}`}
-                  className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors ${isActive ? "bg-yellow-50 text-[#e8a020] font-bold" : "text-gray-800"}`}
-                >
-                  <span className="leading-tight">{kat.kategori}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ml-1 flex-shrink-0 ${isActive ? "bg-[#e8a020] text-white" : "bg-gray-200 text-gray-700"}`}>
-                    {kat.sayi}
-                  </span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+            {kategoriler.map((kat) => {
+              const isActive = activeKategori === kat.kategori;
+              return (
+                <li key={kat.kategori}>
+                  <Link
+                    href={`/firmalar?firma_tipi=sitesiz&kategori=${encodeURIComponent(kat.kategori)}`}
+                    className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors ${isActive ? "bg-yellow-50 text-[#e8a020] font-bold" : "text-gray-800"}`}
+                  >
+                    <span className="leading-tight">{kat.kategori}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ml-1 flex-shrink-0 ${isActive ? "bg-[#e8a020] text-white" : "bg-gray-200 text-gray-700"}`}>
+                      {kat.sayi}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+
+        {/* Kurumsal Firmalar - Ana Kategori ve Alt Kategoriler */}
+        {sekme === 'kurumsal' && (
+          <ul className={`${menuOpen ? "block" : "hidden"} lg:block max-h-[28rem] overflow-y-auto`}>
+            <li>
+              <Link
+                href="/firmalar?firma_tipi=kurumsal"
+                className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-blue-50 transition-colors ${!activeKategori ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
+              >
+                <span>Tümü</span>
+                <span className="bg-[#1a3a6b] text-white text-[10px] px-1.5 py-0.5 rounded-full">{toplamKurumsal}</span>
+              </Link>
+            </li>
+
+            {kurumsalKategoriler.map((anaKat) => {
+              const isAcik = acikAnaKategoriler.has(anaKat.ana);
+              return (
+                <li key={anaKat.ana}>
+                  {/* Ana Kategori Başlık */}
+                  <button
+                    onClick={() => toggleAnaKategori(anaKat.ana)}
+                    className="w-full flex justify-between items-center px-3 py-2 text-sm font-bold border-b border-gray-100 hover:bg-blue-50 transition-colors text-[#1a3a6b]"
+                  >
+                    <span className="flex items-center gap-1">
+                      <svg className={`w-3 h-3 transition-transform ${isAcik ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                      {anaKat.ana}
+                    </span>
+                    <span className="bg-[#1a3a6b] text-white text-[10px] px-1.5 py-0.5 rounded-full">{anaKat.toplam}</span>
+                  </button>
+
+                  {/* Alt Kategoriler */}
+                  {isAcik && anaKat.altKategoriler.map((altKat) => {
+                    const isActive = activeKategori === altKat.kategori;
+                    return (
+                      <Link
+                        key={altKat.kategori}
+                        href={`/firmalar?firma_tipi=kurumsal&kategori=${encodeURIComponent(altKat.kategori)}`}
+                        className={`flex justify-between items-center pl-8 pr-3 py-1.5 text-xs border-b border-gray-50 hover:bg-blue-50 transition-colors ${isActive ? "bg-blue-50 text-[#1a3a6b] font-bold" : "text-gray-700"}`}
+                      >
+                        <span>{altKat.kategori}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-[#1a3a6b] text-white" : "bg-gray-200 text-gray-600"}`}>
+                          {altKat.sayi}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </aside>
   );
