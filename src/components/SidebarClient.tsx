@@ -244,13 +244,18 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
       </div>
 
       <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
-        <div className="bg-[#e8a020] text-white px-3 py-2 font-bold text-sm">{t.listingCategories}</div>
-        <ul>
+        <div className="bg-[#e8a020] text-white px-3 py-2 font-bold text-[15px]">{t.listingCategories}</div>
+        <div className="px-2 pt-2">
+          <div className="bg-[#1a3a6b] text-white text-center text-xs font-bold tracking-wide rounded-md px-2 py-1.5">
+            🏗️ {t.listingForZones}
+          </div>
+        </div>
+        <ul className="p-2 space-y-1.5">
           {ILAN_KATEGORILERI.map((ilan) => (
             <li key={ilan.id}>
               <Link
                 href={`/ilanlar?tip=${encodeURIComponent(ilan.name)}`}
-                className="flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors text-gray-800"
+                className="flex justify-between items-center px-3 py-2 text-[15px] font-semibold rounded-md bg-[#fff8eb] border border-[#e8a020]/50 hover:bg-[#ffefcc] hover:border-[#e8a020] transition-colors text-gray-800"
               >
                 <span className="leading-tight">{ilan.name}</span>
               </Link>
