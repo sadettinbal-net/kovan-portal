@@ -187,6 +187,8 @@ export default async function FirmalarPage(props: PageProps) {
   const normalFirmalar = firmalar.filter(f => !(f as typeof f & { hedef_sayfa?: number | null }).hedef_sayfa);
 
   const toplamFirma = normalFirmalar.length;
+  // Ekranda yazan toplam: sayfaya sabitlenmiş firmalar dahil bütün firmalar (kenar menüdeki sayıyla aynı)
+  const gosterilenToplam = firmalar.length;
   const toplamSayfa = Math.max(Math.ceil(toplamFirma / limit), 1);
   const gecerliSayfa = Math.min(sayfa, toplamSayfa);
 
@@ -247,7 +249,7 @@ export default async function FirmalarPage(props: PageProps) {
             <div>
               <h1 className="font-bold text-[#1a3a6b] text-lg">{baslik}</h1>
               <p className="text-gray-500 text-xs mt-0.5">
-                {t.showing((gecerliSayfa - 1) * limit + 1, Math.min(gecerliSayfa * limit, toplamFirma), toplamFirma)}
+                {t.showing((gecerliSayfa - 1) * limit + 1, Math.min(gecerliSayfa * limit, gosterilenToplam), gosterilenToplam)}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
@@ -361,7 +363,7 @@ export default async function FirmalarPage(props: PageProps) {
               {/* Alt bilgi + sayfa başına seçici */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-3">
                 <p className="text-xs text-gray-400">
-                  {t.pageInfo(gecerliSayfa, toplamSayfa, toplamFirma)}
+                  {t.pageInfo(gecerliSayfa, toplamSayfa, gosterilenToplam)}
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-400 text-xs">{t.perPage}</span>
