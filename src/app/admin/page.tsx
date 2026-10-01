@@ -1902,6 +1902,7 @@ function AdminPanel() {
       onay_durumu: seciliFirma.onay_durumu,
       hedef_sayfa: seciliFirma.hedef_sayfa ?? null,
       kullanici_email: seciliFirma.kullanici_email ?? '',
+      firma_tipi: seciliFirma.firma_tipi ?? null,
     });
     setDuzenlemeAcik(true);
     setDurum(null);
@@ -2282,6 +2283,11 @@ function AdminPanel() {
                     </div>
                     <div className="col-span-2"><span className="text-gray-400 text-xs">Adres</span><p className="text-gray-800">{seciliFirma.adres || '—'}</p></div>
                     <div className="col-span-2"><span className="text-gray-400 text-xs">📍 Plus Code</span><p className="text-gray-800">{seciliFirma.plus_code || '—'}</p></div>
+                    <div><span className="text-gray-400 text-xs">Firma Tipi</span>
+                      <p className="text-gray-800">
+                        {seciliFirma.firma_tipi === 'kurumsal' ? '🏢 Kurumsal' : seciliFirma.firma_tipi === 'sitesiz' ? '🏪 Sanayi Dışı' : seciliFirma.firma_tipi === 'siteli' ? '🏗️ Sanayi Sitesi' : '—'}
+                      </p>
+                    </div>
                     {seciliFirma.hizmetler?.length > 0 && (
                       <div className="col-span-2">
                         <span className="text-gray-400 text-xs">Hizmetler</span>
@@ -2402,6 +2408,15 @@ function AdminPanel() {
                         <option value="beklemede">Beklemede</option>
                         <option value="onaylandi">Onaylı</option>
                         <option value="reddedildi">Reddedildi</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 block mb-1">Firma Tipi</label>
+                      <select value={(duzenleForm as Record<string, unknown>).firma_tipi as string || 'siteli'} onChange={e => setDuzenleForm(f => ({ ...f, firma_tipi: e.target.value as Firma['firma_tipi'] }))}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]">
+                        <option value="siteli">🏗️ Sanayi Sitesi</option>
+                        <option value="sitesiz">🏪 Sanayi Dışı</option>
+                        <option value="kurumsal">🏢 Kurumsal</option>
                       </select>
                     </div>
                     <div>
