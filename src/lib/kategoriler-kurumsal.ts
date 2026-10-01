@@ -9,6 +9,7 @@ export const KURUMSAL_KATEGORILER: KurumsalKategori[] = [
     ana: 'SAĞLIK',
     altlar: [
       'Hastaneler',
+      'Sağlık Hizmetleri',
       'Özel Poliklinikler',
       'Tıp Merkezleri',
       'Diyaliz Merkezleri',

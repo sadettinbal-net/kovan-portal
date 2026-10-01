@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { SEKTORLER_SITELI } from '@/lib/sektorler-siteli';
-import { SEKTORLER_SITESIZ } from '@/lib/sektorler-sitesiz';
+import { TUM_SANAYI_DISI_ALT_KATEGORILER } from '@/lib/kategoriler-sanayi-disi';
 import { TUM_KURUMSAL_ALT_KATEGORILER } from '@/lib/kategoriler-kurumsal';
 import KonumSecici, { BOS_KONUM, type Konum } from '@/components/KonumSecici';
 
@@ -75,7 +75,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
     } else if (firmaTipi === 'kurumsal') {
       baseKategoriler = TUM_KURUMSAL_ALT_KATEGORILER;
     } else {
-      baseKategoriler = SEKTORLER_SITESIZ;
+      baseKategoriler = TUM_SANAYI_DISI_ALT_KATEGORILER;
     }
 
     // Veritabanındaki diğer kategorileri de ekle

@@ -6,24 +6,19 @@ import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type KategoriSayisi = {
-  kategori: string;
-  sayi: number;
-};
-
-type KurumsalKategoriSayisi = {
   ana: string;
   altKategoriler: { kategori: string; sayi: number }[];
   toplam: number;
 };
 
 interface Props {
-  kategoriler: KategoriSayisi[];
-  toplamFirma: number;
-  kurumsalKategoriler?: KurumsalKategoriSayisi[];
+  sanayiDisiKategoriler?: KategoriSayisi[];
+  toplamSanayiDisi?: number;
+  kurumsalKategoriler?: KategoriSayisi[];
   toplamKurumsal?: number;
 }
 
-export default function RightSidebar({ kategoriler, toplamFirma, kurumsalKategoriler = [], toplamKurumsal = 0 }: Props) {
+export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0 }: Props) {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -155,7 +150,7 @@ export default function RightSidebar({ kategoriler, toplamFirma, kurumsalKategor
           </div>
         </div>
 
-        {/* Sanayi Dışı Kategoriler */}
+        {/* Sanayi Dışı - Ana Kategori ve Alt Kategoriler */}
         {sekme === 'sitesiz' && (
           <ul className={`${menuOpen ? "block" : "hidden"} lg:block max-h-[28rem] overflow-y-auto`}>
             <li>
@@ -164,23 +159,44 @@ export default function RightSidebar({ kategoriler, toplamFirma, kurumsalKategor
                 className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors ${!activeKategori ? "bg-yellow-50 text-[#e8a020] font-semibold" : "text-gray-700"}`}
               >
                 <span>Tümü</span>
-                <span className="bg-[#e8a020] text-white text-[10px] px-1.5 py-0.5 rounded-full">{toplamFirma}</span>
+                <span className="bg-[#e8a020] text-white text-[10px] px-1.5 py-0.5 rounded-full">{toplamSanayiDisi}</span>
               </Link>
             </li>
 
-            {kategoriler.map((kat) => {
-              const isActive = activeKategori === kat.kategori;
+            {sanayiDisiKategoriler.map((anaKat) => {
+              const isAcik = acikAnaKategoriler.has(anaKat.ana);
               return (
-                <li key={kat.kategori}>
-                  <Link
-                    href={`/firmalar?firma_tipi=sitesiz&kategori=${encodeURIComponent(kat.kategori)}`}
-                    className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors ${isActive ? "bg-yellow-50 text-[#e8a020] font-bold" : "text-gray-800"}`}
+                <li key={anaKat.ana}>
+                  {/* Ana Kategori Başlık */}
+                  <button
+                    onClick={() => toggleAnaKategori(anaKat.ana)}
+                    className="w-full flex justify-between items-center px-3 py-2 text-sm font-bold border-b border-gray-100 hover:bg-yellow-50 transition-colors text-[#e8a020]"
                   >
-                    <span className="leading-tight">{kat.kategori}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ml-1 flex-shrink-0 ${isActive ? "bg-[#e8a020] text-white" : "bg-gray-200 text-gray-700"}`}>
-                      {kat.sayi}
+                    <span className="flex items-center gap-1">
+                      <svg className={`w-3 h-3 transition-transform ${isAcik ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                      {anaKat.ana}
                     </span>
-                  </Link>
+                    <span className="bg-[#e8a020] text-white text-[10px] px-1.5 py-0.5 rounded-full">{anaKat.toplam}</span>
+                  </button>
+
+                  {/* Alt Kategoriler */}
+                  {isAcik && anaKat.altKategoriler.map((altKat) => {
+                    const isActive = activeKategori === altKat.kategori;
+                    return (
+                      <Link
+                        key={altKat.kategori}
+                        href={`/firmalar?firma_tipi=sitesiz&kategori=${encodeURIComponent(altKat.kategori)}`}
+                        className={`flex justify-between items-center pl-8 pr-3 py-1.5 text-xs border-b border-gray-50 hover:bg-yellow-50 transition-colors ${isActive ? "bg-yellow-50 text-[#e8a020] font-bold" : "text-gray-700"}`}
+                      >
+                        <span>{altKat.kategori}</span>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? "bg-[#e8a020] text-white" : "bg-gray-200 text-gray-600"}`}>
+                          {altKat.sayi}
+                        </span>
+                      </Link>
+                    );
+                  })}
                 </li>
               );
             })}
