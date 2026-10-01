@@ -83,23 +83,29 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
         <div className="flex">
           <button
             onClick={() => { setSekme('sitesiz'); setMenuOpen(true); }}
-            className={`flex-1 px-3 py-2 font-bold text-sm transition-colors ${
+            className={`flex-1 px-3 py-2 font-bold text-sm transition-colors flex items-center justify-center gap-1.5 ${
               sekme === 'sitesiz'
                 ? 'bg-[#e8a020] text-white'
                 : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
             }`}
           >
             Sanayi Dışı
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${sekme === 'sitesiz' ? 'bg-white text-[#e8a020]' : 'bg-[#e8a020] text-white'}`}>
+              {toplamSanayiDisi}
+            </span>
           </button>
           <button
             onClick={() => { setSekme('kurumsal'); setMenuOpen(true); }}
-            className={`flex-1 px-3 py-2 font-bold text-sm transition-colors ${
+            className={`flex-1 px-3 py-2 font-bold text-sm transition-colors flex items-center justify-center gap-1.5 ${
               sekme === 'kurumsal'
                 ? 'bg-[#1a3a6b] text-white'
                 : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
             }`}
           >
             Kurumsal
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${sekme === 'kurumsal' ? 'bg-white text-[#1a3a6b]' : 'bg-[#1a3a6b] text-white'}`}>
+              {toplamKurumsal}
+            </span>
           </button>
         </div>
 
