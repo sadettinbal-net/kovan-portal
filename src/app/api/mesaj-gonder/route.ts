@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { SITE_EPOSTA } from '@/lib/site';
+import { SITE_EPOSTA_YONLENDIRME } from '@/lib/site';
 
 // E-postaya yazılan kullanıcı metinlerini HTML'e karşı güvenli hale getir
 function kacis(metin: string) {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         </div>
       `;
 
-      for (const alici of [SITE_EPOSTA, 'sadettinbal@gmail.com']) {
+      for (const alici of [SITE_EPOSTA_YONLENDIRME]) {
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
