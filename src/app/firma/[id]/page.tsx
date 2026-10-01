@@ -208,6 +208,23 @@ export default async function FirmaDetay({ params }: PageProps) {
             </div>
           )}
 
+          {firma.plus_code && (
+            <div className="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg">
+              <span className="text-xl">📍</span>
+              <div>
+                <div className="text-xs text-gray-500 mb-0.5">Plus Code (Google Haritalar)</div>
+                <a
+                  href={`https://plus.codes/${firma.plus_code}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#1a3a6b] font-semibold hover:underline text-sm"
+                >
+                  {firma.plus_code}
+                </a>
+              </div>
+            </div>
+          )}
+
           {hasSosyal && (
             <div className="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg">
               <span className="text-xl">📱</span>
