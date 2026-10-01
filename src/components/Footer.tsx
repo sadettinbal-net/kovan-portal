@@ -2,7 +2,7 @@ import Link from "next/link";
 import { unstable_noStore as noStore } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { translations, Lang } from "@/lib/translations";
-import { SITE_EPOSTA, SITE_KONUM, SITE_URL } from "@/lib/site";
+import { SITE_ADI, SITE_EPOSTA, SITE_KONUM, SITE_URL } from "@/lib/site";
 
 const QR_BASE = "https://api.qrserver.com/v1/create-qr-code";
 
@@ -26,8 +26,7 @@ export default async function Footer({ lang = "tr" }: { lang?: Lang }) {
 
         {/* 1 — Logo & About */}
         <div>
-          <div className="font-bold text-lg text-white mb-1">ÜMRANİYE SANAYİ SİTESİ</div>
-          <div className="text-[#e8a020] text-sm font-semibold mb-3">{t.footerTagline}</div>
+          <div className="font-bold text-lg text-white mb-3">{SITE_ADI.toLocaleUpperCase("tr-TR")}</div>
           <p className="text-gray-300 text-sm">
             {t.footerDesc(count ? `${count}+` : t.footerCountFallback)}
           </p>
