@@ -413,6 +413,8 @@ export default async function FirmaDetay({ params }: PageProps) {
             youtube: firma.youtube || '',
             linkedin: firma.linkedin || '',
             tiktok: firma.tiktok || '',
+            eposta: firma.eposta || '',
+            nsosyal: firma.nsosyal || '',
           }}
           fotografUrl={firma.fotograf_url || null}
           detayFotograflar={firma.detay_fotograflar || []}

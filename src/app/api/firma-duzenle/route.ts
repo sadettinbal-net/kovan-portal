@@ -46,6 +46,8 @@ export async function PATCH(request: NextRequest) {
     youtube: body.youtube || null,
     linkedin: body.linkedin || null,
     tiktok: body.tiktok || null,
+    eposta: body.eposta?.trim().toLowerCase() || null,
+    nsosyal: body.nsosyal || null,
   };
 
   const { error } = await supabase.from('firmalar').update({

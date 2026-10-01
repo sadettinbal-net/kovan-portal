@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import SosyalIkon from '@/components/SosyalIkon';
 
 type EditForm = {
   ad: string;
@@ -20,6 +21,8 @@ type EditForm = {
   youtube: string;
   linkedin: string;
   tiktok: string;
+  eposta: string;
+  nsosyal: string;
 };
 
 type Props = {
@@ -385,6 +388,12 @@ export default function FirmaOwnerPanel({ firmaId, kullaniciEmail, firma, fotogr
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]"
                       placeholder="https://firmaniz.com" />
                   </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 block mb-1">✉️ E-posta Adresi</label>
+                    <input type="email" value={form.eposta || ''} onChange={e => setForm(f => ({ ...f, eposta: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]"
+                      placeholder="info@firmaniz.com" />
+                  </div>
                 </div>
               </div>
 
@@ -426,6 +435,12 @@ export default function FirmaOwnerPanel({ firmaId, kullaniciEmail, firma, fotogr
                     <input value={form.tiktok || ''} onChange={e => setForm(f => ({ ...f, tiktok: e.target.value }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]"
                       placeholder="https://tiktok.com/@firmaadi" />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 mb-1"><SosyalIkon ad="nsosyal" /> N Sosyal</label>
+                    <input value={form.nsosyal || ''} onChange={e => setForm(f => ({ ...f, nsosyal: e.target.value }))}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]"
+                      placeholder="nsosyal.com/firmaadi" />
                   </div>
                 </div>
               </div>

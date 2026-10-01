@@ -10,6 +10,7 @@ import ActiveUsers from '@/components/ActiveUsers';
 import SanayiSiteleriYonetimi from '@/components/admin/SanayiSiteleriYonetimi';
 import KategoriYonetimi from '@/components/admin/KategoriYonetimi';
 import FirmaEkleFormu from '@/components/FirmaEkleFormu';
+import SosyalIkon from '@/components/SosyalIkon';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
 import { aktifKategoriler } from '@/lib/firmaKategorileri';
@@ -134,7 +135,7 @@ const GUNCELLEME_ALAN_ETIKETLER: Record<string, string> = {
   ad: 'Firma Adı', sahip: 'Sahip/Yetkili', sektor: 'Sektör', sanayi_sitesi: 'Sanayi Sitesi',
   telefon: 'Telefon', mobil_telefon: 'Mobil Telefon', adres: 'Adres', hizmetler: 'Hizmetler', aciklama: 'Hakkında',
   web_sitesi: 'Web Sitesi', instagram: 'Instagram', facebook: 'Facebook',
-  twitter: 'X (Twitter)', youtube: 'YouTube', linkedin: 'LinkedIn',
+  twitter: 'X (Twitter)', youtube: 'YouTube', linkedin: 'LinkedIn', tiktok: 'TikTok', eposta: 'E-posta', nsosyal: 'N Sosyal',
 };
 
 function BekleyenGuncellemeler({ onSayi }: { onSayi: (n: number) => void }) {
@@ -1896,6 +1897,11 @@ function AdminPanel() {
       adres: seciliFirma.adres,
       plus_code: seciliFirma.plus_code ?? '',
       web_sitesi: seciliFirma.web_sitesi,
+      eposta: seciliFirma.eposta ?? '',
+      instagram: seciliFirma.instagram ?? '',
+      facebook: seciliFirma.facebook ?? '',
+      tiktok: seciliFirma.tiktok ?? '',
+      nsosyal: seciliFirma.nsosyal ?? '',
       hizmetler: seciliFirma.hizmetler,
       ozel_firma: seciliFirma.ozel_firma,
       onay_durumu: seciliFirma.onay_durumu,
@@ -2435,6 +2441,27 @@ function AdminPanel() {
                       <input value={duzenleForm.web_sitesi || ''} onChange={e => setDuzenleForm(f => ({ ...f, web_sitesi: e.target.value }))}
                         placeholder="https://www.firmaniz.com"
                         className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 block mb-1">✉️ E-posta Adresi</label>
+                      <input type="email" value={duzenleForm.eposta || ''} onChange={e => setDuzenleForm(f => ({ ...f, eposta: e.target.value }))}
+                        placeholder="info@firmaniz.com"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {([
+                        ['instagram', 'Instagram', 'instagram.com/firmaniz'],
+                        ['facebook', 'Facebook', 'facebook.com/firmaniz'],
+                        ['tiktok', 'TikTok', '@firmaniz'],
+                        ['nsosyal', 'N Sosyal', 'nsosyal.com/firmaniz'],
+                      ] as const).map(([alan, etiket, ornek]) => (
+                        <div key={alan}>
+                          <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 mb-1"><SosyalIkon ad={alan} /> {etiket}</label>
+                          <input value={duzenleForm[alan] || ''} onChange={e => setDuzenleForm(f => ({ ...f, [alan]: e.target.value }))}
+                            placeholder={ornek}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]" />
+                        </div>
+                      ))}
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 block mb-1">Hizmetler <span className="font-normal text-gray-400">(virgülle ayırın)</span></label>
