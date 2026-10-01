@@ -12,6 +12,7 @@ import KategoriYonetimi from '@/components/admin/KategoriYonetimi';
 import FirmaEkleFormu from '@/components/FirmaEkleFormu';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
+import { aktifKategoriler } from '@/lib/firmaKategorileri';
 
 type AuthState = 'loading' | 'unauthenticated' | 'unauthorized' | 'authorized';
 
@@ -259,15 +260,7 @@ function BekleyenFirmalar() {
   }, []);
 
   async function guncelle(id: number, durum: 'onaylandi' | 'reddedildi') {
-    // Onaylamadan önce yeni kategori kontrolü
-    if (durum === 'onaylandi') {
-      const firma = bekleyenler.find(f => f.id === id);
-      if (firma?.yeni_kategori) {
-        alert(`⚠️ DİKKAT!\n\nBu firma yeni bir kategori önermiş: "${firma.sektor}"\n\nÖnce "Kategoriler" sekmesinden bu kategoriyi sisteme ekleyin, sonra firmayı onaylayın.`);
-        return;
-      }
-    }
-
+    // Yeni kategori öneren firma: kategori Kategori Yönetimi'nde eklenmeden sunucu onaylamaz ve nedenini söyler
     setIslem(id);
     const res = await fetch('/api/admin/firma-durum', {
       method: 'PATCH',
@@ -276,6 +269,9 @@ function BekleyenFirmalar() {
     });
     if (res.ok) {
       setBekleyenler(prev => prev.filter(f => f.id !== id));
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(`⚠️ ${data.error || 'İşlem yapılamadı.'}`);
     }
     setIslem(null);
   }
@@ -1871,7 +1867,10 @@ function AdminPanel() {
       }
       setFn(Array.from(new Set(degerler)).sort());
     }
-    tumBenzersizleriGetir('sektor', setBenzersizSektorler);
+    // Sektör seçenekleri Kategori Yönetimi'ndeki aktif kategorilerden
+    aktifKategoriler(supabase).then(k =>
+      setBenzersizSektorler(Array.from(new Set(k.map(x => x.ad))).sort((a, b) => a.localeCompare(b, 'tr')))
+    );
     tumBenzersizleriGetir('sanayi_sitesi', setBenzersizSanayiSiteleri);
   }, []);
 

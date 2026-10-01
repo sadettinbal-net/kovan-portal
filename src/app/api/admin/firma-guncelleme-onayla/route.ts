@@ -4,6 +4,7 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
+import { sektordenKategoriBul } from '@/lib/firmaKategorileri';
 
 export async function PATCH(request: NextRequest) {
   const supabaseUser = await createServerClient();
@@ -25,7 +26,7 @@ export async function PATCH(request: NextRequest) {
 
   const { data: firma } = await supabase
     .from('firmalar')
-    .select('bekleyen_degisiklikler')
+    .select('bekleyen_degisiklikler, sektor, firma_tipi')
     .eq('id', id)
     .single();
 
@@ -35,8 +36,16 @@ export async function PATCH(request: NextRequest) {
     if (!firma.bekleyen_degisiklikler) {
       return NextResponse.json({ error: 'Bekleyen değişiklik yok.' }, { status: 400 });
     }
+    // Sektör değiştiyse kategori bağlantısı da güncellenir
+    const degisiklik: Record<string, unknown> = { ...firma.bekleyen_degisiklikler };
+    const yeniSektor = degisiklik.sektor as string | undefined;
+    if (yeniSektor && yeniSektor !== firma.sektor) {
+      const kategori = await sektordenKategoriBul(supabase, yeniSektor, firma.firma_tipi);
+      degisiklik.kategori_id = kategori?.id ?? null;
+      if (kategori) degisiklik.sektor = kategori.ad;
+    }
     const { error } = await supabase.from('firmalar').update({
-      ...firma.bekleyen_degisiklikler,
+      ...degisiklik,
       bekleyen_degisiklikler: null,
       guncelleme_talep_tarihi: null,
     }).eq('id', id);

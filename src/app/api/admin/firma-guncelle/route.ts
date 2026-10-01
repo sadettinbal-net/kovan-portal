@@ -4,6 +4,7 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
+import { sektordenKategoriBul } from '@/lib/firmaKategorileri';
 
 export async function PATCH(request: NextRequest) {
   const supabaseUser = await createServerClient();
@@ -20,6 +21,15 @@ export async function PATCH(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
+
+  // Sektör veya firma tipi değiştiyse kategori bağlantısı da güncellenir (listede olmayan bir ad yazıldıysa bağlantı boşalır)
+  if ('sektor' in updates || 'firma_tipi' in updates) {
+    const { data: eski } = await supabase.from('firmalar').select('sektor, firma_tipi').eq('id', id).single();
+    const sektor = (updates.sektor ?? eski?.sektor ?? '') as string;
+    const kategori = sektor ? await sektordenKategoriBul(supabase, sektor, (updates.firma_tipi ?? eski?.firma_tipi) as string | null) : null;
+    updates.kategori_id = kategori?.id ?? null;
+    if (kategori) updates.sektor = kategori.ad;
+  }
 
   const { error } = await supabase.from('firmalar').update(updates).eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

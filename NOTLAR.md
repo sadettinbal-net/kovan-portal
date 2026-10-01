@@ -16,7 +16,16 @@
 
 ### Sırada Ne Var?
 
-#### 1. Kategorileri Veritabanına Taşıma Planı (ERTELENDİ)
+### ✅ Kategoriler Veritabanına Taşındı (aynı gün, sonradan yapıldı)
+- Yeni tablo `firma_kategorileri` (ad, tip, ust_kategori_id, sira, aktif). Herkes okur, yazma sadece sunucu (service role).
+- 213 kategori: Sanayi Sitesi 61, Sanayi Dışı 13 ana + 42 alt, Kurumsal 12 ana + 85 alt.
+- `firmalar.kategori_id` ve `firmalar.firma_tipi` eklendi; 1889 firmanın hepsi bağlandı. `sektor` yazısı duruyor (kategori adıyla eşit tutuluyor).
+- 3 hastane → Kurumsal › SAĞLIK › Hastaneler. "ÇAĞ OCAĞI" yazım hatalı 43 firma → "ÇAY OCAĞI" kategorisi.
+- Yönetici paneli Kategori Yönetimi yeniden yazıldı (`/api/admin/kategoriler`, yönetici kontrolü). İçinde firma/alt kategori olan kategori silinemez.
+- Firma Ekle formu, firmalar sayfası süzgeci ve ana sayfa sağ menü kategorileri tablodan okuyor.
+- Migration dosyaları: `supabase/migrations/20261001010000..030000`.
+
+#### (Eski not) Kategorileri Veritabanına Taşıma Planı (yukarıda yapıldı)
 Şu an kategoriler kod içinde sabit listeler halinde:
 - `SEKTORLER_SITELI` (sanayi sitesi kategorileri)
 - `TUM_SANAYI_DISI_ALT_KATEGORILER` (sanayi dışı kategoriler)

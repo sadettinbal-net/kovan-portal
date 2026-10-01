@@ -9,6 +9,8 @@ import { cookies } from "next/headers";
 import { translations } from "@/lib/translations";
 import { siteVeAltSiteAdlari } from "@/lib/sanayiSiteleri";
 import type { Lang } from "@/lib/translations";
+import KategoriSuzgeci from "@/components/KategoriSuzgeci";
+import { aktifKategoriler, adinKategoriIdleri, KATEGORI_TIPI, type FirmaTipi } from "@/lib/firmaKategorileri";
 
 function adminClient() {
   return createClient(
@@ -83,8 +85,13 @@ export default async function FirmalarPage(props: PageProps) {
 
   if (il) query = query.eq("il_adi", il);
 
+  // Kategoriler firma_kategorileri tablosundan (süzgeç listesi ve kategori → kategori_id çevirisi)
+  const kategoriListesi = await aktifKategoriler(supabase);
+
   // Firma tipi filtresi (yeni sistem)
-  if (firma_tipi === "sitesiz") {
+  if (firma_tipi === "siteli") {
+    query = query.eq("firma_tipi", "siteli");
+  } else if (firma_tipi === "sitesiz") {
     // Sanayi sitesi dışı firmalar
     query = query.or("firma_tipi.eq.sitesiz,and(firma_tipi.is.null,or(sanayi_sitesi.is.null,sanayi_sitesi.eq.))");
   } else if (firma_tipi === "kurumsal") {
@@ -97,7 +104,12 @@ export default async function FirmalarPage(props: PageProps) {
 
   // Üst site seçildiyse içindeki sitelerin firmaları da gelir
   if (site) query = query.in("sanayi_sitesi", await siteVeAltSiteAdlari(site));
-  if (kategori) query = query.eq("sektor", kategori);
+  // Kategori: ana kategori seçildiyse alt kategorilerindeki firmalar da gelir. Tabloda olmayan bir ad gelirse eski sektör yazısıyla aranır.
+  if (kategori) {
+    const tip = firma_tipi && firma_tipi in KATEGORI_TIPI ? KATEGORI_TIPI[firma_tipi as FirmaTipi] : undefined;
+    const idler = adinKategoriIdleri(kategoriListesi, kategori, tip);
+    query = idler.length ? query.in("kategori_id", idler) : query.eq("sektor", kategori);
+  }
 
   const tumFirmalarArr: import("@/lib/supabase").Firma[] = [];
   {
@@ -192,7 +204,7 @@ export default async function FirmalarPage(props: PageProps) {
 
   // URL oluşturucu — mevcut filtreleri korur
   const url = (extra: Record<string, string | undefined>) =>
-    buildUrl({ il, site, kategori, ara, limit: String(limit), ...extra });
+    buildUrl({ il, site, firma_tipi, kategori, ara, limit: String(limit), ...extra });
 
   // Sayfa numarası listesi (max 7 sayfa göster)
   const sayfaNumaralari = () => {
@@ -238,7 +250,10 @@ export default async function FirmalarPage(props: PageProps) {
                 {t.showing((gecerliSayfa - 1) * limit + 1, Math.min(gecerliSayfa * limit, toplamFirma), toplamFirma)}
               </p>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+              <Suspense fallback={null}>
+                <KategoriSuzgeci kategoriler={kategoriListesi} />
+              </Suspense>
               <span className="text-gray-500 text-xs">{t.perPage}</span>
               <div className="flex gap-1">
                 {LIMIT_OPTIONS.map((l) => (

@@ -39,6 +39,7 @@ export type Firma = {
   yeni_kategori_tipi?: string | null;
   plus_code?: string | null;
   firma_tipi?: 'siteli' | 'sitesiz' | 'kurumsal' | null;
+  kategori_id?: number | null;
   created_at: string;
 };
 

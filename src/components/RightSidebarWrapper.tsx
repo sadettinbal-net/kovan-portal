@@ -1,63 +1,55 @@
 import RightSidebar from "@/components/RightSidebar";
 import { supabase } from "@/lib/supabase";
-import { KURUMSAL_KATEGORILER } from "@/lib/kategoriler-kurumsal";
-import { SANAYI_DISI_KATEGORILER } from "@/lib/kategoriler-sanayi-disi";
+import { aktifKategoriler, kategoriGruplari, type FirmaKategorisi, type KategoriTipi } from "@/lib/firmaKategorileri";
+
+// Sağ menü: Sanayi Dışı ve Kurumsal kategoriler (firma_kategorileri tablosundan), onaylı firma sayılarıyla.
+// Firması olmayan kategoriler menüde gösterilmez.
+async function onayliFirmalar(firmaTipi: "sitesiz" | "kurumsal") {
+  let query = supabase
+    .from("firmalar")
+    .select("kategori_id")
+    .not("ad", "ilike", "(Firma%")
+    .eq("onay_durumu", "onaylandi");
+  query =
+    firmaTipi === "sitesiz"
+      ? query.or("firma_tipi.eq.sitesiz,and(firma_tipi.is.null,or(sanayi_sitesi.is.null,sanayi_sitesi.eq.))")
+      : query.eq("firma_tipi", "kurumsal");
+  const { data } = await query;
+  return data || [];
+}
+
+function grupla(kategoriler: FirmaKategorisi[], tip: KategoriTipi, firmalar: { kategori_id: number | null }[]) {
+  const sayi = new Map<number, number>();
+  for (const f of firmalar) if (f.kategori_id) sayi.set(f.kategori_id, (sayi.get(f.kategori_id) || 0) + 1);
+
+  return kategoriGruplari(kategoriler, tip)
+    .map(({ ana, altlar }) => {
+      // Alt kategorisi olmayan ana kategori kendi başına tek satır olarak listelenir
+      const satirlar = altlar.length ? altlar : [ana];
+      const altKategoriler = satirlar
+        .map((k) => ({ kategori: k.ad, sayi: sayi.get(k.id) || 0 }))
+        .filter((k) => k.sayi > 0);
+      // Altları olan ana kategoriye doğrudan bağlı firma varsa onlar da ana kategorinin adıyla listelenir
+      const ananinKendisi = altlar.length ? sayi.get(ana.id) || 0 : 0;
+      if (ananinKendisi) altKategoriler.unshift({ kategori: ana.ad, sayi: ananinKendisi });
+      return { ana: ana.ad, altKategoriler, toplam: altKategoriler.reduce((t, k) => t + k.sayi, 0) };
+    })
+    .filter((k) => k.toplam > 0);
+}
 
 export default async function RightSidebarWrapper() {
-  // Sanayi sitesi dışı firmaları getir (firma_tipi = 'sitesiz' veya eski firmalar için sanayi_sitesi boş)
-  const { data: sitesizFirmalar } = await supabase
-    .from("firmalar")
-    .select("sektor")
-    .or("firma_tipi.eq.sitesiz,and(firma_tipi.is.null,or(sanayi_sitesi.is.null,sanayi_sitesi.eq.))")
-    .not("ad", "ilike", "(Firma%")
-    .eq("onay_durumu", "onaylandi");
-
-  // Sitesiz kategorileri ana ve alt kategorilere göre grupla
-  const sanayiDisiKategoriSayilari = SANAYI_DISI_KATEGORILER.map(anaKat => {
-    const altKategoriler = anaKat.altlar.map(alt => {
-      const sayi = sitesizFirmalar?.filter(f => f.sektor === alt).length || 0;
-      return { kategori: alt, sayi };
-    }).filter(k => k.sayi > 0);
-
-    const toplam = altKategoriler.reduce((sum, k) => sum + k.sayi, 0);
-
-    return {
-      ana: anaKat.ana,
-      altKategoriler,
-      toplam
-    };
-  }).filter(k => k.toplam > 0);
-
-  // Kurumsal firmaları getir
-  const { data: kurumsalFirmalar } = await supabase
-    .from("firmalar")
-    .select("sektor")
-    .eq("firma_tipi", "kurumsal")
-    .not("ad", "ilike", "(Firma%")
-    .eq("onay_durumu", "onaylandi");
-
-  // Kurumsal kategorileri ana ve alt kategorilere göre grupla
-  const kurumsalKategoriSayilari = KURUMSAL_KATEGORILER.map(anaKat => {
-    const altKategoriler = anaKat.altlar.map(alt => {
-      const sayi = kurumsalFirmalar?.filter(f => f.sektor === alt).length || 0;
-      return { kategori: alt, sayi };
-    }).filter(k => k.sayi > 0);
-
-    const toplam = altKategoriler.reduce((sum, k) => sum + k.sayi, 0);
-
-    return {
-      ana: anaKat.ana,
-      altKategoriler,
-      toplam
-    };
-  }).filter(k => k.toplam > 0);
+  const [kategoriler, sitesizFirmalar, kurumsalFirmalar] = await Promise.all([
+    aktifKategoriler(supabase),
+    onayliFirmalar("sitesiz"),
+    onayliFirmalar("kurumsal"),
+  ]);
 
   return (
     <RightSidebar
-      sanayiDisiKategoriler={sanayiDisiKategoriSayilari}
-      toplamSanayiDisi={sitesizFirmalar?.length || 0}
-      kurumsalKategoriler={kurumsalKategoriSayilari}
-      toplamKurumsal={kurumsalFirmalar?.length || 0}
+      sanayiDisiKategoriler={grupla(kategoriler, "sanayi_disi", sitesizFirmalar)}
+      toplamSanayiDisi={sitesizFirmalar.length}
+      kurumsalKategoriler={grupla(kategoriler, "kurumsal", kurumsalFirmalar)}
+      toplamKurumsal={kurumsalFirmalar.length}
     />
   );
 }

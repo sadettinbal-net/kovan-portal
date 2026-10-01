@@ -4,6 +4,7 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
+import { FIRMA_TIPI, sektordenKategoriBul, type KategoriTipi } from '@/lib/firmaKategorileri';
 
 export async function PATCH(request: NextRequest) {
   // Sadece admin erişebilir
@@ -39,9 +40,32 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
+  // Onaylanan firma kategoriye bağlı değilse (üyenin önerdiği yeni kategori) sektör yazısıyla bağla.
+  // Kategori henüz yoksa onaylanmaz; önce Kategori Yönetimi'nden eklenmeli.
+  const guncelleme: Record<string, unknown> = { onay_durumu: durum };
+  if (durum === 'onaylandi') {
+    const { data: firma } = await supabase
+      .from('firmalar').select('sektor, kategori_id, firma_tipi, yeni_kategori_tipi').eq('id', id).single();
+    if (firma && !firma.kategori_id && firma.sektor) {
+      const kategori = await sektordenKategoriBul(supabase, firma.sektor, firma.firma_tipi || firma.yeni_kategori_tipi);
+      if (!kategori) {
+        return NextResponse.json(
+          { error: `"${firma.sektor}" kategorisi henüz yok. Önce Kategori Yönetimi'nden bu kategoriyi ekleyin, sonra firmayı onaylayın.` },
+          { status: 409 }
+        );
+      }
+      Object.assign(guncelleme, {
+        kategori_id: kategori.id,
+        sektor: kategori.ad,
+        firma_tipi: FIRMA_TIPI[kategori.tip as KategoriTipi],
+        yeni_kategori: false,
+      });
+    }
+  }
+
   const { error } = await supabase
     .from('firmalar')
-    .update({ onay_durumu: durum })
+    .update(guncelleme)
     .eq('id', id);
 
   if (error) {

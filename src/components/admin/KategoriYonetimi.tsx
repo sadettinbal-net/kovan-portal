@@ -1,46 +1,47 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { SEKTORLER_SITELI } from '@/lib/sektorler-siteli';
-import { SEKTORLER_SITESIZ } from '@/lib/sektorler-sitesiz';
+import { useEffect, useMemo, useState } from 'react';
 
+// Yönetim paneli: firma kategorilerini (firma_kategorileri tablosu) listele, ekle, düzenle, sil.
+// Yazma işlemleri /api/admin/kategoriler üzerinden sunucuda, yönetici kontrolüyle yapılır.
+type Tip = 'sanayi_sitesi' | 'sanayi_disi' | 'kurumsal';
 type Kategori = {
+  id: number;
   ad: string;
-  tip: 'siteli' | 'sitesiz';
+  tip: Tip;
+  ust_kategori_id: number | null;
+  sira: number;
+  aktif: boolean;
   firma_sayisi: number;
+  alt_kategori_sayisi: number;
 };
+type Form = { id?: number; ad: string; tip: Tip; ust_kategori_id: string; sira: string; aktif: boolean };
 
+const TIPLER: { deger: Tip; ad: string; ikon: string; kutu: string; secili: string; rozet: string }[] = [
+  { deger: 'sanayi_sitesi', ad: 'Sanayi Sitesi', ikon: '🏗️', kutu: 'bg-blue-50 border-blue-200', secili: 'ring-2 ring-[#1a3a6b]', rozet: 'bg-blue-100 text-blue-700' },
+  { deger: 'sanayi_disi', ad: 'Sanayi Dışı', ikon: '🏪', kutu: 'bg-orange-50 border-orange-200', secili: 'ring-2 ring-[#e8a020]', rozet: 'bg-orange-100 text-orange-700' },
+  { deger: 'kurumsal', ad: 'Kurumsal', ikon: '🏢', kutu: 'bg-purple-50 border-purple-200', secili: 'ring-2 ring-purple-500', rozet: 'bg-purple-100 text-purple-700' },
+];
+const tipBilgisi = (t: Tip) => TIPLER.find((x) => x.deger === t)!;
+
+const buyuk = (s: string) => s.toLocaleUpperCase('tr-TR');
 const INPUT = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] bg-white';
 
 export default function KategoriYonetimi() {
   const [kategoriler, setKategoriler] = useState<Kategori[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
-  const [tipFilter, setTipFilter] = useState<'hepsi' | 'siteli' | 'sitesiz'>('hepsi');
-  const [arama, setArama] = useState('');
-  const [yeniKategori, setYeniKategori] = useState({ ad: '', tip: 'siteli' as 'siteli' | 'sitesiz' });
+  const [hata, setHata] = useState('');
   const [mesaj, setMesaj] = useState('');
-  const [duzenleniyorKategori, setDuzenleniyorKategori] = useState<{ eskiAd: string; yeniAd: string; tip: 'siteli' | 'sitesiz' } | null>(null);
+  const [arama, setArama] = useState('');
+  const [tipSuzgeci, setTipSuzgeci] = useState<Tip | 'hepsi'>('hepsi');
+  const [form, setForm] = useState<Form | null>(null);
+  const [kaydediliyor, setKaydediliyor] = useState(false);
 
   async function yukle() {
     setYukleniyor(true);
-    try {
-      // Sanayi siteli firmalardan kategorileri al
-      const resSiteli = await fetch('/api/kategoriler?tip=siteli');
-      const dataSiteli = await resSiteli.json();
-
-      // Sanayi sitesiz firmalardan kategorileri al
-      const resSitesiz = await fetch('/api/kategoriler?tip=sitesiz');
-      const dataSitesiz = await resSitesiz.json();
-
-      const tumKategoriler: Kategori[] = [
-        ...dataSiteli.map((k: any) => ({ ad: k.kategori, tip: 'siteli' as const, firma_sayisi: k.sayi })),
-        ...dataSitesiz.map((k: any) => ({ ad: k.kategori, tip: 'sitesiz' as const, firma_sayisi: k.sayi }))
-      ];
-
-      setKategoriler(tumKategoriler);
-    } catch (error) {
-      console.error('Kategoriler yüklenemedi:', error);
-    }
+    const res = await fetch('/api/admin/kategoriler');
+    if (res.ok) setKategoriler(await res.json());
+    else setHata((await res.json()).error || 'Kategoriler yüklenemedi.');
     setYukleniyor(false);
   }
 
@@ -48,337 +49,336 @@ export default function KategoriYonetimi() {
     yukle();
   }, []);
 
-  async function kategoriEkle(e: React.FormEvent) {
+  const altlari = useMemo(() => {
+    const m = new Map<number, Kategori[]>();
+    for (const k of kategoriler) if (k.ust_kategori_id) m.set(k.ust_kategori_id, [...(m.get(k.ust_kategori_id) || []), k]);
+    return m;
+  }, [kategoriler]);
+
+  // Bir ana kategorinin kendi firmaları + alt kategorilerindeki firmalar
+  const toplamFirma = (k: Kategori) => k.firma_sayisi + (altlari.get(k.id) || []).reduce((t, a) => t + a.firma_sayisi, 0);
+
+  const sayilar = (t?: Tip) => {
+    const liste = t ? kategoriler.filter((k) => k.tip === t) : kategoriler;
+    return {
+      ana: liste.filter((k) => !k.ust_kategori_id).length,
+      alt: liste.filter((k) => k.ust_kategori_id).length,
+      firma: liste.reduce((top, k) => top + k.firma_sayisi, 0),
+    };
+  };
+
+  // Görünen satırlar: ana kategori ve hemen altında alt kategorileri. Aramada, ana veya alt kategorilerinden biri eşleşirse ana görünür.
+  const satirlar = useMemo(() => {
+    const a = buyuk(arama.trim());
+    const eslesir = (k: Kategori) => !a || buyuk(k.ad).includes(a);
+    const tipSirasi = (t: Tip) => TIPLER.findIndex((x) => x.deger === t);
+    const analar = kategoriler
+      .filter((k) => !k.ust_kategori_id && (tipSuzgeci === 'hepsi' || k.tip === tipSuzgeci))
+      .sort((x, y) => tipSirasi(x.tip) - tipSirasi(y.tip) || x.sira - y.sira || x.ad.localeCompare(y.ad, 'tr'));
+    const sonuc: { k: Kategori; alt: boolean }[] = [];
+    for (const ana of analar) {
+      const altlar = (altlari.get(ana.id) || []).slice().sort((x, y) => x.sira - y.sira || x.ad.localeCompare(y.ad, 'tr'));
+      const anaEslesir = eslesir(ana);
+      const eslesenAltlar = anaEslesir ? altlar : altlar.filter(eslesir);
+      if (!anaEslesir && eslesenAltlar.length === 0) continue;
+      sonuc.push({ k: ana, alt: false });
+      for (const alt of eslesenAltlar) sonuc.push({ k: alt, alt: true });
+    }
+    return sonuc;
+  }, [kategoriler, altlari, arama, tipSuzgeci]);
+
+  function yeni(ust?: Kategori) {
+    setForm({
+      ad: '',
+      tip: ust?.tip ?? (tipSuzgeci === 'hepsi' ? 'sanayi_sitesi' : tipSuzgeci),
+      ust_kategori_id: ust ? String(ust.id) : '',
+      sira: '',
+      aktif: true,
+    });
+    setHata('');
+    setMesaj('');
+  }
+
+  function duzenle(k: Kategori) {
+    setForm({
+      id: k.id,
+      ad: k.ad,
+      tip: k.tip,
+      ust_kategori_id: k.ust_kategori_id ? String(k.ust_kategori_id) : '',
+      sira: String(k.sira),
+      aktif: k.aktif,
+    });
+    setHata('');
+    setMesaj('');
+  }
+
+  const duzenlenen = form?.id ? kategoriler.find((k) => k.id === form.id) : undefined;
+  // Firması veya alt kategorisi olan kategorinin tipi değiştirilemez (sunucu da kontrol eder)
+  const tipKilitli = !!duzenlenen && (duzenlenen.firma_sayisi > 0 || duzenlenen.alt_kategori_sayisi > 0);
+  // Ana kategori adayları: aynı tipteki ana kategoriler (kendisi hariç). Alt kategorileri olan bir kategori başka birinin altına giremez.
+  const anaAdaylari = form
+    ? kategoriler
+        .filter((k) => !k.ust_kategori_id && k.tip === form.tip && k.id !== form.id)
+        .sort((x, y) => x.sira - y.sira || x.ad.localeCompare(y.ad, 'tr'))
+    : [];
+  const altinaTasinamaz = !!duzenlenen && duzenlenen.alt_kategori_sayisi > 0;
+
+  async function kaydet(e: React.FormEvent) {
     e.preventDefault();
-    if (!yeniKategori.ad.trim()) {
-      setMesaj('⚠️ Kategori adı boş olamaz!');
-      setTimeout(() => setMesaj(''), 3000);
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/kategoriler', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ad: yeniKategori.ad.trim().toUpperCase(), tip: yeniKategori.tip })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setMesaj('✅ Kategori başarıyla eklendi!');
-        setYeniKategori({ ad: '', tip: 'siteli' });
-        yukle();
-        setTimeout(() => setMesaj(''), 3000);
-      } else {
-        setMesaj('❌ ' + data.error);
-        setTimeout(() => setMesaj(''), 3000);
-      }
-    } catch (error) {
-      setMesaj('❌ Kategori eklenirken hata oluştu!');
-      setTimeout(() => setMesaj(''), 3000);
-    }
+    if (!form) return;
+    setKaydediliyor(true);
+    setHata('');
+    const res = await fetch('/api/admin/kategoriler', {
+      method: form.id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: form.id,
+        ad: form.ad,
+        tip: form.tip,
+        ust_kategori_id: form.ust_kategori_id ? parseInt(form.ust_kategori_id) : null,
+        sira: form.sira.trim() ? parseInt(form.sira) : undefined,
+        aktif: form.aktif,
+      }),
+    });
+    const sonuc = await res.json();
+    setKaydediliyor(false);
+    if (!res.ok) return setHata(sonuc.error || 'Kaydedilemedi.');
+    setMesaj(
+      form.id
+        ? `"${form.ad.trim()}" güncellendi${sonuc.guncellenen_firma ? `, ${sonuc.guncellenen_firma} firmanın sektör yazısı da güncellendi` : ''}.`
+        : `"${form.ad.trim()}" eklendi.`
+    );
+    setForm(null);
+    yukle();
   }
 
-  async function kategoriDuzenle() {
-    if (!duzenleniyorKategori || !duzenleniyorKategori.yeniAd.trim()) {
-      setMesaj('⚠️ Kategori adı boş olamaz!');
-      setTimeout(() => setMesaj(''), 3000);
-      return;
+  async function sil(k: Kategori) {
+    setHata('');
+    setMesaj('');
+    if (k.firma_sayisi > 0 || k.alt_kategori_sayisi > 0) {
+      const nedenler = [k.firma_sayisi ? `${k.firma_sayisi} firma` : '', k.alt_kategori_sayisi ? `${k.alt_kategori_sayisi} alt kategori` : '']
+        .filter(Boolean)
+        .join(' ve ');
+      return setHata(`"${k.ad}" silinemez: içinde ${nedenler} var. Önce bunları başka bir kategoriye taşıyın.`);
     }
-
-    try {
-      const res = await fetch('/api/kategoriler', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eskiAd: duzenleniyorKategori.eskiAd,
-          yeniAd: duzenleniyorKategori.yeniAd.trim().toUpperCase(),
-          tip: duzenleniyorKategori.tip
-        })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setMesaj('✅ Kategori başarıyla güncellendi!');
-        setDuzenleniyorKategori(null);
-        yukle();
-        setTimeout(() => setMesaj(''), 3000);
-      } else {
-        setMesaj('❌ ' + data.error);
-        setTimeout(() => setMesaj(''), 3000);
-      }
-    } catch (error) {
-      setMesaj('❌ Kategori güncellenirken hata oluştu!');
-      setTimeout(() => setMesaj(''), 3000);
-    }
+    if (!confirm(`"${k.ad}" silinsin mi? Bu işlem geri alınamaz.`)) return;
+    const res = await fetch('/api/admin/kategoriler', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: k.id }),
+    });
+    const sonuc = await res.json();
+    if (!res.ok) return setHata(sonuc.error || 'Silinemedi.');
+    setMesaj(`"${k.ad}" silindi.`);
+    if (form?.id === k.id) setForm(null);
+    yukle();
   }
 
-  async function kategoriSil(ad: string, tip: 'siteli' | 'sitesiz') {
-    if (!confirm(`"${ad}" kategorisini silmek istediğinize emin misiniz? Bu kategorideki firmalar "DİĞER FİRMALAR" kategorisine taşınacak.`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/kategoriler', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ad, tip })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setMesaj('✅ Kategori başarıyla silindi!');
-        yukle();
-        setTimeout(() => setMesaj(''), 3000);
-      } else {
-        setMesaj('❌ ' + data.error);
-        setTimeout(() => setMesaj(''), 3000);
-      }
-    } catch (error) {
-      setMesaj('❌ Kategori silinirken hata oluştu!');
-      setTimeout(() => setMesaj(''), 3000);
-    }
-  }
-
-  const gorunenler = kategoriler.filter(k => {
-    if (tipFilter !== 'hepsi' && k.tip !== tipFilter) return false;
-    if (!arama) return true;
-    return k.ad.toLocaleLowerCase('tr-TR').includes(arama.toLocaleLowerCase('tr-TR'));
-  });
-
-  // Sabit listelerden olmayan kategoriler
-  const sabitListesi = tipFilter === 'siteli' ? SEKTORLER_SITELI : SEKTORLER_SITESIZ;
-  const ekKategoriler = gorunenler.filter(k =>
-    tipFilter === 'hepsi' || !sabitListesi.includes(k.ad)
-  );
+  const toplam = sayilar();
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <h2 className="text-xl font-bold text-[#1a3a6b] mb-4">📂 Kategori Yönetimi</h2>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-[#1a3a6b]">📂 Kategori Yönetimi</h2>
 
-        {mesaj && (
-          <div className="mb-4 px-4 py-3 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm">
-            {mesaj}
-          </div>
-        )}
-
-        {/* Filtreler */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-          <input
-            type="text"
-            placeholder="Kategori ara..."
-            value={arama}
-            onChange={e => setArama(e.target.value)}
-            className={INPUT}
-          />
-          <select
-            value={tipFilter}
-            onChange={e => setTipFilter(e.target.value as any)}
-            className={INPUT}
-          >
-            <option value="hepsi">Tüm Kategoriler</option>
-            <option value="siteli">🏗️ Sanayi Sitesi İçi</option>
-            <option value="sitesiz">🏪 Sanayi Sitesi Dışı</option>
-          </select>
-        </div>
-
-        {/* Yeni Kategori Ekleme Formu */}
-        <div className="bg-gradient-to-r from-blue-50 to-orange-50 rounded-lg p-4 mb-6 border border-gray-200">
-          <h3 className="text-sm font-bold text-gray-700 mb-3">➕ Yeni Kategori Ekle</h3>
-          <form onSubmit={kategoriEkle} className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input
-              type="text"
-              placeholder="Kategori adı (örn: YAZILIM & BİLİŞİM)"
-              value={yeniKategori.ad}
-              onChange={e => setYeniKategori(prev => ({ ...prev, ad: e.target.value }))}
-              className={INPUT}
-              required
-            />
-            <select
-              value={yeniKategori.tip}
-              onChange={e => setYeniKategori(prev => ({ ...prev, tip: e.target.value as 'siteli' | 'sitesiz' }))}
-              className={INPUT}
+      {/* Kutular: tıklayınca liste o tipe göre süzülür, Toplam'a tıklayınca hepsi */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {TIPLER.map((t) => {
+          const s = sayilar(t.deger);
+          return (
+            <button
+              key={t.deger}
+              onClick={() => setTipSuzgeci(t.deger)}
+              className={`text-left rounded-xl border p-4 transition ${t.kutu} ${tipSuzgeci === t.deger ? t.secili : 'hover:shadow'}`}
             >
-              <option value="siteli">🏗️ Sanayi Sitesi İçi</option>
-              <option value="sitesiz">🏪 Sanayi Sitesi Dışı</option>
-            </select>
+              <div className="text-2xl font-bold text-[#1a3a6b]">{s.ana + s.alt}</div>
+              <div className="text-sm font-semibold text-gray-700">
+                {t.ikon} {t.ad}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {s.ana} ana · {s.alt} alt · {s.firma} firma
+              </div>
+            </button>
+          );
+        })}
+        <button
+          onClick={() => setTipSuzgeci('hepsi')}
+          className={`text-left rounded-xl border p-4 transition bg-gray-50 border-gray-200 ${tipSuzgeci === 'hepsi' ? 'ring-2 ring-gray-500' : 'hover:shadow'}`}
+        >
+          <div className="text-2xl font-bold text-gray-700">{toplam.ana + toplam.alt}</div>
+          <div className="text-sm font-semibold text-gray-700">Toplam</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {toplam.ana} ana · {toplam.alt} alt · {toplam.firma} firma
+          </div>
+        </button>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          value={arama}
+          onChange={(e) => setArama(e.target.value)}
+          placeholder="Kategori ara..."
+          className={`${INPUT} max-w-xs`}
+        />
+        <span className="text-sm text-gray-500">
+          {tipSuzgeci === 'hepsi' ? 'Tüm tipler' : `${tipBilgisi(tipSuzgeci).ikon} ${tipBilgisi(tipSuzgeci).ad}`} gösteriliyor
+        </span>
+        <button
+          onClick={() => yeni()}
+          className="ml-auto bg-[#1a3a6b] hover:bg-[#2554a0] text-white text-sm font-semibold px-4 py-2 rounded-lg"
+        >
+          + Yeni Kategori
+        </button>
+      </div>
+
+      {hata && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{hata}</div>}
+      {mesaj && <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg">{mesaj}</div>}
+
+      {form && (
+        <form onSubmit={kaydet} className="bg-white border border-[#dde3ec] rounded-xl p-5 space-y-4">
+          <h3 className="font-bold text-[#1a3a6b]">{form.id ? 'Kategoriyi Düzenle' : 'Yeni Kategori'}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Kategori adı *</label>
+              <input value={form.ad} onChange={(e) => setForm({ ...form, ad: e.target.value })} className={INPUT} required autoFocus />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Tip *</label>
+              <select
+                value={form.tip}
+                onChange={(e) => setForm({ ...form, tip: e.target.value as Tip, ust_kategori_id: '' })}
+                className={INPUT}
+                disabled={tipKilitli}
+              >
+                {TIPLER.map((t) => (
+                  <option key={t.deger} value={t.deger}>
+                    {t.ikon} {t.ad}
+                  </option>
+                ))}
+              </select>
+              {tipKilitli && <p className="text-xs text-gray-500 mt-1">İçinde firma veya alt kategori olduğu için tipi değiştirilemez.</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Hangi ana kategorinin altında?</label>
+              <select
+                value={form.ust_kategori_id}
+                onChange={(e) => setForm({ ...form, ust_kategori_id: e.target.value })}
+                className={INPUT}
+                disabled={altinaTasinamaz}
+              >
+                <option value="">Yok (bu bir ana kategori)</option>
+                {anaAdaylari.map((k) => (
+                  <option key={k.id} value={k.id}>
+                    {k.ad}
+                  </option>
+                ))}
+              </select>
+              {altinaTasinamaz && <p className="text-xs text-gray-500 mt-1">Alt kategorileri olduğu için başka bir kategorinin altına taşınamaz.</p>}
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sıra</label>
+              <input
+                type="number"
+                value={form.sira}
+                onChange={(e) => setForm({ ...form, sira: e.target.value })}
+                placeholder="Boş bırakılırsa en sona"
+                className={INPUT}
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-gray-700 self-end pb-2">
+              <input type="checkbox" checked={form.aktif} onChange={(e) => setForm({ ...form, aktif: e.target.checked })} />
+              Aktif (listelerde görünsün)
+            </label>
+          </div>
+          <div className="flex gap-2">
             <button
               type="submit"
-              className="bg-[#1a3a6b] hover:bg-[#2a4a7b] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+              disabled={kaydediliyor}
+              className="bg-[#1a3a6b] hover:bg-[#2554a0] text-white text-sm font-semibold px-5 py-2 rounded-lg disabled:opacity-50"
             >
-              Ekle
+              {kaydediliyor ? 'Kaydediliyor...' : 'Kaydet'}
             </button>
-          </form>
-        </div>
+            <button type="button" onClick={() => setForm(null)} className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-5 py-2 rounded-lg">
+              Vazgeç
+            </button>
+          </div>
+        </form>
+      )}
 
-        {/* İstatistikler */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-            <div className="text-2xl font-bold text-[#1a3a6b]">{kategoriler.filter(k => k.tip === 'siteli').length}</div>
-            <div className="text-xs text-gray-600">Sanayi Sitesi İçi</div>
-          </div>
-          <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-            <div className="text-2xl font-bold text-[#e8a020]">{kategoriler.filter(k => k.tip === 'sitesiz').length}</div>
-            <div className="text-xs text-gray-600">Sanayi Sitesi Dışı</div>
-          </div>
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="text-2xl font-bold text-gray-700">{kategoriler.length}</div>
-            <div className="text-xs text-gray-600">Toplam Kategori</div>
-          </div>
-        </div>
-
-        {/* Kategori Listesi */}
-        {yukleniyor ? (
-          <div className="text-center py-8">
-            <div className="w-6 h-6 border-4 border-[#1a3a6b] border-t-transparent rounded-full animate-spin mx-auto" />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Kategori Adı</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Tip</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">Firma Sayısı</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">Durum</th>
-                  <th className="text-center px-4 py-3 font-semibold text-gray-700">İşlemler</th>
-                </tr>
-              </thead>
-              <tbody>
-                {gorunenler.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="text-center py-8 text-gray-400">
-                      Kategori bulunamadı
+      {yukleniyor ? (
+        <div className="bg-white rounded-xl p-10 text-center text-gray-500">Yükleniyor...</div>
+      ) : (
+        <div className="bg-white rounded-xl border border-[#dde3ec] overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-[#f4f6f9] text-gray-600 text-left">
+              <tr>
+                <th className="px-4 py-2 font-semibold">Kategori</th>
+                <th className="px-4 py-2 font-semibold">Tip</th>
+                <th className="px-4 py-2 font-semibold text-right">Firma</th>
+                <th className="px-4 py-2 font-semibold text-center">Durum</th>
+                <th className="px-4 py-2"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {satirlar.map(({ k, alt }) => {
+                const t = tipBilgisi(k.tip);
+                const altToplam = !alt && k.alt_kategori_sayisi > 0 ? toplamFirma(k) : null;
+                return (
+                  <tr key={k.id} className={alt ? 'hover:bg-gray-50' : 'bg-gray-50/60 hover:bg-gray-100'}>
+                    <td className={`py-2 pr-4 ${alt ? 'pl-10' : 'pl-4'}`}>
+                      <div className={alt ? 'text-gray-700' : 'font-semibold text-[#1a3a6b]'}>
+                        {alt && <span className="text-gray-400 mr-1">└</span>}
+                        {k.ad}
+                      </div>
+                      {!alt && k.alt_kategori_sayisi > 0 && <div className="text-xs text-gray-500">{k.alt_kategori_sayisi} alt kategori</div>}
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold whitespace-nowrap ${t.rozet}`}>
+                        {t.ikon} {t.ad}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-right whitespace-nowrap">
+                      {k.firma_sayisi}
+                      {altToplam !== null && altToplam !== k.firma_sayisi && (
+                        <div className="text-xs text-gray-500">altlarla {altToplam}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                          k.aktif ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
+                        }`}
+                      >
+                        {k.aktif ? 'Aktif' : 'Pasif'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2 text-right whitespace-nowrap">
+                      {!alt && (
+                        <button onClick={() => yeni(k)} className="text-[#2554a0] hover:underline mr-3">
+                          + Alt
+                        </button>
+                      )}
+                      <button onClick={() => duzenle(k)} className="text-[#2554a0] hover:underline mr-3">
+                        Düzenle
+                      </button>
+                      <button onClick={() => sil(k)} className="text-red-600 hover:underline">
+                        Sil
+                      </button>
                     </td>
                   </tr>
-                ) : (
-                  gorunenler
-                    .sort((a, b) => b.firma_sayisi - a.firma_sayisi || a.ad.localeCompare(b.ad, 'tr'))
-                    .map((kat, i) => {
-                      const sabitMi = (kat.tip === 'siteli' ? SEKTORLER_SITELI : SEKTORLER_SITESIZ).includes(kat.ad);
-                      return (
-                        <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium text-gray-800">{kat.ad}</td>
-                          <td className="px-4 py-3">
-                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                              kat.tip === 'siteli'
-                                ? 'bg-blue-100 text-blue-700'
-                                : 'bg-orange-100 text-orange-700'
-                            }`}>
-                              {kat.tip === 'siteli' ? '🏗️ Siteli' : '🏪 Sitesiz'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-semibold">
-                              {kat.firma_sayisi}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              sabitMi
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {sabitMi ? '✓ Sabit' : '• Dinamik'}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center justify-center gap-2">
-                              {!sabitMi && (
-                                <>
-                                  <button
-                                    onClick={() => setDuzenleniyorKategori({ eskiAd: kat.ad, yeniAd: kat.ad, tip: kat.tip })}
-                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                                  >
-                                    ✏️ Düzenle
-                                  </button>
-                                  <button
-                                    onClick={() => kategoriSil(kat.ad, kat.tip)}
-                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                                  >
-                                    🗑️ Sil
-                                  </button>
-                                </>
-                              )}
-                              {sabitMi && (
-                                <span className="text-xs text-gray-400">Düzenlenemez</span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* Düzenleme Modalı */}
-        {duzenleniyorKategori && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setDuzenleniyorKategori(null)}>
-            <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4" onClick={e => e.stopPropagation()}>
-              <h3 className="text-lg font-bold text-[#1a3a6b] mb-4">✏️ Kategori Düzenle</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Kategori Adı</label>
-                  <input
-                    type="text"
-                    value={duzenleniyorKategori.yeniAd}
-                    onChange={e => setDuzenleniyorKategori(prev => prev ? { ...prev, yeniAd: e.target.value } : null)}
-                    className={INPUT}
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tip</label>
-                  <select
-                    value={duzenleniyorKategori.tip}
-                    onChange={e => setDuzenleniyorKategori(prev => prev ? { ...prev, tip: e.target.value as 'siteli' | 'sitesiz' } : null)}
-                    className={INPUT}
-                  >
-                    <option value="siteli">🏗️ Sanayi Sitesi İçi</option>
-                    <option value="sitesiz">🏪 Sanayi Sitesi Dışı</option>
-                  </select>
-                </div>
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={kategoriDuzenle}
-                    className="flex-1 bg-[#1a3a6b] hover:bg-[#2a4a7b] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                  >
-                    Kaydet
-                  </button>
-                  <button
-                    onClick={() => setDuzenleniyorKategori(null)}
-                    className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-                  >
-                    İptal
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Açıklama */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div className="text-sm text-blue-800">
-              <p className="font-semibold mb-1">Kategori Sistemi</p>
-              <ul className="space-y-1 text-xs">
-                <li>• <strong>Sabit Kategoriler:</strong> Kod tarafında tanımlı, her zaman form listesinde görünür</li>
-                <li>• <strong>Dinamik Kategoriler:</strong> Firmalar tarafından eklenmiş, veritabanından gelen kategoriler</li>
-                <li>• <strong>Sanayi Sitesi İçi:</strong> Oto tamir, elektrik, makina imalat gibi sanayi kategorileri</li>
-                <li>• <strong>Sanayi Sitesi Dışı:</strong> Berber, kafe, market gibi genel işletme kategorileri</li>
-              </ul>
-            </div>
-          </div>
+                );
+              })}
+              {satirlar.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                    Kategori bulunamadı.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -3,9 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { SEKTORLER_SITELI } from '@/lib/sektorler-siteli';
-import { TUM_SANAYI_DISI_ALT_KATEGORILER } from '@/lib/kategoriler-sanayi-disi';
-import { TUM_KURUMSAL_ALT_KATEGORILER } from '@/lib/kategoriler-kurumsal';
+import { aktifKategoriler, kategoriGruplari, KATEGORI_TIPI, type FirmaKategorisi } from '@/lib/firmaKategorileri';
 import KonumSecici, { BOS_KONUM, type Konum } from '@/components/KonumSecici';
 
 type Durum = { tip: 'basari' | 'hata'; mesaj: string } | null;
@@ -28,7 +26,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
   const [konum, setKonum] = useState<Konum>(BOS_KONUM);
   const [sanayiSiteleri, setSanayiSiteleri] = useState<{ id: number; site_adi: string; ilce_adi: string | null }[]>([]);
   const [firmaTipi, setFirmaTipi] = useState<'siteli' | 'sitesiz' | 'kurumsal'>('siteli');
-  const [kategoriler, setKategoriler] = useState<string[]>(SEKTORLER_SITELI);
+  const [kategoriler, setKategoriler] = useState<FirmaKategorisi[]>([]);
   const [gonderiyor, setGonderiyor] = useState(false);
   const [durum, setDurum] = useState<Durum>(null);
   const [kullanici, setKullanici] = useState<{ email: string } | null | 'yukleniyor'>(yonetici ? { email: '' } : 'yukleniyor');
@@ -40,7 +38,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
   const [detayOnizlemeler, setDetayOnizlemeler] = useState<string[]>([]);
 
   const [form, setForm] = useState({
-    ad: '', sahip: '', site_id: '', sektor: '',
+    ad: '', sahip: '', site_id: '', kategori_id: '',
     telefon: '', mobil_telefon: '', adres: '', plus_code: '', web_sitesi: '', hizmetler: '',
   });
 
@@ -56,7 +54,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
   }, [yonetici]);
 
   function formuSifirla() {
-    setForm({ ad: '', sahip: '', site_id: '', sektor: '', telefon: '', mobil_telefon: '', adres: '', plus_code: '', web_sitesi: '', hizmetler: '' });
+    setForm({ ad: '', sahip: '', site_id: '', kategori_id: '', telefon: '', mobil_telefon: '', adres: '', plus_code: '', web_sitesi: '', hizmetler: '' });
     setKonum(BOS_KONUM);
     setYeniKategoriModu(false);
     setYeniKategori('');
@@ -67,43 +65,19 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
     setDurum(null);
   }
 
-  // Firma tipi değişince kategori listesini güncelle
+  // Kategoriler firma_kategorileri tablosundan (yönetim panelindeki Kategori Yönetimi ile aynı liste)
   useEffect(() => {
-    let baseKategoriler: string[];
-    if (firmaTipi === 'siteli') {
-      baseKategoriler = SEKTORLER_SITELI;
-    } else if (firmaTipi === 'kurumsal') {
-      baseKategoriler = TUM_KURUMSAL_ALT_KATEGORILER;
-    } else {
-      baseKategoriler = TUM_SANAYI_DISI_ALT_KATEGORILER;
-    }
+    aktifKategoriler(supabase).then(setKategoriler);
+  }, []);
 
-    // Veritabanındaki diğer kategorileri de ekle
-    supabase
-      .from('firmalar')
-      .select('sektor, sanayi_sitesi, firma_tipi')
-      .not('ad', 'ilike', '(Firma%')
-      .then(({ data }) => {
-        const k = new Set<string>(baseKategoriler);
-        for (const f of data || []) {
-          if (!f.sektor) continue;
+  // Seçili firma tipinin kategorileri: ana kategori altında alt kategoriler; altı olmayan ana kategori kendisi seçilir
+  const kategoriGruplariListesi = kategoriGruplari(kategoriler, KATEGORI_TIPI[firmaTipi]);
 
-          if (firmaTipi === 'siteli') {
-            const firmaninSitesi = f.sanayi_sitesi && f.sanayi_sitesi.trim() !== '';
-            if (firmaninSitesi) k.add(f.sektor);
-          } else if (firmaTipi === 'kurumsal') {
-            if (f.firma_tipi === 'kurumsal') k.add(f.sektor);
-          } else if (firmaTipi === 'sitesiz') {
-            const firmaninSitesi = f.sanayi_sitesi && f.sanayi_sitesi.trim() !== '';
-            if (!firmaninSitesi && f.firma_tipi !== 'kurumsal') k.add(f.sektor);
-          }
-        }
-        setKategoriler(Array.from(k).sort((a, b) => a.localeCompare(b, 'tr')));
-      });
-
-    // Firma tipi değiştiğinde sektör seçimini sıfırla
-    setForm(prev => ({ ...prev, sektor: '' }));
-  }, [firmaTipi]);
+  // Firma tipi değişince site ve kategori seçimi sıfırlanır
+  function tipSec(tip: 'siteli' | 'sitesiz' | 'kurumsal') {
+    setFirmaTipi(tip);
+    setForm(prev => ({ ...prev, site_id: '', kategori_id: '' }));
+  }
 
   // İl seçilince o ildeki sanayi siteleri
   useEffect(() => {
@@ -177,7 +151,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
     }
 
     // Kategori kontrolü
-    const kategoriDegeri = yeniKategoriModu ? yeniKategori.trim() : form.sektor;
+    const kategoriDegeri = yeniKategoriModu ? yeniKategori.trim() : form.kategori_id;
     if (!kategoriDegeri) {
       setDurum({ tip: 'hata', mesaj: 'Lütfen bir kategori seçin veya yeni kategori yazın.' });
       return;
@@ -197,7 +171,8 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
     // Eğer yeni kategori modundaysa, kategoriyi ve bilgiyi gönder
     // (yönetici eklerken kategori direkt kullanılır, onaya düşmez)
     if (yeniKategoriModu) {
-      fd.set('sektor', kategoriDegeri);
+      fd.set('kategori_id', '');
+      fd.append('sektor', kategoriDegeri);
       if (!yonetici) {
         fd.append('yeni_kategori', '1');
         fd.append('yeni_kategori_tipi', firmaTipi);
@@ -386,7 +361,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
             <div className={`grid gap-3 ${yonetici ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <button
                 type="button"
-                onClick={() => { setFirmaTipi('siteli'); setForm(prev => ({ ...prev, site_id: '' })); }}
+                onClick={() => tipSec('siteli')}
                 className={`px-4 py-3 rounded-lg border-2 font-medium text-sm transition-all ${
                   firmaTipi === 'siteli'
                     ? 'border-[#1a3a6b] bg-[#1a3a6b] text-white'
@@ -397,7 +372,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
               </button>
               <button
                 type="button"
-                onClick={() => { setFirmaTipi('sitesiz'); setForm(prev => ({ ...prev, site_id: '' })); }}
+                onClick={() => tipSec('sitesiz')}
                 className={`px-4 py-3 rounded-lg border-2 font-medium text-sm transition-all ${
                   firmaTipi === 'sitesiz'
                     ? 'border-[#e8a020] bg-[#e8a020] text-white'
@@ -409,7 +384,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
               {yonetici && (
                 <button
                   type="button"
-                  onClick={() => { setFirmaTipi('kurumsal'); setForm(prev => ({ ...prev, site_id: '' })); }}
+                  onClick={() => tipSec('kurumsal')}
                   className={`px-4 py-3 rounded-lg border-2 font-medium text-sm transition-all ${
                     firmaTipi === 'kurumsal'
                       ? 'border-[#059669] bg-[#059669] text-white'
@@ -441,15 +416,23 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
             {!yeniKategoriModu ? (
               <>
                 <select
-                  value={form.sektor}
-                  onChange={e => setField('sektor', e.target.value)}
+                  value={form.kategori_id}
+                  onChange={e => setField('kategori_id', e.target.value)}
                   className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors bg-white">
                   <option value="">Seçin...</option>
-                  {kategoriler.map(k => <option key={k} value={k}>{k}</option>)}
+                  {kategoriGruplariListesi.map(({ ana, altlar }) =>
+                    altlar.length > 0 ? (
+                      <optgroup key={ana.id} label={ana.ad}>
+                        {altlar.map(a => <option key={a.id} value={a.id}>{a.ad}</option>)}
+                      </optgroup>
+                    ) : (
+                      <option key={ana.id} value={ana.id}>{ana.ad}</option>
+                    )
+                  )}
                 </select>
                 <button
                   type="button"
-                  onClick={() => { setYeniKategoriModu(true); setField('sektor', ''); }}
+                  onClick={() => { setYeniKategoriModu(true); setField('kategori_id', ''); }}
                   className="mt-2 text-xs text-[#1a3a6b] hover:underline flex items-center gap-1"
                 >
                   ➕ Kategori bulamadınız mı? Yeni kategori ekleyin

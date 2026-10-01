@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { yoneticiMi } from '@/lib/admin';
+import { FIRMA_TIPI, KATEGORI_TIPI, sektordenKategoriBul, type FirmaTipi, type KategoriTipi } from '@/lib/firmaKategorileri';
 
 const BUCKET = 'firma-fotograflari';
 
@@ -48,7 +49,10 @@ export async function POST(request: NextRequest) {
     const siteIdRaw    = parseInt((formData.get('site_id') as string) || '');
     const mahalle_id   = parseInt((formData.get('mahalle_id') as string) || '') || null;
     const sokak_id     = parseInt((formData.get('sokak_id') as string) || '') || null;
-    const sektor       = (formData.get('sektor') as string)?.trim();
+    let sektor         = (formData.get('sektor') as string)?.trim() || '';
+    const kategoriIdRaw = parseInt((formData.get('kategori_id') as string) || '');
+    const firmaTipiRaw = formData.get('firma_tipi') as string;
+    let firma_tipi: FirmaTipi | null = firmaTipiRaw && firmaTipiRaw in KATEGORI_TIPI ? (firmaTipiRaw as FirmaTipi) : null;
     const telefon      = (formData.get('telefon') as string)?.trim();
     const mobil_telefon = (formData.get('mobil_telefon') as string)?.trim() || null;
     const adres        = (formData.get('adres') as string)?.trim() || null;
@@ -60,7 +64,7 @@ export async function POST(request: NextRequest) {
     const yeniKategori = formData.get('yeni_kategori') === '1';
     const yeniKategoriTipi = (formData.get('yeni_kategori_tipi') as string) || null;
 
-    if (!ad || !il_adi || !sektor || !telefon) {
+    if (!ad || !il_adi || (!sektor && isNaN(kategoriIdRaw)) || !telefon) {
       return NextResponse.json({ error: 'Zorunlu alanlar eksik.' }, { status: 400 });
     }
 
@@ -68,6 +72,30 @@ export async function POST(request: NextRequest) {
       .split(',').map(h => h.trim()).filter(Boolean);
 
     const supabase = getAdmin();
+
+    // Kategori: listeden seçildiyse firma_kategorileri kaydından; sektör yazısı ve firma tipi oradan gelir.
+    let kategori_id: number | null = null;
+    if (!isNaN(kategoriIdRaw)) {
+      const { data: kategori } = await supabase
+        .from('firma_kategorileri').select('id, ad, tip').eq('id', kategoriIdRaw).eq('aktif', true).maybeSingle();
+      if (!kategori) return NextResponse.json({ error: 'Seçilen kategori bulunamadı. Sayfayı yenileyip tekrar seçin.' }, { status: 400 });
+      kategori_id = kategori.id;
+      sektor = kategori.ad;
+      firma_tipi = FIRMA_TIPI[kategori.tip as KategoriTipi];
+    } else if (yonetici && firma_tipi) {
+      // Yönetici yeni kategori yazdıysa: aynı adda kategori varsa ona bağlanır, yoksa ana kategori olarak eklenir
+      const mevcut = await sektordenKategoriBul(supabase, sektor, firma_tipi);
+      if (mevcut) {
+        kategori_id = mevcut.id;
+        sektor = mevcut.ad;
+      } else {
+        const { data: yeni, error: kategoriHata } = await supabase
+          .from('firma_kategorileri').insert({ ad: sektor, tip: KATEGORI_TIPI[firma_tipi] }).select('id').single();
+        if (kategoriHata || !yeni) return NextResponse.json({ error: 'Yeni kategori eklenemedi: ' + kategoriHata?.message }, { status: 500 });
+        kategori_id = yeni.id;
+      }
+    }
+    // Üye yeni kategori önerdiyse kategori_id boş kalır; yönetici onaylarken kategori eklenip bağlanır.
 
     // Sanayi sitesi adı formdan değil, seçilen sitenin kaydından alınır
     let site_id: number | null = null;
@@ -84,7 +112,8 @@ export async function POST(request: NextRequest) {
     const { data: firma, error: insertError } = await supabase
       .from('firmalar')
       .insert({
-        ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, mahalle_id, sokak_id, sektor, telefon, mobil_telefon, adres, plus_code, web_sitesi,
+        ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, mahalle_id, sokak_id, sektor, kategori_id, firma_tipi,
+        telefon, mobil_telefon, adres, plus_code, web_sitesi,
         hizmetler, ozel_firma: false,
         fotograf_url: null, detay_fotograflar: [],
         onay_durumu: yonetici ? 'onaylandi' : 'beklemede',
