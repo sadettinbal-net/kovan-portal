@@ -34,7 +34,7 @@ export default function DilSecici() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 bg-[#0f2548] hover:bg-[#162e5e] text-gray-200 text-xs font-semibold px-2.5 py-1 rounded-md transition-colors"
+        className="flex items-center gap-1.5 bg-[#0f2548] hover:bg-[#162e5e] text-gray-200 text-sm font-semibold px-2.5 py-1 rounded-md transition-colors"
       >
         <img
           src={active.flag}
@@ -61,7 +61,7 @@ export default function DilSecici() {
             <li key={l.code}>
               <button
                 onClick={() => { setLang(l.code); setOpen(false); }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                className={`w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-colors ${
                   lang === l.code
                     ? "bg-[#e8a020] text-white"
                     : "text-gray-200 hover:bg-[#1a3a6b]"

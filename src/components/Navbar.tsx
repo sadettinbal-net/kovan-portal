@@ -246,23 +246,23 @@ export default function Navbar() {
         <nav className={`hidden md:flex items-center gap-0.5 ${scrolled ? "flex-shrink-0" : "flex-1 justify-center"}`}>
           {linksOnce.map((link) => (
             <Link key={link.href} href={link.href}
-              className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-xs px-2 py-1.5" : "text-sm px-3 py-2"}`}>
+              className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
               {link.label}
             </Link>
           ))}
           <button
             onClick={siteKullanimiAc}
-            className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-xs px-2 py-1.5" : "text-sm px-3 py-2"}`}>
+            className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
             Site Kullanımı
           </button>
           <button
             onClick={() => { setUyeOlModal(true); setUyeOlMesaj(null); }}
-            className={`text-[#1a3a6b] bg-[#e8a020] hover:bg-[#c8851a] rounded font-semibold transition-colors whitespace-nowrap ${scrolled ? "text-xs px-2 py-1.5" : "text-sm px-3 py-2"}`}>
+            className={`text-[#1a3a6b] bg-[#e8a020] hover:bg-[#c8851a] rounded font-semibold transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
             Üye Ol
           </button>
           {linksSonra.map((link) => (
             <Link key={link.href} href={link.href}
-              className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-xs px-2 py-1.5" : "text-sm px-3 py-2"}`}>
+              className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
               {link.label}
             </Link>
           ))}
@@ -285,11 +285,11 @@ export default function Navbar() {
                   {user.name.charAt(0).toUpperCase()}
                 </div>
               )}
-              <span className={scrolled ? "text-xs" : "text-sm"}>{user.name.split(' ')[0]}</span>
+              <span className={scrolled ? "text-[13px]" : "text-[15px]"}>{user.name.split(' ')[0]}</span>
             </button>
           ) : (
             <button onClick={() => setKvkkModal(true)}
-              className={`flex items-center gap-1.5 bg-white hover:bg-gray-100 text-gray-700 font-semibold rounded transition-colors whitespace-nowrap shadow-sm ${scrolled ? "text-xs px-2.5 py-1.5" : "text-sm px-3 py-2"}`}>
+              className={`flex items-center gap-1.5 bg-white hover:bg-gray-100 text-gray-700 font-semibold rounded transition-colors whitespace-nowrap shadow-sm ${scrolled ? "text-[13px] px-2.5 py-1.5" : "text-[15px] px-3 py-2"}`}>
               <GoogleIcon size={scrolled ? 14 : 16} />
               <span>{t.signInGoogle}</span>
             </button>
@@ -338,38 +338,38 @@ export default function Navbar() {
           </form>
           {linksOnce.map((link) => (
             <Link key={link.href} href={link.href}
-              className="block text-white px-4 py-3 text-sm border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors"
+              className="block text-white px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors"
               onClick={() => setMenuOpen(false)}>
               {link.label}
             </Link>
           ))}
           <button
             onClick={() => { setMenuOpen(false); siteKullanimiAc(); }}
-            className="block w-full text-left text-white px-4 py-3 text-sm border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors">
+            className="block w-full text-left text-white px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors">
             Site Kullanımı
           </button>
           <button
             onClick={() => { setMenuOpen(false); setUyeOlModal(true); setUyeOlMesaj(null); }}
-            className="block w-full text-left text-[#e8a020] font-semibold px-4 py-3 text-sm border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors">
+            className="block w-full text-left text-[#e8a020] font-semibold px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors">
             Üye Ol
           </button>
           {linksSonra.map((link) => (
             <Link key={link.href} href={link.href}
-              className="block text-white px-4 py-3 text-sm border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors"
+              className="block text-white px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors"
               onClick={() => setMenuOpen(false)}>
               {link.label}
             </Link>
           ))}
           {user ? (
             <>
-              <Link href="/profil" className="block text-white px-4 py-3 text-sm border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors" onClick={() => setMenuOpen(false)}>{t.myProfile}</Link>
+              <Link href="/profil" className="block text-white px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors" onClick={() => setMenuOpen(false)}>{t.myProfile}</Link>
               <button onClick={async () => { setMenuOpen(false); await fetch('/api/auth/logout', { method: 'POST' }); setUser(null); router.push('/'); }}
-                className="block w-full text-left text-red-400 px-4 py-3 text-sm hover:bg-[#1a3a6b] transition-colors">
+                className="block w-full text-left text-red-400 px-4 py-3 text-base hover:bg-[#1a3a6b] transition-colors">
                 {t.signOut}
               </button>
             </>
           ) : (
-            <button onClick={() => { setMenuOpen(false); setKvkkModal(true); }} className="flex items-center gap-2 px-4 py-3 text-sm bg-white hover:bg-gray-100 text-gray-700 font-semibold transition-colors w-full">
+            <button onClick={() => { setMenuOpen(false); setKvkkModal(true); }} className="flex items-center gap-2 px-4 py-3 text-base bg-white hover:bg-gray-100 text-gray-700 font-semibold transition-colors w-full">
               <GoogleIcon size={16} />
               <span>{t.signInGoogle}</span>
             </button>
