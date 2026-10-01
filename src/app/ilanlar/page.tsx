@@ -106,7 +106,7 @@ function IlanlarContent() {
         {/* Sidebar */}
         <aside className="w-full md:w-64 flex-shrink-0">
           <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
-            <div className="bg-[#e8a020] text-white px-4 py-2.5 font-semibold text-sm flex items-center justify-between">
+            <div className="bg-[#e8a020] text-white px-4 py-2.5 font-bold text-[15px] flex items-center justify-between">
               <span>{t.listingCategories}</span>
               <button
                 onClick={() => setIlanVerAcik(true)}
@@ -115,16 +115,21 @@ function IlanlarContent() {
                 {t.postListingBtn}
               </button>
             </div>
-            <ul>
+            <div className="px-2 pt-2">
+              <div className="bg-[#1a3a6b] text-white text-center text-xs font-bold tracking-wide rounded-md px-2 py-1.5">
+                🏗️ {t.listingForZones}
+              </div>
+            </div>
+            <ul className="p-2 space-y-1.5">
               <li>
                 <Link
                   href="/ilanlar"
-                  className={`flex justify-between items-center px-4 py-2.5 text-sm border-b border-gray-100 hover:bg-yellow-50 transition-colors ${
-                    !tip ? "bg-yellow-50 text-[#1a3a6b] font-semibold" : "text-gray-700"
+                  className={`flex justify-between items-center px-3 py-2 text-[15px] font-semibold rounded-md border transition-colors ${
+                    !tip ? "bg-[#ffefcc] border-[#e8a020] text-[#1a3a6b]" : "bg-[#fff8eb] border-[#e8a020]/50 hover:bg-[#ffefcc] hover:border-[#e8a020] text-gray-800"
                   }`}
                 >
                   <span>{t.allListings}</span>
-                  <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">
+                  <span className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full border border-[#e8a020]/40">
                     {toplamIlan}
                   </span>
                 </Link>
@@ -133,14 +138,14 @@ function IlanlarContent() {
                 <li key={kat.id}>
                   <Link
                     href={`/ilanlar?tip=${encodeURIComponent(kat.name)}`}
-                    className={`flex justify-between items-center px-4 py-2.5 text-sm border-b border-gray-100 hover:bg-yellow-50 transition-colors ${
+                    className={`flex justify-between items-center px-3 py-2 text-[15px] font-semibold rounded-md border transition-colors ${
                       tip === kat.name
-                        ? "bg-yellow-50 text-[#1a3a6b] font-semibold"
-                        : "text-gray-700"
+                        ? "bg-[#ffefcc] border-[#e8a020] text-[#1a3a6b]"
+                        : "bg-[#fff8eb] border-[#e8a020]/50 hover:bg-[#ffefcc] hover:border-[#e8a020] text-gray-800"
                     }`}
                   >
                     <span className="leading-tight">{kat.name}</span>
-                    <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full ml-1 flex-shrink-0">
+                    <span className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full ml-1 flex-shrink-0 border border-[#e8a020]/40">
                       {kategoriBayi[kat.name] || 0}
                     </span>
                   </Link>
