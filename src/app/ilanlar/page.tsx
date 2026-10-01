@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+import { ILAN_KATEGORILERI, ilanKategoriEtiketi } from "@/lib/ilanKategorileri";
 const IlanVerModal = dynamic(() => import("@/components/IlanVerModal"), { ssr: false });
 const VideoReklamModal = dynamic(() => import("@/components/VideoReklamModal"), { ssr: false });
 
@@ -29,14 +30,6 @@ type User = { id: string; email: string; name: string };
 
 function IlanlarContent() {
   const { t, lang } = useLanguage();
-  const ILAN_KATEGORILERI = [
-    { id: "arac", name: t.catVehicle },
-    { id: "dukkan", name: t.catShop },
-    { id: "elaman", name: t.catJob },
-    { id: "yedekparca-arayan", name: t.catPartsWanted },
-    { id: "yedekparca-satan", name: t.catPartsSelling },
-    { id: "imalat", name: t.catManufacturing },
-  ];
   const router = useRouter();
   const searchParams = useSearchParams();
   const tip = searchParams.get("tip") || "";
@@ -97,7 +90,7 @@ function IlanlarContent() {
         {tip && (
           <>
             <span className="mx-2">›</span>
-            <span className="text-[#1a3a6b] font-medium">{tip}</span>
+            <span className="text-[#1a3a6b] font-medium">{ilanKategoriEtiketi(tip, t)}</span>
           </>
         )}
       </nav>
@@ -137,16 +130,16 @@ function IlanlarContent() {
               {ILAN_KATEGORILERI.map((kat) => (
                 <li key={kat.id}>
                   <Link
-                    href={`/ilanlar?tip=${encodeURIComponent(kat.name)}`}
+                    href={`/ilanlar?tip=${encodeURIComponent(kat.ad)}`}
                     className={`flex justify-between items-center px-3 py-2 text-[15px] font-semibold rounded-md border transition-colors ${
-                      tip === kat.name
+                      tip === kat.ad
                         ? "bg-[#ffefcc] border-[#e8a020] text-[#1a3a6b]"
                         : "bg-[#fff8eb] border-[#e8a020]/50 hover:bg-[#ffefcc] hover:border-[#e8a020] text-gray-800"
                     }`}
                   >
-                    <span className="leading-tight">{kat.name}</span>
+                    <span className="leading-tight">{t[kat.etiket]}</span>
                     <span className="bg-white text-gray-700 text-xs px-2 py-0.5 rounded-full ml-1 flex-shrink-0 border border-[#e8a020]/40">
-                      {kategoriBayi[kat.name] || 0}
+                      {kategoriBayi[kat.ad] || 0}
                     </span>
                   </Link>
                 </li>
@@ -158,7 +151,7 @@ function IlanlarContent() {
         {/* İçerik */}
         <div className="flex-1 min-w-0">
           <div className="bg-white border border-[#dde3ec] rounded-lg px-4 py-3 mb-4 flex items-center justify-between">
-            <h1 className="font-bold text-[#1a3a6b] text-lg">{tip || t.allListings}</h1>
+            <h1 className="font-bold text-[#1a3a6b] text-lg">{tip ? ilanKategoriEtiketi(tip, t) : t.allListings}</h1>
             <div className="flex items-center gap-3">
               <span className="text-gray-500 text-sm">{t.listingsCount(ilanlar.length)}</span>
               <button
@@ -218,7 +211,7 @@ function IlanlarContent() {
                       </p>
                       <div className="flex flex-wrap gap-2 text-xs">
                         <span className="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-medium">
-                          {ilan.kategori}
+                          {ilanKategoriEtiketi(ilan.kategori, t)}
                         </span>
                         {ilan.fiyat && (
                           <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full font-semibold">

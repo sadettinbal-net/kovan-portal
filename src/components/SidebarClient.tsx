@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
+import { ILAN_KATEGORILERI } from "@/lib/ilanKategorileri";
 
 
 // baslik: grup başlığı satırı (ör. Anadolu Yakası); girintili: bir üst sitenin içindeki site
@@ -31,14 +32,6 @@ interface Props {
 
 export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, toplamFirma }: Props) {
   const { t } = useLanguage();
-  const ILAN_KATEGORILERI = [
-    { id: "arac", name: t.catVehicle },
-    { id: "dukkan", name: t.catShop },
-    { id: "elaman", name: t.catJob },
-    { id: "yedekparca-arayan", name: t.catPartsWanted },
-    { id: "yedekparca-satan", name: t.catPartsSelling },
-    { id: "imalat", name: t.catManufacturing },
-  ];
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeIl = searchParams.get("il") || "";
@@ -254,10 +247,10 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
           {ILAN_KATEGORILERI.map((ilan) => (
             <li key={ilan.id}>
               <Link
-                href={`/ilanlar?tip=${encodeURIComponent(ilan.name)}`}
+                href={`/ilanlar?tip=${encodeURIComponent(ilan.ad)}`}
                 className="flex justify-between items-center px-3 py-2 text-[15px] font-semibold rounded-md bg-[#fff8eb] border border-[#e8a020]/50 hover:bg-[#ffefcc] hover:border-[#e8a020] transition-colors text-gray-800"
               >
-                <span className="leading-tight">{ilan.name}</span>
+                <span className="leading-tight">{t[ilan.etiket]}</span>
               </Link>
             </li>
           ))}

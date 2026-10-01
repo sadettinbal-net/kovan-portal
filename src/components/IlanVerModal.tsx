@@ -1,15 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { ILAN_KATEGORILERI } from "@/lib/ilanKategorileri";
 
-const ILAN_KATEGORILERI = [
-  { id: "arac", name: "Araç İlanları" },
-  { id: "dukkan", name: "Satılık - Kiralık Dükkan" },
-  { id: "elaman", name: "Elaman İlanları" },
-  { id: "yedekparca-arayan", name: "Yedek Parça Arayanlar" },
-  { id: "yedekparca-satan", name: "Yedek Parça Ve Çıkma Ürün Satanlar" },
-  { id: "imalat", name: "Ürün İmalatı Yapanlar" },
-];
 
 const MAX_FOTO = 10;
 const MAX_BOYUT_MB = 5;
@@ -238,10 +231,10 @@ export default function IlanVerModal({ onClose, user }: Props) {
                 {ILAN_KATEGORILERI.map((kat) => (
                   <button
                     key={kat.id}
-                    onClick={() => handleKategoriSec(kat.name)}
+                    onClick={() => handleKategoriSec(kat.ad)}
                     className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:border-[#e8a020] hover:bg-yellow-50 text-sm font-medium text-gray-700 transition-colors"
                   >
-                    {kat.name}
+                    {kat.ad}
                   </button>
                 ))}
               </div>

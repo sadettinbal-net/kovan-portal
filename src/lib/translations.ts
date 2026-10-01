@@ -52,7 +52,7 @@ export const translations = {
     listingForZones: 'SANAYİ SİTELERİ İÇİN',
     catVehicle: 'Araç İlanları',
     catShop: 'Satılık - Kiralık Dükkan',
-    catJob: 'Elaman İlanları',
+    catJob: 'Eleman İlanları',
     catPartsWanted: 'Yedek Parça Arayanlar',
     catPartsSelling: 'Yedek Parça Ve Çıkma Ürün Satanlar',
     catManufacturing: 'Ürün İmalatı Yapanlar',
