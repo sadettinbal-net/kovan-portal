@@ -243,26 +243,26 @@ export default function Navbar() {
         </form>
 
         {/* Desktop nav */}
-        <nav className={`hidden md:flex items-center gap-0.5 ${scrolled ? "flex-shrink-0" : "flex-1 justify-center"}`}>
+        <nav className={`hidden md:flex items-center gap-1 ${scrolled ? "flex-shrink-0" : "flex-1 justify-center"}`}>
           {linksOnce.map((link) => (
             <Link key={link.href} href={link.href}
-              className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
+              className={`text-white rounded-md bg-white/10 border border-white/30 hover:bg-[#2554a0] hover:border-white/60 transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
               {link.label}
             </Link>
           ))}
           <button
             onClick={siteKullanimiAc}
-            className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
+            className={`text-white rounded-md bg-white/10 border border-white/30 hover:bg-[#2554a0] hover:border-white/60 transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
             Site Kullanımı
           </button>
           <button
             onClick={() => { setUyeOlModal(true); setUyeOlMesaj(null); }}
-            className={`text-[#1a3a6b] bg-[#e8a020] hover:bg-[#c8851a] rounded font-semibold transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
+            className={`text-[#1a3a6b] bg-[#e8a020] hover:bg-[#c8851a] rounded-md border border-[#e8a020] font-semibold transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
             Üye Ol
           </button>
           {linksSonra.map((link) => (
             <Link key={link.href} href={link.href}
-              className={`text-white rounded hover:bg-[#2554a0] transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
+              className={`text-white rounded-md bg-white/10 border border-white/30 hover:bg-[#2554a0] hover:border-white/60 transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
               {link.label}
             </Link>
           ))}
