@@ -9,7 +9,7 @@ export type SlotReklam = {
 
 // Bir reklam alanı (konum) için aktif özel reklamı getirir.
 // Birden fazla aktif reklam varsa her yüklemede rastgele biri seçilir (rotation).
-export function useOzelReklam(konum: "video" | "sidebar" | "popup", kategori?: string) {
+export function useOzelReklam(konum: "video" | "sidebar" | "popup" | "anasayfa_ust", kategori?: string) {
   const [reklam, setReklam] = useState<SlotReklam | null>(null);
   const [yuklendi, setYuklendi] = useState(false);
 

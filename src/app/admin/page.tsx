@@ -492,7 +492,7 @@ type Reklam = {
   baslik: string;
   gorsel_url: string;
   link_url: string;
-  konum: 'video' | 'sidebar' | 'popup';
+  konum: 'video' | 'sidebar' | 'popup' | 'anasayfa_ust';
   kategori: string | null;
   aktif: boolean;
   baslangic_tarihi: string | null;
@@ -509,7 +509,7 @@ function ReklamYonetimi() {
 
   const [baslik, setBaslik] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
-  const [konum, setKonum] = useState<'video' | 'sidebar' | 'popup'>('video');
+  const [konum, setKonum] = useState<'video' | 'sidebar' | 'popup' | 'anasayfa_ust'>('video');
   const [kategori, setKategori] = useState('');
   const [kategoriler, setKategoriler] = useState<string[]>([]);
   const [baslangic, setBaslangic] = useState('');
@@ -626,10 +626,11 @@ function ReklamYonetimi() {
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-600 mb-1">Reklam Alanı</label>
-            <select value={konum} onChange={e => setKonum(e.target.value as 'video' | 'sidebar' | 'popup')} className={inputCls}>
+            <select value={konum} onChange={e => setKonum(e.target.value as 'video' | 'sidebar' | 'popup' | 'anasayfa_ust')} className={inputCls}>
               <option value="video">Sayfa-içi video (sayfa gövdesi)</option>
               <option value="popup">Popup (detay sayfası açılınca)</option>
               <option value="sidebar">Kenar çubuğu (sağ menü)</option>
+              <option value="anasayfa_ust">Ana sayfa üst şerit (arama kutusunun altı)</option>
             </select>
           </div>
           <div>
@@ -681,7 +682,7 @@ function ReklamYonetimi() {
               <img src={r.gorsel_url} alt={r.baslik} className="w-24 h-16 object-cover rounded border border-gray-200 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{r.konum === 'video' ? 'Sayfa-içi video' : r.konum === 'popup' ? 'Popup' : 'Kenar çubuğu'}</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{r.konum === 'video' ? 'Sayfa-içi video' : r.konum === 'popup' ? 'Popup' : r.konum === 'anasayfa_ust' ? 'Ana sayfa üst şerit' : 'Kenar çubuğu'}</span>
                   {r.kategori && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">🏷️ {r.kategori}</span>}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${r.aktif ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>{r.aktif ? 'Aktif' : 'Pasif'}</span>
                   <span className="text-xs text-gray-400">👆 {r.tiklanma} tıklanma</span>

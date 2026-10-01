@@ -42,6 +42,9 @@
 
 **NOT:** Bu görev kullanıcı talebi üzerine iptal edildi. İleriki bir tarihte yeniden ele alınabilir.
 
+### 📌 Yayına Girince Yapılacaklar
+- **Ana sayfa üst şerit reklamı (AdSense):** Şu an geçici olarak sağ menüdeki AdSense birimi (`7684004731`) kullanılıyor. Site yayına girince AdSense'te yatay şerit için yeni bir görüntülü reklam birimi açılacak; kullanıcı numarasını verecek → `src/components/AnasayfaBanner.tsx` içindeki `ADSENSE_SLOT` değiştirilecek.
+
 ---
 
 ## Genel Sistem Notları

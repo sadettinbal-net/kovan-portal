@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const konum = searchParams.get('konum');
   const kategori = (searchParams.get('kategori') || '').trim();
-  if (konum !== 'video' && konum !== 'sidebar' && konum !== 'popup') {
+  if (konum !== 'video' && konum !== 'sidebar' && konum !== 'popup' && konum !== 'anasayfa_ust') {
     return jsonNoStore({ reklamlar: [] });
   }
 

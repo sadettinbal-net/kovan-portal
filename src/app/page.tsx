@@ -7,6 +7,7 @@ import type { Lang } from "@/lib/translations";
 export const dynamic = "force-dynamic";
 import Sidebar from "@/components/Sidebar";
 import RightSidebarWrapper from "@/components/RightSidebarWrapper";
+import AnasayfaBanner from "@/components/AnasayfaBanner";
 import FirmaKart from "@/components/FirmaKart";
 import VideoReklam from "@/components/VideoReklam";
 import { supabase } from "@/lib/supabase";
@@ -75,6 +76,7 @@ export default async function Home() {
       <AramaKutusu count={count} />
 
       <div className="max-w-[1600px] mx-auto px-4 py-6">
+        <AnasayfaBanner />
         <div className="flex flex-col md:flex-row gap-4">
           <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
             <Sidebar />
