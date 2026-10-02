@@ -4,7 +4,7 @@
 
 - ✅ Reklam Ver sayfasındaki "Mesaj Gönder" → `/iletisim?konu=reklam`; formda "📢 Reklam başvurusu" yazar, mesaj `iletisim_mesajlari.konu = reklam` olarak kaydedilir (migration `20261002100000_iletisim_mesaj_konu.sql`). Mesajlar tablosu açık anahtarla okunamıyor (401).
 - ✅ Yönetici paneli "📨 Reklam Mesajları" sekmesi (`/api/admin/mesajlar`): okunmamış rozeti, Reklam / Genel / Tümü süzgeci, okundu işareti, silme.
-- ⏳ **E-posta:** kod hazır (konu: "📢 Reklam Başvurusu", alıcı sadettinbal@gmail.com) ama `RESEND_API_KEY` tanımlı değil. Kullanıcı resend.com'da hesap açıp anahtarı verince .env.local'e (ve yayında Vercel'e) eklenecek. Gönderen adres şimdilik onboarding@resend.dev; kovanportal.com alan adı Resend'de doğrulanınca info@kovanportal.com yapılabilir.
+- ✅ **E-posta:** Resend hesabı açıldı, `RESEND_API_KEY` .env.local'e eklendi (2026-10-02). Deneme ve Reklam Ver formundan gönderilen mesajın e-postası sadettinbal@gmail.com'a teslim edildi (Resend: delivered). Gönderen adres onboarding@resend.dev: bu adresle sadece Resend hesabının sahibine (sadettinbal@gmail.com) gönderilebilir. **Yayında:** aynı anahtar Vercel ortam değişkenlerine de eklenmeli; info@kovanportal.com'dan göndermek için kovanportal.com alan adı Resend'de doğrulanmalı. Not: aynı anahtarla firma/ilan bildirim e-postaları da artık gidiyor.
 
 ---
 
