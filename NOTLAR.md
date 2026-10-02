@@ -10,6 +10,24 @@
 - ✅ Formlarda alan açıklaması: "WhatsApp numarası veya WhatsApp Business linki". Mobil Telefon'daki "(WhatsApp için)" kaldırıldı.
 - ✅ Düzeltilen hata: Boşluklu ("0539 836 82 86") veya virgülle birden fazla yazılmış mobil numaralarda WhatsApp/Ara butonları bozuk adrese gidiyordu; artık ilk numara düzgün alınıyor (`ilkNumara`).
 
+## 2026-10-02 - Firma Silme ve Yayından Kaldırma
+
+### Sorunun tespiti
+- Admin silme zaten sunucuda, admin kontrolü + service role ile yapılıyordu (RLS sebebi değildi). Son 24 saatte Supabase'e hiç firma silme isteği ulaşmamıştı; istek sitede takılıyordu, kesin sebep bulunamadı. Yeni sürümde her hata ekranda yazıyor.
+- Eski koddaki hatalar: fotoğraflar firmadan ÖNCE siliniyordu (silme başarısızsa fotoğraflar gidiyordu); silinen satır sayısına bakılmıyordu; firma sahibi silmesinde `kullanici_email` boş olan firmayı giriş yapmış herkes silebiliyordu.
+
+### Yapılanlar
+- ✅ `onay_durumu`na `'pasif'` eklendi (migration `20261002020000_firma_pasif_durumu.sql`, tek ifade, canlıya uygulandı). RLS'e dokunulmadı: mevcut SELECT politikası herkese sadece `onaylandi` gösterdiği için pasif firma sitede her yerden kendiliğinden kayboluyor.
+- ✅ Ortak sunucu kodu `src/lib/firmaSilme.ts`: önce firma silinir, silinen satır 0 ise hata, fotoğraflar ancak sonra silinir. Ad kontrolü `src/lib/firmaAdEslesme.ts` (hem pencere hem sunucu).
+- ✅ Onay penceresi `src/components/FirmaSilPenceresi.tsx`: bağlı yorum/fotoğraf/ziyaret sayısını gösterir, firma adı aynen yazılmadan silmez (7 dil).
+- ✅ Admin: "⏸ Yayından kaldır" / "↩ Yayına geri al" (`/api/admin/firma-durum`, artık `pasif` kabul ediyor ve 0 satır kontrolü var) + "🗑️ Kalıcı sil" (`/api/admin/firma-sil`).
+- ✅ Firma sahibi (`/profil`): "Yayından kaldır", "Tekrar yayına gönder" (pasif → beklemede, yönetici onaylayınca yayına girer), "Kalıcı sil" (`/api/firma-sil-kullanici` GET/DELETE/PATCH). Sahip artık onaylı firmasını da kalıcı silebiliyor.
+- Kalıcı silmede: yorumlar/puanlar CASCADE ile silinir; ziyaret kayıtları kalır (`firma_id` NULL); kart + detay fotoğrafları Storage'dan silinir; firma_talepleri/ilanlar/reklamlar etkilenmez.
+
+### 📌 Sonra bakılacak
+- **Sahipsiz 3 fotoğraf:** `firma-fotograflari` deposunda hiçbir firmanın `fotograf_url`/`detay_fotograflar` alanında geçmeyen 3 dosya var (toplam 23 dosyadan). Kullanıcı isteğiyle şimdilik dokunulmadı; ileride temizlenebilir.
+- `firma-durum` route'unda: yeniden gönderilmiş (`yeniden_gonderildi`) bir firma reddedilirse kayıt siliniyor ama fotoğrafları Storage'da kalıyor (eski davranış, değiştirilmedi).
+
 ---
 
 ## 2026-10-01 - Bugünkü Çalışmalar

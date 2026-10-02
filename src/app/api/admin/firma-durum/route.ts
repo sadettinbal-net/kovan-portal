@@ -15,7 +15,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const { id, durum } = await request.json();
-  if (!id || !['onaylandi', 'reddedildi'].includes(durum)) {
+  if (!id || !['onaylandi', 'reddedildi', 'pasif'].includes(durum)) {
     return NextResponse.json({ error: 'Geçersiz istek.' }, { status: 400 });
   }
 
@@ -63,13 +63,17 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  const { error } = await supabase
+  const { data: guncellenen, error } = await supabase
     .from('firmalar')
     .update(guncelleme)
-    .eq('id', id);
+    .eq('id', id)
+    .select('id');
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (!guncellenen || guncellenen.length === 0) {
+    return NextResponse.json({ error: 'Firma durumu değiştirilemedi (0 kayıt güncellendi).' }, { status: 500 });
   }
 
   revalidatePath('/', 'layout');

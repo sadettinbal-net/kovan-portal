@@ -10,6 +10,7 @@ import ActiveUsers from '@/components/ActiveUsers';
 import SanayiSiteleriYonetimi from '@/components/admin/SanayiSiteleriYonetimi';
 import KategoriYonetimi from '@/components/admin/KategoriYonetimi';
 import FirmaEkleFormu from '@/components/FirmaEkleFormu';
+import FirmaSilPenceresi from '@/components/FirmaSilPenceresi';
 import SosyalIkon from '@/components/SosyalIkon';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
@@ -1791,9 +1792,9 @@ function AdminPanel() {
   const [duzenlemeAcik, setDuzenlemeAcik] = useState(false);
   const [duzenleForm, setDuzenleForm] = useState<Partial<Firma>>({});
   const [kaydediliyor, setKaydediliyor] = useState(false);
-  // Silme
+  // Silme ve yayından kaldırma
   const [silOnayiAcik, setSilOnayiAcik] = useState(false);
-  const [siliyor, setSiliyor] = useState(false);
+  const [yayinIslem, setYayinIslem] = useState(false);
   // Detay fotoğraf
   const detayFotoRef = useRef<HTMLInputElement>(null);
   const [detayFotoYukleniyor, setDetayFotoYukleniyor] = useState(false);
@@ -1940,24 +1941,38 @@ function AdminPanel() {
     setKaydediliyor(false);
   }
 
-  async function firmaSil() {
+  function firmaSilindi(fotografHatasi: boolean) {
     if (!seciliFirma) return;
-    setSiliyor(true);
-    const res = await fetch('/api/admin/firma-sil', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: seciliFirma.id }),
-    });
-    if (res.ok) {
-      setFirmalar(prev => prev.filter(f => f.id !== seciliFirma.id));
-      setSeciliFirma(null);
-      setSilOnayiAcik(false);
-    } else {
+    setFirmalar(prev => prev.filter(f => f.id !== seciliFirma.id));
+    setSeciliFirma(null);
+    setSilOnayiAcik(false);
+    if (fotografHatasi) alert('Firma silindi, ancak bazı fotoğraflar depodan silinemedi.');
+  }
+
+  // Yayından kaldır (pasif) veya yayına geri al (onaylandi); firma kaydı silinmez
+  async function yayinDurumuDegistir(durum: 'pasif' | 'onaylandi') {
+    if (!seciliFirma) return;
+    setYayinIslem(true);
+    setDurum(null);
+    try {
+      const res = await fetch('/api/admin/firma-durum', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: seciliFirma.id, durum }),
+      });
       const data = await res.json();
-      setDurum({ tip: 'hata', mesaj: data.error || 'Silme başarısız.' });
-      setSilOnayiAcik(false);
+      if (res.ok) {
+        const guncel = { ...seciliFirma, onay_durumu: durum };
+        setSeciliFirma(guncel);
+        setFirmalar(prev => prev.map(f => f.id === guncel.id ? guncel : f));
+        setDurum({ tip: 'basari', mesaj: durum === 'pasif' ? 'Firma yayından kaldırıldı. Sitede görünmüyor; "Yayına geri al" ile geri getirebilirsiniz.' : 'Firma yeniden yayında.' });
+      } else {
+        setDurum({ tip: 'hata', mesaj: data.error || 'İşlem başarısız.' });
+      }
+    } catch {
+      setDurum({ tip: 'hata', mesaj: 'Bağlantı hatası. Lütfen tekrar deneyin.' });
     }
-    setSiliyor(false);
+    setYayinIslem(false);
   }
 
   async function revalidateFirma(id: number) {
@@ -2198,6 +2213,7 @@ function AdminPanel() {
                   <p className="font-medium text-sm text-gray-800 truncate">{firma.ad}</p>
                   <p className="text-xs text-gray-400 truncate">{firma.sektor}</p>
                 </div>
+                {firma.onay_durumu === 'pasif' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">Yayında değil</span>}
                 {firma.fotograf_url && <span className="text-green-500 text-xs flex-shrink-0">📷</span>}
               </button>
             ))}
@@ -2212,25 +2228,14 @@ function AdminPanel() {
             </div>
           ) : (
             <div className="bg-white border border-gray-200 rounded-lg relative">
-              {/* Silme onayı overlay */}
               {silOnayiAcik && (
-                <div className="absolute inset-0 bg-white/95 z-10 flex items-center justify-center rounded-lg">
-                  <div className="text-center p-6">
-                    <div className="text-4xl mb-3">⚠️</div>
-                    <p className="font-bold text-gray-800 mb-1">Firmayı silmek istediğinize emin misiniz?</p>
-                    <p className="text-sm text-gray-500 mb-5"><strong>{seciliFirma.ad}</strong> kalıcı olarak silinecek.</p>
-                    <div className="flex gap-3 justify-center">
-                      <button onClick={firmaSil} disabled={siliyor}
-                        className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold disabled:opacity-50">
-                        {siliyor ? 'Siliniyor...' : 'Evet, Sil'}
-                      </button>
-                      <button onClick={() => setSilOnayiAcik(false)}
-                        className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold">
-                        İptal
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <FirmaSilPenceresi
+                  firmaId={seciliFirma.id}
+                  firmaAdi={seciliFirma.ad}
+                  adres="/api/admin/firma-sil"
+                  onSilindi={firmaSilindi}
+                  onKapat={() => setSilOnayiAcik(false)}
+                />
               )}
 
               {/* Header */}
@@ -2246,9 +2251,20 @@ function AdminPanel() {
                         className="px-3 py-1.5 bg-[#1a3a6b] hover:bg-[#2554a0] text-white text-xs font-semibold rounded-lg transition-colors">
                         ✏️ Düzenle
                       </button>
+                      {seciliFirma.onay_durumu === 'pasif' ? (
+                        <button onClick={() => yayinDurumuDegistir('onaylandi')} disabled={yayinIslem}
+                          className="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50">
+                          {yayinIslem ? '...' : '↩ Yayına geri al'}
+                        </button>
+                      ) : seciliFirma.onay_durumu === 'onaylandi' && (
+                        <button onClick={() => yayinDurumuDegistir('pasif')} disabled={yayinIslem}
+                          className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50">
+                          {yayinIslem ? '...' : '⏸ Yayından kaldır'}
+                        </button>
+                      )}
                       <button onClick={() => setSilOnayiAcik(true)}
                         className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-lg transition-colors">
-                        🗑️ Sil
+                        🗑️ Kalıcı sil
                       </button>
                     </>
                   ) : (
@@ -2285,8 +2301,8 @@ function AdminPanel() {
                     <div><span className="text-gray-400 text-xs">Mobil Telefon</span><p className="text-gray-800">{seciliFirma.mobil_telefon || '—'}</p></div>
                     <div><span className="text-gray-400 text-xs">WhatsApp</span><p className="text-gray-800 break-all">{seciliFirma.whatsapp || '—'}</p></div>
                     <div><span className="text-gray-400 text-xs">Durum</span>
-                      <p className={`font-medium ${seciliFirma.onay_durumu === 'onaylandi' ? 'text-green-600' : seciliFirma.onay_durumu === 'reddedildi' ? 'text-red-600' : 'text-yellow-600'}`}>
-                        {seciliFirma.onay_durumu === 'onaylandi' ? '✓ Onaylı' : seciliFirma.onay_durumu === 'reddedildi' ? '✕ Reddedildi' : '⏳ Beklemede'}
+                      <p className={`font-medium ${seciliFirma.onay_durumu === 'onaylandi' ? 'text-green-600' : seciliFirma.onay_durumu === 'reddedildi' ? 'text-red-600' : seciliFirma.onay_durumu === 'pasif' ? 'text-gray-500' : 'text-yellow-600'}`}>
+                        {seciliFirma.onay_durumu === 'onaylandi' ? '✓ Onaylı' : seciliFirma.onay_durumu === 'reddedildi' ? '✕ Reddedildi' : seciliFirma.onay_durumu === 'pasif' ? '⏸ Yayından kaldırıldı' : '⏳ Beklemede'}
                       </p>
                     </div>
                     <div className="col-span-2"><span className="text-gray-400 text-xs">Adres</span><p className="text-gray-800">{seciliFirma.adres || '—'}</p></div>
@@ -2422,6 +2438,7 @@ function AdminPanel() {
                         <option value="beklemede">Beklemede</option>
                         <option value="onaylandi">Onaylı</option>
                         <option value="reddedildi">Reddedildi</option>
+                        <option value="pasif">Yayından kaldırıldı</option>
                       </select>
                     </div>
                     <div>

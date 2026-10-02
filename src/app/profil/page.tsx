@@ -9,6 +9,7 @@ import { createClient } from '@/utils/supabase/client';
 // Oturumlu okuma: kendi onay bekleyen firmalarını da görebilsin
 const supabase = createClient();
 import { useLanguage } from "@/contexts/LanguageContext";
+import FirmaSilPenceresi from '@/components/FirmaSilPenceresi';
 
 type User = {
   id: string;
@@ -25,6 +26,8 @@ export default function ProfilPage() {
   const [loading, setLoading] = useState(true);
   const [loggingOut, setLoggingOut] = useState(false);
   const [islemFirmaId, setIslemFirmaId] = useState<number | null>(null);
+  const [silinecekFirma, setSilinecekFirma] = useState<Firma | null>(null);
+  const [hata, setHata] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -75,15 +78,22 @@ export default function ProfilPage() {
     setIslemFirmaId(null);
   };
 
-  const firmaSil = async (firmaId: number) => {
-    setIslemFirmaId(firmaId);
-    const res = await fetch('/api/firma-sil-kullanici', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: firmaId }),
-    });
-    if (res.ok) {
-      setFirmalar(prev => prev.filter(f => f.id !== firmaId));
+  // Yayından kaldır (onaylı → pasif) veya tekrar yayına gönder (pasif → onay bekliyor)
+  const yayinDurumu = async (firma: Firma, islem: 'kaldir' | 'geri_gonder') => {
+    if (islem === 'kaldir' && !window.confirm(t.unpublishConfirm)) return;
+    setIslemFirmaId(firma.id);
+    setHata(null);
+    try {
+      const res = await fetch('/api/firma-sil-kullanici', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: firma.id, islem }),
+      });
+      const data = await res.json();
+      if (res.ok) setFirmalar(prev => prev.map(f => f.id === firma.id ? { ...f, onay_durumu: data.onay_durumu } : f));
+      else setHata(data.error || 'İşlem başarısız.');
+    } catch {
+      setHata('Bağlantı hatası. Lütfen tekrar deneyin.');
     }
     setIslemFirmaId(null);
   };
@@ -186,7 +196,7 @@ export default function ProfilPage() {
                                 {islem ? '...' : t.resubmitBtn}
                               </button>
                               <button
-                                onClick={() => firmaSil(firma.id)}
+                                onClick={() => setSilinecekFirma(firma)}
                                 disabled={islem}
                                 className="flex-1 text-xs font-semibold py-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 transition-colors disabled:opacity-50"
                               >
@@ -197,27 +207,71 @@ export default function ProfilPage() {
                         );
                       }
 
+                      const pasif = firma.onay_durumu === 'pasif';
                       return (
-                        <Link
-                          key={firma.id}
-                          href={`/firma/${firma.id}`}
-                          className="flex items-center gap-3 p-3 bg-[#f0f4fa] hover:bg-[#e2eaf6] rounded-xl border border-[#d0daea] transition-colors group"
-                        >
-                          {logoEl}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-[#1a3a6b] text-sm truncate group-hover:underline">{firma.ad}</p>
-                            <p className="text-xs text-gray-500 truncate">{firma.sektor} · {firma.sanayi_sitesi}</p>
+                        <div key={firma.id} className={`rounded-xl border ${pasif ? 'bg-gray-50 border-gray-200' : 'bg-[#f0f4fa] border-[#d0daea]'}`}>
+                          {pasif ? (
+                            <div className="flex items-center gap-3 p-3 opacity-70">
+                              {logoEl}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-[#1a3a6b] text-sm truncate">{firma.ad}</p>
+                                <p className="text-xs text-gray-500 truncate">{firma.sektor} · {firma.sanayi_sitesi}</p>
+                              </div>
+                              <span className="text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-medium bg-gray-200 text-gray-600">{t.unpublishedStatus}</span>
+                            </div>
+                          ) : (
+                            <Link
+                              href={`/firma/${firma.id}`}
+                              className="flex items-center gap-3 p-3 hover:bg-[#e2eaf6] rounded-t-xl transition-colors group"
+                            >
+                              {logoEl}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-[#1a3a6b] text-sm truncate group-hover:underline">{firma.ad}</p>
+                                <p className="text-xs text-gray-500 truncate">{firma.sektor} · {firma.sanayi_sitesi}</p>
+                              </div>
+                              <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-medium ${
+                                firma.onay_durumu === 'onaylandi' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                              }`}>
+                                {firma.onay_durumu === 'onaylandi' ? t.approvedStatus : t.pendingStatus}
+                              </span>
+                            </Link>
+                          )}
+                          <div className="flex gap-2 px-3 pb-3">
+                            {firma.onay_durumu === 'onaylandi' && (
+                              <button onClick={() => yayinDurumu(firma, 'kaldir')} disabled={islem}
+                                className="flex-1 text-xs font-semibold py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition-colors disabled:opacity-50">
+                                {islem ? '...' : t.unpublishBtn}
+                              </button>
+                            )}
+                            {pasif && (
+                              <button onClick={() => yayinDurumu(firma, 'geri_gonder')} disabled={islem}
+                                className="flex-1 text-xs font-semibold py-1.5 rounded-lg bg-[#1a3a6b] hover:bg-[#2554a0] text-white transition-colors disabled:opacity-50">
+                                {islem ? '...' : t.republishBtn}
+                              </button>
+                            )}
+                            <button onClick={() => setSilinecekFirma(firma)} disabled={islem}
+                              className="flex-1 text-xs font-semibold py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-100 transition-colors disabled:opacity-50">
+                              {t.deletePermanentBtn}
+                            </button>
                           </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-medium ${
-                            firma.onay_durumu === 'onaylandi' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                          }`}>
-                            {firma.onay_durumu === 'onaylandi' ? t.approvedStatus : t.pendingStatus}
-                          </span>
-                        </Link>
+                        </div>
                       );
                     })}
                   </div>
+                  {hata && <p className="mt-2 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{hata}</p>}
                 </div>
+              )}
+              {silinecekFirma && (
+                <FirmaSilPenceresi
+                  firmaId={silinecekFirma.id}
+                  firmaAdi={silinecekFirma.ad}
+                  adres="/api/firma-sil-kullanici"
+                  onSilindi={() => {
+                    setFirmalar(prev => prev.filter(f => f.id !== silinecekFirma.id));
+                    setSilinecekFirma(null);
+                  }}
+                  onKapat={() => setSilinecekFirma(null)}
+                />
               )}
             </div>
           </div>

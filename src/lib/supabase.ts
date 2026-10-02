@@ -23,7 +23,7 @@ export type Firma = {
   ozel_firma: boolean;
   fotograf_url: string | null;
   detay_fotograflar: string[] | null;
-  onay_durumu: 'beklemede' | 'onaylandi' | 'reddedildi';
+  onay_durumu: 'beklemede' | 'onaylandi' | 'reddedildi' | 'pasif';
   aciklama?: string | null;
   web_sitesi?: string | null;
   instagram?: string | null;
