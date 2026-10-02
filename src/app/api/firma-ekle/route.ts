@@ -4,6 +4,8 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { yoneticiMi } from '@/lib/admin';
 import { whatsappKontrol } from '@/lib/whatsapp';
+import { htmlKacis } from '@/lib/htmlKacis';
+import { resimleriKontrolEt, resimYukle } from '@/lib/resimKontrol';
 import { FIRMA_TIPI, KATEGORI_TIPI, sektordenKategoriBul, type FirmaTipi, type KategoriTipi } from '@/lib/firmaKategorileri';
 
 const BUCKET = 'firma-fotograflari';
@@ -14,19 +16,6 @@ function getAdmin() {
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
-}
-
-async function uploadFile(
-  supabase: ReturnType<typeof getAdmin>,
-  file: File,
-  path: string
-): Promise<string | null> {
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, buffer, { contentType: file.type, upsert: true });
-  if (error) { console.error('Upload error:', error); return null; }
-  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 export async function POST(request: NextRequest) {
@@ -76,6 +65,12 @@ export async function POST(request: NextRequest) {
     }
     if (whatsappSonuc.hata) return NextResponse.json({ error: whatsappSonuc.hata }, { status: 400 });
     const whatsapp = whatsappSonuc.deger;
+
+    // Fotoğraflar firma kaydedilmeden önce içeriğinden kontrol edilir (JPG/PNG/WEBP, ≤5 MB); biri bile uymazsa firma kaydedilmez
+    const kart = await resimleriKontrolEt([kartResmi].filter((f): f is File => !!f), 1);
+    if ('hata' in kart) return NextResponse.json({ error: kart.hata }, { status: 400 });
+    const detay = await resimleriKontrolEt(detayFiles, 5);
+    if ('hata' in detay) return NextResponse.json({ error: detay.hata }, { status: 400 });
 
     const hizmetler = hizmetlerRaw
       .split(',').map(h => h.trim()).filter(Boolean);
@@ -146,21 +141,17 @@ export async function POST(request: NextRequest) {
     const ts = Date.now();
     const updates: Record<string, unknown> = {};
 
-    // 2. Kart resmi yükle
-    if (kartResmi && kartResmi.size > 0) {
-      const ext = kartResmi.name.split('.').pop();
-      const url = await uploadFile(supabase, kartResmi, `kart/${id}-${ts}.${ext}`);
+    // 2. Kart resmi yükle (içeriğinden anlaşılan tür ve uzantıyla)
+    if (kart.resimler.length > 0) {
+      const url = await resimYukle(supabase, BUCKET, `kart/${id}-${ts}`, kart.resimler[0]);
       if (url) updates.fotograf_url = url;
     }
 
     // 3. Detay fotoğrafları yükle (max 5)
-    const gecerliFotolar = detayFiles.filter(f => f.size > 0).slice(0, 5);
-    if (gecerliFotolar.length > 0) {
+    if (detay.resimler.length > 0) {
       const urls: string[] = [];
-      for (let i = 0; i < gecerliFotolar.length; i++) {
-        const file = gecerliFotolar[i];
-        const ext = file.name.split('.').pop();
-        const url = await uploadFile(supabase, file, `detay/${id}-${i}-${ts}.${ext}`);
+      for (let i = 0; i < detay.resimler.length; i++) {
+        const url = await resimYukle(supabase, BUCKET, `detay/${id}-${i}-${ts}`, detay.resimler[i]);
         if (url) urls.push(url);
       }
       if (urls.length > 0) updates.detay_fotograflar = urls;
@@ -187,7 +178,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           from: 'onboarding@resend.dev',
           to: 'sadettinbal@gmail.com',
-          subject: `⚠️ Yeni Firma Eklendi - Onaylayın: ${ad}`,
+          subject: `⚠️ Yeni Firma Eklendi - Onaylayın: ${ad.replace(/[\r\n]+/g, " ")}`,
           html: `
             <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
               <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px 18px;margin-bottom:20px">
@@ -197,21 +188,21 @@ export async function POST(request: NextRequest) {
               <table style="border-collapse:collapse;width:100%;margin-top:16px">
                 <tr style="background:#f5f7fa">
                   <td style="padding:10px 14px;font-weight:bold;width:130px">Firma Adı</td>
-                  <td style="padding:10px 14px">${ad}</td>
+                  <td style="padding:10px 14px">${htmlKacis(ad)}</td>
                 </tr>
                 <tr>
                   <td style="padding:10px 14px;font-weight:bold">Konum</td>
-                  <td style="padding:10px 14px">${[sanayi_sitesi, ilce_adi, il_adi].filter(Boolean).join(' / ')}</td>
+                  <td style="padding:10px 14px">${htmlKacis([sanayi_sitesi, ilce_adi, il_adi].filter(Boolean).join(' / '))}</td>
                 </tr>
                 <tr style="background:#f5f7fa">
                   <td style="padding:10px 14px;font-weight:bold">Kategori</td>
-                  <td style="padding:10px 14px">${sektor}</td>
+                  <td style="padding:10px 14px">${htmlKacis(sektor)}</td>
                 </tr>
                 <tr>
                   <td style="padding:10px 14px;font-weight:bold">Telefon</td>
-                  <td style="padding:10px 14px">${telefon}</td>
+                  <td style="padding:10px 14px">${htmlKacis(telefon)}</td>
                 </tr>
-                ${sahip ? `<tr style="background:#f5f7fa"><td style="padding:10px 14px;font-weight:bold">Yetkili</td><td style="padding:10px 14px">${sahip}</td></tr>` : ''}
+                ${sahip ? `<tr style="background:#f5f7fa"><td style="padding:10px 14px;font-weight:bold">Yetkili</td><td style="padding:10px 14px">${htmlKacis(sahip)}</td></tr>` : ''}
               </table>
               <br>
               <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin" style="background:#1a3a6b;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">

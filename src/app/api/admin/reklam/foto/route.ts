@@ -1,42 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
-import { createClient } from '@supabase/supabase-js';
 
-import { ADMIN_EMAILS } from '@/lib/admin';
-const BUCKET = 'firma-fotograflari';
+import { yoneticiMi } from '@/lib/admin';
+import { servisIstemcisi } from '@/lib/firmaSilme';
+import { resimleriKontrolEt, resimYukle } from '@/lib/resimKontrol';
 
-function getAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+// Reklam görselleri ayrı depoda: GIF (hareketli banner), JPG, PNG, WEBP; en fazla 5 MB. Sadece yönetici yükler.
+const BUCKET = 'reklam-gorselleri';
 
 export async function POST(request: NextRequest) {
   const supabaseUser = await createServerClient();
   const { data: { user } } = await supabaseUser.auth.getUser();
-  if (!user || !ADMIN_EMAILS.includes(user.email!)) {
-    return NextResponse.json({ error: 'Yetkisiz.' }, { status: 403 });
-  }
+  if (!yoneticiMi(user?.email)) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 403 });
 
   const formData = await request.formData();
   const file = formData.get('file') as File | null;
   if (!file) return NextResponse.json({ error: 'Dosya yok.' }, { status: 400 });
 
-  const supabase = getAdmin();
-  const uzanti = (file.name.split('.').pop() || 'jpg').toLowerCase();
-  const dosyaAdi = `reklam/${Date.now()}-${Math.round(Math.random() * 1e6)}.${uzanti}`;
+  const kontrol = await resimleriKontrolEt([file], 1, { gif: true });
+  if ('hata' in kontrol) return NextResponse.json({ error: kontrol.hata }, { status: 400 });
+  if (kontrol.resimler.length === 0) return NextResponse.json({ error: 'Dosya boş.' }, { status: 400 });
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .upload(dosyaAdi, buffer, { contentType: file.type, upsert: true });
-
-  if (uploadError) {
-    return NextResponse.json({ error: 'Yüklenemedi: ' + uploadError.message }, { status: 500 });
-  }
-
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(dosyaAdi);
-  return NextResponse.json({ url: urlData.publicUrl });
+  const url = await resimYukle(servisIstemcisi(), BUCKET, `${Date.now()}-${Math.round(Math.random() * 1e6)}`, kontrol.resimler[0]);
+  if (!url) return NextResponse.json({ error: 'Yüklenemedi.' }, { status: 500 });
+  return NextResponse.json({ url });
 }

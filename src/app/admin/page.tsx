@@ -671,7 +671,7 @@ function ReklamYonetimi() {
           </div>
           <div className="sm:col-span-2">
             <label className="block text-xs text-gray-600 mb-1">Görsel / Banner *</label>
-            <input type="file" accept="image/*" onChange={dosyaSec} className="text-sm" />
+            <input type="file" accept="image/gif,image/jpeg,image/png,image/webp" onChange={dosyaSec} className="text-sm" />
             {onizleme && <img src={onizleme} alt="önizleme" className="mt-2 max-h-32 rounded border border-gray-200" />}
             <p className="text-[11px] text-gray-400 mt-1">İpucu: Video alanı için geniş (örn. 970×250), kenar çubuğu için dikdörtgen (örn. 300×250) görsel kullanın.</p>
           </div>
@@ -805,7 +805,9 @@ function IlanYonetimi() {
       body: JSON.stringify({ id: seciliIlan.id, ...duzenleForm }),
     });
     if (res.ok) {
-      const guncel = { ...seciliIlan, ...duzenleForm } as Ilan;
+      // Sunucu alanları düzeltip kaydeder (ör. telefon biçimi); ekranda kaydedilen hâli gösterilir
+      const { ilan: kaydedilen } = await res.json();
+      const guncel = { ...seciliIlan, ...duzenleForm, ...kaydedilen } as Ilan;
       setSeciliIlan(guncel);
       setIlanlar(prev => prev.map(i => i.id === seciliIlan.id ? guncel : i));
       setDuzenlemeAcik(false);
@@ -1723,14 +1725,12 @@ function AdminPanel() {
   useEffect(() => {
     supabase.from('firmalar').select('*', { count: 'exact', head: true }).eq('onay_durumu', 'beklemede')
       .then(({ count }) => setBekleyenSayi(count || 0));
-    supabase.from('ilanlar').select('*', { count: 'exact', head: true }).eq('onay_durumu', 'beklemede')
-      .then(({ count }) => setBekleyenIlanSayi(count || 0));
     supabase.from('firmalar').select('*', { count: 'exact', head: true }).not('bekleyen_degisiklikler', 'is', null)
       .then(({ count }) => setBekleyenGuncellemeSayi(count || 0));
     // Panel içi bildirim: görülmemiş yeni yorumlar ve bekleyen şikâyetler
     fetch('/api/bildirimler?kapsam=yonetici')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { setYeniYorumSayi(d.sayi); setBekleyenSikayetSayi(d.bekleyenSikayet ?? 0); } })
+      .then(d => { if (d) { setYeniYorumSayi(d.sayi); setBekleyenSikayetSayi(d.bekleyenSikayet ?? 0); setBekleyenIlanSayi(d.bekleyenIlan ?? 0); } })
       .catch(() => {});
 
     // Gerçek toplam firma sayısını çek
@@ -2520,7 +2520,7 @@ function AdminPanel() {
                         </div>
                       )}
                       <div className="flex flex-col gap-2">
-                        <input ref={fileRef} type="file" accept="image/*" onChange={dosyaSeç} className="hidden" />
+                        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={dosyaSeç} className="hidden" />
                         <button onClick={() => fileRef.current?.click()} className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-medium transition-colors">
                           {onizleme ? 'Değiştir' : '+ Ekle'}
                         </button>
@@ -2551,7 +2551,7 @@ function AdminPanel() {
                       ))}
                       {(seciliFirma.detay_fotograflar || []).length < 5 && (
                         <label className="w-20 h-20 border-2 border-dashed border-gray-300 hover:border-[#e8a020] rounded-lg flex items-center justify-center cursor-pointer transition-colors">
-                          <input ref={detayFotoRef} type="file" accept="image/*" onChange={detayFotoEkle} className="hidden" />
+                          <input ref={detayFotoRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={detayFotoEkle} className="hidden" />
                           <span className="text-2xl text-gray-400">+</span>
                         </label>
                       )}

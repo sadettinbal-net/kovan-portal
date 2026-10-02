@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { cepWhatsappAdresi } from "@/lib/whatsapp";
 
 type Ilan = {
   id: number;
@@ -215,14 +216,17 @@ export default function IlanDetayPage() {
             >
               📞 Ara: {ilan.telefon}
             </a>
-            <a
-              href={`https://wa.me/90${ilan.telefon.replace(/\D/g, "").replace(/^0/, "")}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition-colors"
-            >
-              WhatsApp ile Yaz
-            </a>
+            {/* WhatsApp sadece cep numarasında (firmalardaki ortak kural; sabit hatta WhatsApp yok) */}
+            {cepWhatsappAdresi(ilan.telefon) && (
+              <a
+                href={cepWhatsappAdresi(ilan.telefon)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition-colors"
+              >
+                WhatsApp ile Yaz
+              </a>
+            )}
           </div>
         </div>
       </div>

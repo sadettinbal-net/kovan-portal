@@ -54,3 +54,9 @@ export function whatsappAdresi(whatsapp: string | null | undefined, mobilTelefon
 export function ilkNumara(telefon: string | null | undefined): string {
   return (telefon ?? '').split(/[|,]/)[0].trim();
 }
+
+// Sadece cep numarası (905xx…) için WhatsApp adresi; sabit hatta WhatsApp olmadığından null döner.
+export function cepWhatsappAdresi(telefon: string | null | undefined): string | null {
+  const adres = whatsappAdresi(null, telefon);
+  return adres && /^https:\/\/wa\.me\/905\d{9}$/.test(adres) ? adres : null;
+}

@@ -1,106 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
-import { createClient } from '@supabase/supabase-js';
+
+import { servisIstemcisi } from '@/lib/firmaSilme';
+import { resimleriKontrolEt, resimYukle } from '@/lib/resimKontrol';
+import { ayniEposta } from '@/lib/yorumlar';
 
 const BUCKET = 'firma-fotograflari';
+const MAX_DETAY = 5;
 
-function getAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
-
-function urlToPath(url: string): string {
+function urlToPath(url: string): string | null {
   const marker = `/${BUCKET}/`;
   const idx = url.indexOf(marker);
-  if (idx === -1) return url;
-  return url.slice(idx + marker.length);
+  return idx === -1 ? null : url.slice(idx + marker.length);
 }
 
+// Firma sahibi fotoğraf değişikliği. Sıra: yeni dosyaları kontrol et → yükle → firmaya bağla → en son eskileri sil.
+// Böylece bir adım başarısız olursa firma resimsiz kalmaz. Sadece bu firmaya ait fotoğraflar silinebilir.
 export async function PATCH(request: NextRequest) {
   const supabaseAuth = await createServerClient();
   const { data: { user } } = await supabaseAuth.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Giriş gerekli.' }, { status: 401 });
+  if (!user?.email) return NextResponse.json({ error: 'Giriş gerekli.' }, { status: 401 });
 
   const formData = await request.formData();
   const id = Number(formData.get('id'));
   if (!id) return NextResponse.json({ error: 'ID gerekli.' }, { status: 400 });
 
-  const supabase = getAdmin();
-
+  const supabase = servisIstemcisi();
   const { data: firma } = await supabase
     .from('firmalar')
     .select('kullanici_email, fotograf_url, detay_fotograflar')
     .eq('id', id)
     .single();
-
-  if (!firma || firma.kullanici_email !== user.email) {
+  if (!firma || !ayniEposta(firma.kullanici_email, user.email)) {
     return NextResponse.json({ error: 'Bu firmayı düzenleme yetkiniz yok.' }, { status: 403 });
   }
 
+  const mevcutDetaylar: string[] = Array.isArray(firma.detay_fotograflar) ? firma.detay_fotograflar : [];
   const silKart = formData.get('sil_kart') === 'true';
-  const silDetaylar = formData.getAll('sil_detaylar') as string[];
-  const yeniKart = formData.get('yeni_kart') as File | null;
-  const yeniDetaylar = formData.getAll('yeni_detaylar') as File[];
+  // Sadece bu firmanın kendi detay fotoğrafları silinebilir (başka adres gönderilirse yok sayılır)
+  const silDetaylar = (formData.getAll('sil_detaylar') as string[]).filter((u) => mevcutDetaylar.includes(u));
+  const kalanDetaylar = mevcutDetaylar.filter((u) => !silDetaylar.includes(u));
 
-  const updates: Record<string, unknown> = {};
+  // 1) Yeni dosyaları kontrol et (biri bile uymazsa hiçbir şey değişmez)
+  const kart = await resimleriKontrolEt([formData.get('yeni_kart') as File].filter(Boolean), 1);
+  if ('hata' in kart) return NextResponse.json({ error: kart.hata }, { status: 400 });
+  const detay = await resimleriKontrolEt(formData.getAll('yeni_detaylar') as File[], MAX_DETAY);
+  if ('hata' in detay) return NextResponse.json({ error: detay.hata }, { status: 400 });
+  if (kalanDetaylar.length + detay.resimler.length > MAX_DETAY) {
+    return NextResponse.json({ error: `En fazla ${MAX_DETAY} detay fotoğrafı olabilir.` }, { status: 400 });
+  }
+
+  // 2) Yükle
   const ts = Date.now();
-
-  // Kart resmi sil
-  if (silKart && firma.fotograf_url) {
-    await supabase.storage.from(BUCKET).remove([urlToPath(firma.fotograf_url)]);
+  const updates: Record<string, unknown> = {};
+  const silinecekDosyalar: string[] = [];
+  if (kart.resimler.length > 0) {
+    const url = await resimYukle(supabase, BUCKET, `kart/${id}-${ts}`, kart.resimler[0]);
+    if (!url) return NextResponse.json({ error: 'Kart resmi yüklenemedi.' }, { status: 500 });
+    updates.fotograf_url = url;
+    if (firma.fotograf_url) silinecekDosyalar.push(firma.fotograf_url);
+  } else if (silKart && firma.fotograf_url) {
     updates.fotograf_url = null;
+    silinecekDosyalar.push(firma.fotograf_url);
   }
-
-  // Yeni kart resmi yükle
-  if (yeniKart && yeniKart.size > 0) {
-    if (firma.fotograf_url && !silKart) {
-      await supabase.storage.from(BUCKET).remove([urlToPath(firma.fotograf_url)]);
-    }
-    const ext = yeniKart.name.split('.').pop();
-    const path = `kart/${id}-${ts}.${ext}`;
-    const buffer = Buffer.from(await yeniKart.arrayBuffer());
-    const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, { contentType: yeniKart.type, upsert: true });
-    if (!error) {
-      updates.fotograf_url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
-    }
+  const yeniUrller: string[] = [];
+  for (let i = 0; i < detay.resimler.length; i++) {
+    const url = await resimYukle(supabase, BUCKET, `detay/${id}-${ts}-${i}`, detay.resimler[i]);
+    if (url) yeniUrller.push(url);
   }
-
-  // Detay fotoğraf sil
-  let mevcutDetaylar: string[] = Array.isArray(firma.detay_fotograflar) ? firma.detay_fotograflar : [];
-  if (silDetaylar.length > 0) {
-    await supabase.storage.from(BUCKET).remove(silDetaylar.map(urlToPath));
-    mevcutDetaylar = mevcutDetaylar.filter(url => !silDetaylar.includes(url));
-    updates.detay_fotograflar = mevcutDetaylar;
+  if (silDetaylar.length > 0 || yeniUrller.length > 0) {
+    updates.detay_fotograflar = [...kalanDetaylar, ...yeniUrller];
+    silinecekDosyalar.push(...silDetaylar);
   }
+  if (Object.keys(updates).length === 0) return NextResponse.json({ success: true });
 
-  // Yeni detay fotoğraf yükle
-  const gecerliYeniDetaylar = yeniDetaylar.filter(f => f.size > 0).slice(0, Math.max(0, 5 - mevcutDetaylar.length));
-  if (gecerliYeniDetaylar.length > 0) {
-    const urls: string[] = [];
-    for (let i = 0; i < gecerliYeniDetaylar.length; i++) {
-      const file = gecerliYeniDetaylar[i];
-      const ext = file.name.split('.').pop();
-      const path = `detay/${id}-${ts}-${i}.${ext}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const { error } = await supabase.storage.from(BUCKET).upload(path, buffer, { contentType: file.type, upsert: true });
-      if (!error) {
-        urls.push(supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl);
-      }
-    }
-    if (urls.length > 0) {
-      updates.detay_fotograflar = [...mevcutDetaylar, ...urls];
-    }
-  }
-
-  if (Object.keys(updates).length === 0) {
-    return NextResponse.json({ success: true });
-  }
-
-  const { error } = await supabase.from('firmalar').update(updates).eq('id', id);
+  // 3) Firmaya bağla
+  const { data: guncellenen, error } = await supabase.from('firmalar').update(updates).eq('id', id).select('id');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!guncellenen || guncellenen.length === 0) return NextResponse.json({ error: 'Firma güncellenemedi (0 kayıt).' }, { status: 500 });
 
+  // 4) En son eski dosyaları sil
+  const yollar = silinecekDosyalar.map(urlToPath).filter((y): y is string => !!y);
+  if (yollar.length > 0) {
+    const { error: depoHata } = await supabase.storage.from(BUCKET).remove(yollar);
+    if (depoHata) console.error('Eski fotoğraflar silinemedi:', yollar, depoHata);
+  }
   return NextResponse.json({ success: true });
 }

@@ -7,17 +7,26 @@ import { aktifKategoriler, kategoriGruplari, KATEGORI_TIPI, type FirmaKategorisi
 import SosyalIkon from '@/components/SosyalIkon';
 import KonumSecici, { BOS_KONUM, type Konum } from '@/components/KonumSecici';
 import { whatsappKontrol } from '@/lib/whatsapp';
+import { gonderimSiniriUyarisi, GONDERIM_SINIRI_MB, resmiKucult, toplamMB } from '@/lib/resimKucult';
 
 type Durum = { tip: 'basari' | 'hata'; mesaj: string } | null;
 
 const MAX_DETAY = 5;
 const MAX_MB = 5;
-const IZIN_TIPLER = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const IZIN_TIPLER = ['image/jpeg', 'image/png', 'image/webp'];
 
 function dosyaKontrol(file: File): string | null {
-  if (!IZIN_TIPLER.includes(file.type)) return 'Sadece JPG, PNG, WebP veya GIF yükleyebilirsiniz.';
-  if (file.size > MAX_MB * 1024 * 1024) return `Dosya ${MAX_MB}MB'dan büyük olamaz.`;
+  if (!IZIN_TIPLER.includes(file.type)) return 'Sadece JPG, PNG veya WEBP yükleyebilirsiniz.';
   return null;
+}
+
+// Seçilen fotoğraf tarayıcıda küçültülür (en uzun kenar 1600 px); boyut sınırı küçültülmüş hâline uygulanır.
+async function hazirla(file: File): Promise<File | string> {
+  const hata = dosyaKontrol(file);
+  if (hata) return hata;
+  const kucuk = await resmiKucult(file);
+  if (kucuk.size > MAX_MB * 1024 * 1024) return `"${file.name}" küçültüldükten sonra bile ${MAX_MB} MB'tan büyük.`;
+  return kucuk;
 }
 
 // yonetici: yönetici panelinden kullanılır; kayıt onay beklemeden direkt yayına girer
@@ -106,13 +115,13 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
     setDurum(null);
   }
 
-  function kartSec(e: React.ChangeEvent<HTMLInputElement>) {
+  async function kartSec(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    const hata = dosyaKontrol(file);
-    if (hata) { setDurum({ tip: 'hata', mesaj: hata }); return; }
-    setKartResmi(file);
-    setKartOnizleme(URL.createObjectURL(file));
+    const sonuc = await hazirla(file);
+    if (typeof sonuc === 'string') { setDurum({ tip: 'hata', mesaj: sonuc }); return; }
+    setKartResmi(sonuc);
+    setKartOnizleme(URL.createObjectURL(sonuc));
     setDurum(null);
   }
 
@@ -122,20 +131,20 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
     if (kartRef.current) kartRef.current.value = '';
   }
 
-  function detaySec(e: React.ChangeEvent<HTMLInputElement>) {
+  async function detaySec(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
+    if (detayRef.current) detayRef.current.value = '';
     const kalan = MAX_DETAY - detayFotolar.length;
     if (kalan <= 0) return;
+    setDurum(null);
     const eklenecekler: File[] = [];
     for (const file of files.slice(0, kalan)) {
-      const hata = dosyaKontrol(file);
-      if (hata) { setDurum({ tip: 'hata', mesaj: hata }); continue; }
-      eklenecekler.push(file);
+      const sonuc = await hazirla(file);
+      if (typeof sonuc === 'string') { setDurum({ tip: 'hata', mesaj: sonuc }); continue; }
+      eklenecekler.push(sonuc);
     }
     setDetayFotolar(prev => [...prev, ...eklenecekler]);
     setDetayOnizlemeler(prev => [...prev, ...eklenecekler.map(f => URL.createObjectURL(f))]);
-    if (detayRef.current) detayRef.current.value = '';
-    setDurum(null);
   }
 
   function detayKaldir(idx: number) {
@@ -170,6 +179,13 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
       return;
     }
 
+    // Yayındaki sunucu tek gönderimde ~4,5 MB'tan büyüğünü kabul etmiyor
+    const fotoMB = toplamMB([kartResmi, ...detayFotolar]);
+    if (fotoMB > GONDERIM_SINIRI_MB) {
+      setDurum({ tip: 'hata', mesaj: gonderimSiniriUyarisi(fotoMB) });
+      return;
+    }
+
     setGonderiyor(true);
     setDurum(null);
 
@@ -200,6 +216,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
     try {
       const res = await fetch('/api/firma-ekle', { method: 'POST', body: fd });
+      if (res.status === 413) { setDurum({ tip: 'hata', mesaj: gonderimSiniriUyarisi(fotoMB) }); return; }
       const json = await res.json();
       if (!res.ok) {
         const mesaj = [json.error, json.detail, json.code].filter(Boolean).join(' — ');
@@ -565,7 +582,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
           {/* ── KART RESMİ ── */}
           <div className="border-t border-gray-100 pt-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-1">Kart Resmi</h3>
-            <p className="text-xs text-gray-400 mb-3">Firma listesindeki kartta görünür. 1 adet, max {MAX_MB}MB.</p>
+            <p className="text-xs text-gray-400 mb-3">Firma listesindeki kartta görünür. 1 adet; fotoğraf otomatik küçültülür.</p>
 
             {kartOnizleme ? (
               <div className="relative w-full h-40 rounded-xl overflow-hidden border border-[#dde3ec] group">
@@ -585,13 +602,13 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
                 <span className="text-xs">Kart resmi seç</span>
               </button>
             )}
-            <input ref={kartRef} type="file" accept="image/*" onChange={kartSec} className="hidden" />
+            <input ref={kartRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={kartSec} className="hidden" />
           </div>
 
           {/* ── DETAY FOTOĞRAFLARI ── */}
           <div className="border-t border-gray-100 pt-5">
             <h3 className="text-sm font-semibold text-gray-700 mb-1">Detay Fotoğrafları</h3>
-            <p className="text-xs text-gray-400 mb-3">Firma detay sayfasında görünür. En fazla {MAX_DETAY} adet, her biri max {MAX_MB}MB.</p>
+            <p className="text-xs text-gray-400 mb-3">Firma detay sayfasında görünür. En fazla {MAX_DETAY} adet; fotoğraflar otomatik küçültülür (toplam en fazla {GONDERIM_SINIRI_MB} MB).</p>
 
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
               {detayOnizlemeler.map((src, i) => (
@@ -613,7 +630,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
                 </button>
               )}
             </div>
-            <input ref={detayRef} type="file" accept="image/*" multiple onChange={detaySec} className="hidden" />
+            <input ref={detayRef} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={detaySec} className="hidden" />
           </div>
 
           {/* Durum mesajı */}

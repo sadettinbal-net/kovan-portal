@@ -1,5 +1,41 @@
 # Proje Notları - Kovan Portal
 
+## 2026-10-02 - İlanlar 1. Aşama (güvenlik)
+
+### Yapılanlar
+- ✅ Migration `20261002060000_ilanlar_guvenlik.sql` (canlıya uygulandı): `ilanlar` tablosunda anon/authenticated yetkileri kaldırıldı (RLS politikasına dokunulmadı) → ilan verenlerin e-postaları açık anahtarla okunamıyor (401). `ilan-fotograflari` deposuna 5 MB ve sadece JPG/PNG/WEBP sınırı.
+- ✅ İlan verme (`/api/ilan-ekle`): Google ile giriş zorunlu; e-posta ve ad oturumdan (formdan gelen yok sayılır); son 24 saatte en fazla 3 ilan. Kurallar `src/lib/ilanKurallari.ts`: kategori 6 türden biri, başlık 5-100, açıklama 10-3000, fiyat ≤50 karakter, telefon Türkiye numarası (0XXXXXXXXXX olarak kaydedilir).
+- ✅ Fotoğraflar (`src/lib/resimKontrol.ts`): türü dosyanın ilk baytlarından anlaşılır (JPG/PNG/WEBP), her biri ≤5 MB, ilan başına ≤10; biri bile uymazsa ilan kaydedilmez. Dosya, içeriğinden anlaşılan tür ve uzantıyla kaydedilir.
+- ✅ Tarayıcıda küçültme (`src/lib/resimKucult.ts`): ilan ve firma ekleme formlarında fotoğraflar seçilince en uzun kenar 1600 px, JPEG %82; konum (GPS) gibi gizli bilgiler de silinir. Toplam 4 MB'ı geçerse uyarı ve gönderim engeli.
+- ✅ Yönetici: ilan silmede önce ilan, sonra fotoğraflar; silme/durum/düzenlemede 0 kayıt hatası; düzenleme sadece izinli alanları kabul eder ve aynı kurallarla kontrol eder. Bekleyen ilan sayısı sunucudan (`/api/bildirimler`).
+- ✅ İlan sayfasında WhatsApp firmalardaki ortak kuralla ("9090" hatası gitti), sadece cep numarasında görünür.
+- ✅ Bildirim e-postalarında kullanıcı metni kaçışlı (`src/lib/htmlKacis.ts`): ilan ekleme, firma ekleme, firma düzenleme.
+- Test: 31 kontrol geçti (girişsiz/sahte e-posta/4. ilan/sahte resim/büyük dosya/11 fotoğraf/yanlış alanlar reddedildi; depo HTML ve >5 MB dosyayı doğrudan yüklemede de reddetti). Tarayıcıdaki küçültme elle denenmeli.
+
+### 📌 İlanlar 2. Aşama
+- "İlanlarım" bölümü (düzenle, satıldı olarak işaretle, sil)
+- 60 günlük ilan süresi ve yenileme
+- Arama motorları için ilan sayfaları (sunucuda oluşan sayfa + site haritasında tek tek ilanlar)
+
+### 📌 Yayın öncesi
+- **Fotoğrafları doğrudan depoya yükleme:** Vercel tek gönderimde ~4,5 MB'tan büyüğünü kabul etmiyor. Şimdilik tarayıcıda küçültme + 4 MB uyarısı var; kalıcı çözüm sunucunun verdiği tek kullanımlık izinle doğrudan depoya yükleme (içerik kontrolü korunarak). Firma sahibinin panelindeki ve yöneticinin fotoğraf yükleme ekranları da aynı kapsamda ele alınmalı.
+
+## 2026-10-02 - Firma fotoğrafları: aynı kural
+
+### Yapılanlar
+- ✅ `firma-fotograflari` deposu: 5 MB + sadece JPG/PNG/WEBP (migration `20261002070000_firma_fotograf_deposu_siniri.sql`). Mevcut 23 dosya içerikten kontrol edildi; 22'si uygun.
+- ✅ Fotoğraflar içeriğinden kontrol ediliyor (`resimleriKontrolEt` + `resimYukle`): firma ekleme (üye ve yönetici), firma sahibi paneli (`/api/firma-fotograf-guncelle`), yönetici fotoğraf yükleme (`/api/admin/foto-yukle`). Dosya seçme pencereleri sadece JPG/PNG/WEBP; Firma Ekle'deki GIF izni kaldırıldı.
+- ✅ Firma sahibi paneli: sıra düzeltildi (kontrol → yükle → firmaya bağla → en son eskiyi sil). **Güvenlik açığı kapatıldı:** önceden gönderilen herhangi bir dosya adresi depodan siliniyordu; artık sadece o firmanın kendi detay fotoğrafları silinebilir.
+- ✅ ÖZNUR OTO (5167) kart resmi 6,29 MB (5184×3456) → 0,33 MB (1600×1067) küçültüldü, `kart/5167-1790963114306.jpg` olarak bağlandı, sayfada göründüğü doğrulandı. Eski dosya `firma-5167-1777977527370.jpg` kullanıcı onayıyla silindi (önce hiçbir firma/reklam/bekleyen talepte kullanılmadığı doğrulandı).
+- ✅ Reklam görselleri ayrı `reklam-gorselleri` deposunda (migration `20261002080000`): GIF/JPG/PNG/WEBP, 5 MB, herkese açık görüntüleme, yükleme kuralı yok (sadece sunucu, yönetici kontrolüyle). `/api/admin/reklam/foto` içerikten kontrol eder (GIF sadece reklamda).
+- ✅ Eski `firma-resimleri` deposundaki "giriş yapan üye kendi klasörüne yükler" kuralı kaldırıldı (migration `20261002090000`); 5 dosyaya dokunulmadı. Artık depo sisteminde hiç yükleme kuralı yok; tüm yüklemeler sunucudan.
+- Test: 15 + 9 kontrol geçti (üye eski depoya ve reklam deposuna doğrudan yükleyemiyor; reklam deposu HTML/SVG/5 MB üstünü reddediyor).
+
+### 📌 Yapılacak
+- **ZOR OTOMOTİV reklamı (id 13, video):** görseli `firma-fotograflari/reklam/1783870663418-228500.png` depoda yok (Ümraniye'den aktarılmamış). Kullanıcı görseli Reklam Yönetimi'nden yeniden yükleyecek.
+
+---
+
 ## 2026-10-02 - Özel Firmalar: iki ayrı etiket
 
 ### Yapılanlar

@@ -25,11 +25,17 @@ export async function GET(request: NextRequest) {
   const supabase = servisIstemcisi();
   const sonuc = await yeniYorumlar(supabase, k.kapsam, k.email);
   let bekleyenSikayet: number | undefined;
+  let bekleyenIlan: number | undefined;
   if (k.kapsam === 'yonetici') {
-    const { count } = await supabase.from('yorum_sikayetleri').select('id', { count: 'exact', head: true }).eq('durum', 'bekliyor');
-    bekleyenSikayet = count ?? 0;
+    // ilanlar tablosu açık anahtarla okunamadığı için onay bekleyen ilan sayısı da buradan gelir
+    const [s, i] = await Promise.all([
+      supabase.from('yorum_sikayetleri').select('id', { count: 'exact', head: true }).eq('durum', 'bekliyor'),
+      supabase.from('ilanlar').select('id', { count: 'exact', head: true }).eq('onay_durumu', 'beklemede'),
+    ]);
+    bekleyenSikayet = s.count ?? 0;
+    bekleyenIlan = i.count ?? 0;
   }
-  return NextResponse.json({ ...sonuc, bekleyenSikayet });
+  return NextResponse.json({ ...sonuc, bekleyenSikayet, bekleyenIlan });
 }
 
 // "Gördüm": sayaç sıfırlanır (bu andan sonraki yorumlar yeni sayılır)

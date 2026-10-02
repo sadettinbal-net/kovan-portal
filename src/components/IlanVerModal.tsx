@@ -2,85 +2,57 @@
 
 import { useState, useRef } from "react";
 import { ILAN_KATEGORILERI } from "@/lib/ilanKategorileri";
-
+import { gonderimSiniriUyarisi, GONDERIM_SINIRI_MB, resmiKucult, toplamMB } from "@/lib/resimKucult";
 
 const MAX_FOTO = 10;
-const MAX_BOYUT_MB = 5;
+const KABUL_EDILEN = "image/jpeg,image/png,image/webp";
 
-type Step = "uye-ol" | "kategori" | "form" | "basarili";
+type Step = "giris" | "kategori" | "form" | "basarili";
 type User = { id: string; email: string; name: string };
 type Props = { onClose: () => void; user?: User | null };
 
+// İlan vermek için Google ile giriş zorunlu; ad ve e-posta sunucuda oturumdan alınır.
+// Fotoğraflar seçilince tarayıcıda küçültülür (en uzun kenar 1600 px); toplam 4 MB'ı geçerse uyarı verilir.
 export default function IlanVerModal({ onClose, user }: Props) {
-  const kaydedilmis = !!user;
-
-  const [step, setStep] = useState<Step>(kaydedilmis ? "kategori" : "uye-ol");
-  const [uye, setUye] = useState({
-    isim: kaydedilmis ? (user!.name.split(" ")[0] || "") : "",
-    soyisim: kaydedilmis ? (user!.name.split(" ").slice(1).join(" ") || "") : "",
-    telefon: "",
-    email: kaydedilmis ? user!.email : "",
-  });
+  const [step, setStep] = useState<Step>(user ? "kategori" : "giris");
   const [seciliKategori, setSeciliKategori] = useState("");
   const [form, setForm] = useState({ baslik: "", aciklama: "", fiyat: "", telefon: "" });
   const [fotograflar, setFotograflar] = useState<File[]>([]);
   const [onizlemeler, setOnizlemeler] = useState<string[]>([]);
   const [fotoHata, setFotoHata] = useState<string | null>(null);
+  const [kucultuluyor, setKucultuluyor] = useState(false);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Adım göstergesi: kayıtlı kullanıcı için 2 adım, ziyaretçi için 3 adım
-  const adimlar = kaydedilmis
-    ? [
-        { key: "kategori" as Step, label: "Kategori" },
-        { key: "form" as Step, label: "İlan Detayı" },
-      ]
-    : [
-        { key: "uye-ol" as Step, label: "Üye Ol" },
-        { key: "kategori" as Step, label: "Kategori" },
-        { key: "form" as Step, label: "İlan Detayı" },
-      ];
+  const adimlar = [
+    { key: "kategori" as Step, label: "Kategori" },
+    { key: "form" as Step, label: "İlan Detayı" },
+  ];
   const aktifAdimIndex = adimlar.findIndex((a) => a.key === step);
+  const toplam = toplamMB(fotograflar);
+  const sinirAsildi = toplam > GONDERIM_SINIRI_MB;
 
-  function handleUyeChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setUye((u) => ({ ...u, [e.target.name]: e.target.value }));
-  }
-
-  function handleUyeDevam(e: React.FormEvent) {
-    e.preventDefault();
-    setStep("kategori");
-  }
-
-  function handleKategoriSec(name: string) {
-    setSeciliKategori(name);
-    setStep("form");
-  }
-
-  function handleFotografSec(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFotografSec(e: React.ChangeEvent<HTMLInputElement>) {
     setFotoHata(null);
     const files = Array.from(e.target.files || []);
+    if (fileInputRef.current) fileInputRef.current.value = "";
     const bosSlot = MAX_FOTO - fotograflar.length;
-    const eklenecekler: File[] = [];
+    if (files.length > bosSlot) setFotoHata(`En fazla ${MAX_FOTO} fotoğraf eklenebilir.`);
 
+    setKucultuluyor(true);
+    const eklenecekler: File[] = [];
     for (const file of files.slice(0, bosSlot)) {
-      if (file.size > MAX_BOYUT_MB * 1024 * 1024) {
-        setFotoHata(`"${file.name}" 5 MB sınırını aşıyor, atlandı.`);
+      if (!KABUL_EDILEN.split(",").includes(file.type)) {
+        setFotoHata(`"${file.name}" atlandı: sadece JPG, PNG veya WEBP yükleyebilirsiniz.`);
         continue;
       }
-      eklenecekler.push(file);
+      eklenecekler.push(await resmiKucult(file));
     }
-
-    if (files.length > bosSlot) {
-      setFotoHata(`En fazla ${MAX_FOTO} fotoğraf eklenebilir.`);
-    }
+    setKucultuluyor(false);
 
     setFotograflar((prev) => [...prev, ...eklenecekler]);
-    setOnizlemeler((prev) => [
-      ...prev,
-      ...eklenecekler.map((f) => URL.createObjectURL(f)),
-    ]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setOnizlemeler((prev) => [...prev, ...eklenecekler.map((f) => URL.createObjectURL(f))]);
   }
 
   function fotografSil(index: number) {
@@ -92,29 +64,21 @@ export default function IlanVerModal({ onClose, user }: Props) {
 
   async function handleIlanGonder(e: React.FormEvent) {
     e.preventDefault();
+    if (sinirAsildi) { setHata(gonderimSiniriUyarisi(toplam)); return; }
     setYukleniyor(true);
     setHata(null);
-
-    // Kayıtlı kullanıcı: telefonu form'dan al, ad/email Google hesabından
-    const telefon = kaydedilmis ? form.telefon : uye.telefon;
-    const ilan_veren_ad = kaydedilmis
-      ? user!.name
-      : `${uye.isim} ${uye.soyisim}`.trim();
-    const ilan_veren_email = kaydedilmis ? user!.email : uye.email;
-
     try {
       const fd = new FormData();
       fd.append("baslik", form.baslik);
       fd.append("aciklama", form.aciklama);
       if (form.fiyat) fd.append("fiyat", form.fiyat);
       fd.append("kategori", seciliKategori);
-      fd.append("telefon", telefon);
-      fd.append("ilan_veren_ad", ilan_veren_ad);
-      fd.append("ilan_veren_email", ilan_veren_email);
+      fd.append("telefon", form.telefon);
       fotograflar.forEach((f) => fd.append("fotograflar", f));
 
       const res = await fetch("/api/ilan-ekle", { method: "POST", body: fd });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 413) throw new Error(gonderimSiniriUyarisi(toplam));
       if (!res.ok) throw new Error(data.error || "Bir hata oluştu.");
       setStep("basarili");
     } catch (err) {
@@ -134,7 +98,7 @@ export default function IlanVerModal({ onClose, user }: Props) {
         </div>
 
         {/* Adım göstergesi */}
-        {step !== "basarili" && (
+        {(step === "kategori" || step === "form") && (
           <div className="flex border-b border-gray-100 flex-shrink-0">
             {adimlar.map((adim, idx) => (
               <div
@@ -155,83 +119,34 @@ export default function IlanVerModal({ onClose, user }: Props) {
         )}
 
         <div className="p-6 overflow-y-auto flex-1">
-          {/* ── Adım 1: Üye Ol (sadece misafir) ── */}
-          {step === "uye-ol" && (
-            <>
-              <p className="text-sm text-gray-500 mb-4">
-                İlan verebilmek için önce bilgilerinizi girin.
+          {/* ── Giriş gerekli ── */}
+          {step === "giris" && (
+            <div className="text-center py-4">
+              <div className="text-5xl mb-3">🔐</div>
+              <p className="font-bold text-[#1a3a6b] text-lg mb-2">İlan vermek için giriş yapın</p>
+              <p className="text-sm text-gray-500 mb-6">
+                İlanlarınız Google hesabınızla ilişkilendirilir. Günde en fazla 3 ilan verebilirsiniz.
               </p>
-              <form onSubmit={handleUyeDevam} className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">
-                      İsim <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      name="isim" value={uye.isim} onChange={handleUyeChange} required
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors"
-                      placeholder="Ali"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">
-                      Soyisim <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      name="soyisim" value={uye.soyisim} onChange={handleUyeChange} required
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors"
-                      placeholder="Yılmaz"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 block mb-1">
-                    Telefon <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    name="telefon" value={uye.telefon} onChange={handleUyeChange} required type="tel"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors"
-                    placeholder="05XX XXX XX XX"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold text-gray-700 block mb-1">
-                    E-posta <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    name="email" value={uye.email} onChange={handleUyeChange} required type="email"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors"
-                    placeholder="ornek@mail.com"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-[#e8a020] hover:bg-[#c8851a] text-white font-semibold py-3 rounded-lg transition-colors"
-                >
-                  Devam Et →
-                </button>
-              </form>
-            </>
+              <button
+                onClick={() => { window.location.href = "/api/auth/google"; }}
+                className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-lg transition-colors"
+              >
+                <span className="font-bold text-[#4285F4]">G</span> Google ile giriş yap
+              </button>
+            </div>
           )}
 
-          {/* ── Adım 2: Kategori ── */}
+          {/* ── Adım 1: Kategori ── */}
           {step === "kategori" && (
             <>
-              {kaydedilmis && (
-                <p className="text-sm text-gray-500 mb-3">
-                  Merhaba, <strong>{user!.name}</strong>. Hangi kategoride ilan vermek istiyorsunuz?
-                </p>
-              )}
-              {!kaydedilmis && (
-                <p className="text-sm text-gray-500 mb-4">
-                  İlanınızı hangi kategoriye vermek istiyorsunuz?
-                </p>
-              )}
+              <p className="text-sm text-gray-500 mb-3">
+                Merhaba, <strong>{user?.name}</strong>. Hangi kategoride ilan vermek istiyorsunuz?
+              </p>
               <div className="space-y-2">
                 {ILAN_KATEGORILERI.map((kat) => (
                   <button
                     key={kat.id}
-                    onClick={() => handleKategoriSec(kat.ad)}
+                    onClick={() => { setSeciliKategori(kat.ad); setStep("form"); }}
                     className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:border-[#e8a020] hover:bg-yellow-50 text-sm font-medium text-gray-700 transition-colors"
                   >
                     {kat.ad}
@@ -241,7 +156,7 @@ export default function IlanVerModal({ onClose, user }: Props) {
             </>
           )}
 
-          {/* ── Adım 3: İlan Formu ── */}
+          {/* ── Adım 2: İlan Formu ── */}
           {step === "form" && (
             <>
               <div className="flex items-center gap-2 mb-4">
@@ -262,7 +177,7 @@ export default function IlanVerModal({ onClose, user }: Props) {
                   <input
                     value={form.baslik}
                     onChange={(e) => setForm((f) => ({ ...f, baslik: e.target.value }))}
-                    required
+                    required minLength={5} maxLength={100}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors"
                     placeholder="Örn: Satılık Honda Civic 2015"
                   />
@@ -275,7 +190,7 @@ export default function IlanVerModal({ onClose, user }: Props) {
                   <textarea
                     value={form.aciklama}
                     onChange={(e) => setForm((f) => ({ ...f, aciklama: e.target.value }))}
-                    required rows={3}
+                    required minLength={10} maxLength={3000} rows={3}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors resize-none"
                     placeholder="İlanınızı detaylı açıklayın..."
                   />
@@ -288,33 +203,31 @@ export default function IlanVerModal({ onClose, user }: Props) {
                   <input
                     value={form.fiyat}
                     onChange={(e) => setForm((f) => ({ ...f, fiyat: e.target.value }))}
+                    maxLength={50}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors"
                     placeholder="Örn: 150.000 TL veya Pazarlıklı"
                   />
                 </div>
 
-                {/* Kayıtlı kullanıcı: sadece telefon sor */}
-                {kaydedilmis && (
-                  <div>
-                    <label className="text-sm font-semibold text-gray-700 block mb-1">
-                      İletişim Telefonu <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      value={form.telefon}
-                      onChange={(e) => setForm((f) => ({ ...f, telefon: e.target.value }))}
-                      required type="tel"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors"
-                      placeholder="05XX XXX XX XX"
-                    />
-                  </div>
-                )}
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-1">
+                    İletişim Telefonu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    value={form.telefon}
+                    onChange={(e) => setForm((f) => ({ ...f, telefon: e.target.value }))}
+                    required type="tel" maxLength={20}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b] transition-colors"
+                    placeholder="0532 123 45 67 veya 0216 123 45 67"
+                  />
+                </div>
 
                 {/* Fotoğraf Yükleme */}
                 <div>
                   <label className="text-sm font-semibold text-gray-700 block mb-1">
                     Fotoğraflar{" "}
                     <span className="text-gray-400 font-normal">
-                      (opsiyonel, en fazla {MAX_FOTO} adet, her biri max {MAX_BOYUT_MB} MB)
+                      (opsiyonel, JPG/PNG/WEBP, en fazla {MAX_FOTO} adet; otomatik küçültülür)
                     </span>
                   </label>
 
@@ -347,18 +260,19 @@ export default function IlanVerModal({ onClose, user }: Props) {
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="image/*"
+                        accept={KABUL_EDILEN}
                         multiple
                         className="hidden"
                         onChange={handleFotografSec}
                       />
                       <button
                         type="button"
+                        disabled={kucultuluyor}
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-[#e8a020] rounded-lg py-3 text-sm text-gray-500 hover:text-[#e8a020] transition-colors"
+                        className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-[#e8a020] rounded-lg py-3 text-sm text-gray-500 hover:text-[#e8a020] transition-colors disabled:opacity-50"
                       >
                         <span className="text-lg">📷</span>
-                        Fotoğraf Ekle{" "}
+                        {kucultuluyor ? "Fotoğraflar hazırlanıyor..." : "Fotoğraf Ekle"}{" "}
                         <span className="text-xs text-gray-400">
                           ({fotograflar.length}/{MAX_FOTO})
                         </span>
@@ -366,15 +280,12 @@ export default function IlanVerModal({ onClose, user }: Props) {
                     </>
                   )}
 
-                  {fotograflar.length === MAX_FOTO && (
-                    <p className="text-xs text-amber-600 mt-1">
-                      Maksimum fotoğraf sayısına ulaşıldı.
+                  {fotograflar.length > 0 && (
+                    <p className={`text-xs mt-1 ${sinirAsildi ? "text-red-600 font-semibold" : "text-gray-400"}`}>
+                      {sinirAsildi ? gonderimSiniriUyarisi(toplam) : `Toplam ${toplam.toFixed(1)} MB / ${GONDERIM_SINIRI_MB} MB`}
                     </p>
                   )}
-
-                  {fotoHata && (
-                    <p className="text-xs text-red-500 mt-1">{fotoHata}</p>
-                  )}
+                  {fotoHata && <p className="text-xs text-red-500 mt-1">{fotoHata}</p>}
                 </div>
 
                 {hata && (
@@ -384,7 +295,7 @@ export default function IlanVerModal({ onClose, user }: Props) {
                 )}
 
                 <button
-                  type="submit" disabled={yukleniyor}
+                  type="submit" disabled={yukleniyor || kucultuluyor || sinirAsildi}
                   className="w-full bg-[#1a3a6b] hover:bg-[#2554a0] text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {yukleniyor ? (
@@ -405,24 +316,8 @@ export default function IlanVerModal({ onClose, user }: Props) {
             <div className="text-center py-6">
               <div className="text-6xl mb-4">✅</div>
               <p className="font-bold text-[#1a3a6b] text-xl mb-2">İlanınız Alındı!</p>
-
-              {kaydedilmis ? (
-                /* Kayıtlı kullanıcı: onay uyarısı gösterme */
-                <p className="text-gray-500 text-sm mb-6">
-                  İlanınız başarıyla sisteme gönderildi.
-                </p>
-              ) : (
-                /* Misafir: onay uyarısı göster */
-                <>
-                  <p className="text-gray-500 text-sm mb-2">
-                    İlanınız incelemeye alınmıştır.
-                  </p>
-                  <p className="text-[#e8a020] font-semibold text-sm mb-6">
-                    Onaylandıktan sonra sitede yayımlanacaktır.
-                  </p>
-                </>
-              )}
-
+              <p className="text-gray-500 text-sm mb-2">İlanınız incelemeye alınmıştır.</p>
+              <p className="text-[#e8a020] font-semibold text-sm mb-6">Onaylandıktan sonra sitede yayımlanacaktır.</p>
               <button
                 onClick={onClose}
                 className="bg-[#1a3a6b] text-white px-8 py-2.5 rounded-lg font-semibold hover:bg-[#2554a0] transition-colors"

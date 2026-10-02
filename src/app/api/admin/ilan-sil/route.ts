@@ -1,43 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServerClient } from '@/utils/supabase/server';
-import { createClient } from '@supabase/supabase-js';
 
-import { ADMIN_EMAILS } from '@/lib/admin';
+import { yoneticiMi } from '@/lib/admin';
+import { servisIstemcisi } from '@/lib/firmaSilme';
+
 const BUCKET = 'ilan-fotograflari';
 
+// Önce ilan silinir (silinen kayıt sayısı kontrol edilir), fotoğraflar ancak ondan sonra depodan silinir.
 export async function DELETE(request: NextRequest) {
   const supabaseUser = await createServerClient();
   const { data: { user } } = await supabaseUser.auth.getUser();
-  if (!user || !ADMIN_EMAILS.includes(user.email!)) {
-    return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 403 });
-  }
+  if (!yoneticiMi(user?.email)) return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 403 });
 
-  const { id } = await request.json();
+  const { id } = await request.json().catch(() => ({}));
   if (!id) return NextResponse.json({ error: 'ID gerekli.' }, { status: 400 });
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-
-  const { data: ilan } = await supabase
-    .from('ilanlar')
-    .select('fotograflar')
-    .eq('id', id)
-    .single();
-
-  if (ilan?.fotograflar && ilan.fotograflar.length > 0) {
-    const storagePaths: string[] = ilan.fotograflar
-      .map((url: string) => url.split(`/${BUCKET}/`)[1])
-      .filter(Boolean);
-    if (storagePaths.length > 0) {
-      await supabase.storage.from(BUCKET).remove(storagePaths);
-    }
-  }
-
-  const { error } = await supabase.from('ilanlar').delete().eq('id', id);
+  const supabase = servisIstemcisi();
+  const { data: silinen, error } = await supabase.from('ilanlar').delete().eq('id', id).select('id, fotograflar');
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!silinen || silinen.length === 0) return NextResponse.json({ error: 'İlan silinemedi (0 kayıt silindi). Fotoğraflara dokunulmadı.' }, { status: 404 });
 
-  return NextResponse.json({ success: true });
+  const yollar = ((silinen[0].fotograflar || []) as string[])
+    .map((url) => url.split(`/${BUCKET}/`)[1])
+    .filter(Boolean);
+  let fotografHatasi = false;
+  if (yollar.length > 0) {
+    const { error: depoHata } = await supabase.storage.from(BUCKET).remove(yollar);
+    if (depoHata) { console.error('İlan silindi ama fotoğraflar silinemedi:', id, yollar, depoHata); fotografHatasi = true; }
+  }
+  return NextResponse.json({ success: true, fotografHatasi });
 }

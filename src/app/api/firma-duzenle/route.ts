@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
 import { whatsappKontrol } from '@/lib/whatsapp';
+import { htmlKacis } from '@/lib/htmlKacis';
 
 export async function PATCH(request: NextRequest) {
   const supabaseAuth = await createServerClient();
@@ -71,7 +72,7 @@ export async function PATCH(request: NextRequest) {
       body: JSON.stringify({
         from: 'onboarding@resend.dev',
         to: ADMIN_EMAILS,
-        subject: `✏️ Firma Güncelleme Talebi - Onaylayın: ${firma.ad}`,
+        subject: `✏️ Firma Güncelleme Talebi - Onaylayın: ${String(firma.ad).replace(/[\r\n]+/g, " ")}`,
         html: `
           <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
             <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px 18px;margin-bottom:20px">
@@ -81,11 +82,11 @@ export async function PATCH(request: NextRequest) {
             <table style="border-collapse:collapse;width:100%;margin-top:16px">
               <tr style="background:#f5f7fa">
                 <td style="padding:10px 14px;font-weight:bold;width:130px">Firma Adı</td>
-                <td style="padding:10px 14px">${firma.ad}</td>
+                <td style="padding:10px 14px">${htmlKacis(firma.ad)}</td>
               </tr>
               <tr>
                 <td style="padding:10px 14px;font-weight:bold">Sahip E-posta</td>
-                <td style="padding:10px 14px">${user.email}</td>
+                <td style="padding:10px 14px">${htmlKacis(user.email)}</td>
               </tr>
               <tr style="background:#f5f7fa">
                 <td style="padding:10px 14px;font-weight:bold">Talep Tarihi</td>

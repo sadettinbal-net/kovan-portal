@@ -25,13 +25,17 @@ export async function PATCH(request: NextRequest) {
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("ilanlar")
     .update({ onay_durumu: durum })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  if (!data || data.length === 0) {
+    return NextResponse.json({ error: "İlan bulunamadı (0 kayıt güncellendi)." }, { status: 404 });
   }
 
   return NextResponse.json({ success: true });

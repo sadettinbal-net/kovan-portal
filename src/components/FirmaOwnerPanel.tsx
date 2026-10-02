@@ -258,7 +258,7 @@ export default function FirmaOwnerPanel({ firmaId, kullaniciEmail, firma, fotogr
                       Kart resmi yok
                     </div>
                   )}
-                  <input ref={kartInputRef} type="file" accept="image/*" className="hidden" onChange={kartSecildi} />
+                  <input ref={kartInputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={kartSecildi} />
                   <button
                     onClick={() => kartInputRef.current?.click()}
                     className="w-full py-2 border border-[#1a3a6b] text-[#1a3a6b] hover:bg-blue-50 rounded-lg text-sm font-medium transition-colors"
@@ -306,7 +306,7 @@ export default function FirmaOwnerPanel({ firmaId, kullaniciEmail, firma, fotogr
 
                   {mevcutDetaySayisi < 5 && (
                     <>
-                      <input ref={detayInputRef} type="file" accept="image/*" multiple className="hidden" onChange={detaySecildi} />
+                      <input ref={detayInputRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={detaySecildi} />
                       <button
                         onClick={() => detayInputRef.current?.click()}
                         className="w-full py-2 border border-[#1a3a6b] text-[#1a3a6b] hover:bg-blue-50 rounded-lg text-sm font-medium transition-colors"
