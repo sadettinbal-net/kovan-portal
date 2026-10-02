@@ -1,5 +1,26 @@
 # Proje Notları - Kovan Portal
 
+## 2026-10-02 - Puanlama Sistemi 1. Aşama
+
+### Yapılanlar
+- ✅ Migration `20261002030000_puanlama_asama1.sql` (canlıya uygulandı, tek işlem; DROP / "or replace" yok).
+- ✅ **E-posta gizliliği:** `yorumlar` tablosunda anon/authenticated yetkileri kaldırıldı (RLS politikasına dokunulmadı). Açık anahtarla okuma artık `401 permission denied`. Tüm okuma/yazma sunucuda service role ile.
+- ✅ **Puan özeti veritabanında:** `firmalar.yorum_sayisi / ortalama_puan / olumlu_yuzde`; `yorumlar` değişince `yorumlar_puan_ozeti` tetikleyicisi `firma_puan_ozeti_guncelle()` ile yeniden hesaplar (gizli yorumlar sayılmaz). Sayfalar artık tüm yorumları çekmiyor → 1000 satır sınırı yok.
+- ✅ `yorumlar.gizli` (yönetici gizler; sitede görünmez, puana katılmaz) ve `yorumlar.guncelleme_tarihi` ("düzenlendi").
+- ✅ Üye: `/api/yorum` POST/PATCH/DELETE — kendi değerlendirmesini ekler, düzenler, siler; firma sayfasında "Sizin değerlendirmeniz" kartı (7 dil). Kurallar `src/lib/yorumlar.ts`: sadece onaylı firmaya, sahibi kendine puan veremez, puan 1-5 tam sayı, yorum 10-2000 karakter.
+- ✅ Yönetici: sahte isimle yorum ekleme ve yorum düzenleme KALDIRILDI (`/api/admin/yorum-ekle`, `/api/admin/yorum-guncelle`, eski `/api/yorum-ekle` silindi). Sadece Gizle/Göster (`/api/admin/yorum-gizle`) ve Sil; listede e-posta ve "Gizli" etiketi görünür (`/api/admin/yorumlar`).
+- ✅ Firmalar sıralamasında öne çıkma: en az 3 yorum + %75 olumlu (`ONE_CIKMA_EN_AZ_YORUM`). Özel Firmalar: en az 3 yorum + %90 olumlu, veritabanı özetinden.
+- Test: 2 geçici kullanıcı + test firmalarıyla 41 kontrol + sıralama testi geçti; firma silinince yorumlar tetikleyiciyle hatasız silindi. Test kayıtları temizlendi.
+
+### 📌 Puanlama 2. Aşama (sonraya bırakıldı)
+- Yeni yorum bildirimi (firma sahibine ve yöneticiye e-posta)
+- Firma sahibinin yorumlara cevap yazabilmesi
+- Yorum şikâyet ("bildir") butonu
+
+- ✅ Firmalar sayfası: öne çıkanlar (≥3 yorum, %75+ olumlu) her gün 1. sayfanın başında sabit; günlük sayfa kaydırma (her gece 1→2, 2→3, ..., son→1) sadece geri kalan firmalara uygulanıyor. Yöneticinin `hedef_sayfa` ile sabitlediği firmalar yine kendi sayfalarının en başında (öne çıkanlardan da önce). Test: 1892 firmanın tamamı sayfalarda tam birer kez görünüyor.
+
+---
+
 ## 2026-10-02 - Firma WhatsApp Alanı
 
 ### Yapılanlar

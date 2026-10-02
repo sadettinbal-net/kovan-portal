@@ -19,6 +19,10 @@ export type Firma = {
   telefon: string;
   mobil_telefon?: string | null;
   whatsapp?: string | null;
+  // Puan özeti: veritabanında yorumlar değiştikçe tetikleyiciyle güncellenir (gizli yorumlar sayılmaz)
+  yorum_sayisi?: number;
+  ortalama_puan?: number | null;
+  olumlu_yuzde?: number | null;
   hizmetler: string[];
   ozel_firma: boolean;
   fotograf_url: string | null;

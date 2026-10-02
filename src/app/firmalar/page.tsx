@@ -3,7 +3,6 @@ import Sidebar from "@/components/Sidebar";
 import FirmaKart from "@/components/FirmaKart";
 import VideoReklam from "@/components/VideoReklam";
 import { supabase } from "@/lib/supabase";
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { translations } from "@/lib/translations";
@@ -11,15 +10,8 @@ import { siteVeAltSiteAdlari } from "@/lib/sanayiSiteleri";
 import type { Lang } from "@/lib/translations";
 import KategoriSuzgeci from "@/components/KategoriSuzgeci";
 import RightSidebarWrapper from "@/components/RightSidebarWrapper";
+import { ONE_CIKMA_EN_AZ_YORUM } from "@/lib/yorumlar";
 import { aktifKategoriler, adinKategoriIdleri, KATEGORI_TIPI, type FirmaTipi } from "@/lib/firmaKategorileri";
-
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +71,7 @@ export default async function FirmalarPage(props: PageProps) {
 
   let query = supabase
     .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, hedef_sayfa")
+    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, hedef_sayfa, yorum_sayisi, ortalama_puan, olumlu_yuzde")
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi")
     .order("ad");
@@ -125,46 +117,16 @@ export default async function FirmalarPage(props: PageProps) {
     }
   }
 
-  // Review istatistiklerini çek — admin key ile (RLS'yi bypass eder)
-  const { data: tumYorumlar } = await adminClient()
-    .from("yorumlar")
-    .select("firma_id, puan");
+  // Puan özetleri (yorum sayısı, ortalama, olumlu oranı) veritabanında hesaplanıp firma kaydında tutuluyor.
+  type FirmaWithStats = import("@/lib/supabase").Firma;
+  const firmalarWithStats: FirmaWithStats[] = [...tumFirmalarArr];
 
-  const statsMap = new Map<number, { toplam: number; olumlu: number; puanToplam: number }>();
-  for (const y of tumYorumlar || []) {
-    const s = statsMap.get(y.firma_id) || { toplam: 0, olumlu: 0, puanToplam: 0 };
-    s.toplam++;
-    if (y.puan >= 4) s.olumlu++;
-    s.puanToplam += y.puan;
-    statsMap.set(y.firma_id, s);
-  }
-
-  // FirmaKartData'ya uyumlu genişletilmiş tip
-  type FirmaWithStats = import("@/lib/supabase").Firma & {
-    olumlu_yuzde: number | null;
-    yorum_sayisi: number;
-    ortalama_puan: number | null;
-  };
-
-  const MIN_YORUM = 1;
-
-  const firmalarWithStats: FirmaWithStats[] = tumFirmalarArr.map((f) => {
-    const s = statsMap.get(f.id);
-    if (!s || s.toplam < MIN_YORUM) {
-      return { ...f, olumlu_yuzde: null, yorum_sayisi: s?.toplam || 0, ortalama_puan: null };
-    }
-    return {
-      ...f,
-      olumlu_yuzde: Math.round((s.olumlu / s.toplam) * 100),
-      yorum_sayisi: s.toplam,
-      ortalama_puan: Math.round((s.puanToplam / s.toplam) * 10) / 10,
-    };
-  });
-
-  // Sıralama: %75+ olumlu → öne al (puana göre azalan), geri kalanlar alfabetik (DB sırası)
+  // Sıralama: en az ${ONE_CIKMA_EN_AZ_YORUM} yorumu olup %75+ olumlu olanlar öne (olumlu oranına göre azalan), geri kalanlar alfabetik (DB sırası)
+  const oneCikar = (f: FirmaWithStats) =>
+    (f.yorum_sayisi ?? 0) >= ONE_CIKMA_EN_AZ_YORUM && f.olumlu_yuzde != null && f.olumlu_yuzde >= 75;
   firmalarWithStats.sort((a, b) => {
-    const aOne = a.olumlu_yuzde !== null && a.olumlu_yuzde >= 75;
-    const bOne = b.olumlu_yuzde !== null && b.olumlu_yuzde >= 75;
+    const aOne = oneCikar(a);
+    const bOne = oneCikar(b);
     if (aOne && !bOne) return -1;
     if (!aOne && bOne) return 1;
     if (aOne && bOne) return (b.olumlu_yuzde || 0) - (a.olumlu_yuzde || 0);
@@ -193,14 +155,19 @@ export default async function FirmalarPage(props: PageProps) {
   const toplamSayfa = Math.max(Math.ceil(toplamFirma / limit), 1);
   const gecerliSayfa = Math.min(sayfa, toplamSayfa);
 
-  // Günlük rotasyon: her gece yarısı sayfa içerikleri bir ileri kayar (1→2, 2→3, ..., son→1)
-  const rotasyon = toplamSayfa > 1 ? gunSayisi % toplamSayfa : 0;
-  const gercekBaslangic = ((gecerliSayfa - 1 - rotasyon + toplamSayfa) % toplamSayfa) * limit;
+  // Öne çıkanlar (sıralamada zaten başta) her gün 1. sayfanın başında sabit durur.
+  // Günlük rotasyon sadece geri kalanlara uygulanır: her gece yarısı sayfa blokları bir ileri kayar (1→2, 2→3, ..., son→1).
+  const oneCikanlar = normalFirmalar.filter(oneCikar);
+  const geriKalan = normalFirmalar.filter(f => !oneCikar(f));
+  const kalanSayfa = Math.max(Math.ceil(geriKalan.length / limit), 1);
+  const kaydirma = ((kalanSayfa - (gunSayisi % kalanSayfa)) % kalanSayfa) * limit;
+  const siraliFirmalar = [...oneCikanlar, ...geriKalan.slice(kaydirma), ...geriKalan.slice(0, kaydirma)];
+  const gercekBaslangic = (gecerliSayfa - 1) * limit;
 
   const sayfadakiSabitler = sabitFirmalar.filter(
     f => (f as typeof f & { hedef_sayfa?: number | null }).hedef_sayfa === gecerliSayfa
   );
-  const normalSayfaFirmalar = normalFirmalar.slice(gercekBaslangic, gercekBaslangic + limit);
+  const normalSayfaFirmalar = siraliFirmalar.slice(gercekBaslangic, gercekBaslangic + limit);
   const sayfaFirmalar = [...sayfadakiSabitler, ...normalSayfaFirmalar];
 
   const baslik = site || kategori || (ara ? t.resultsFor(ara) : il || t.allCompanies);

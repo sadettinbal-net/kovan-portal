@@ -49,22 +49,15 @@ export default async function FirmaKartPage({ params }: PageProps) {
 
   const { data: firma } = await supabase
     .from("firmalar")
-    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu")
+    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu, yorum_sayisi, ortalama_puan")
     .eq("id", id)
     .single();
 
   if (!firma || firma.onay_durumu !== "onaylandi") notFound();
 
-  const { data: puanlar } = await supabase
-    .from("yorumlar")
-    .select("puan")
-    .eq("firma_id", id);
-
-  const yorumSayisi = puanlar?.length ?? 0;
-  const ortalamaPuan =
-    yorumSayisi > 0
-      ? Math.round((puanlar!.reduce((s, y) => s + y.puan, 0) / yorumSayisi) * 10) / 10
-      : null;
+  // Puan özeti veritabanında hesaplanıp firma kaydında tutuluyor (gizli yorumlar sayılmaz)
+  const yorumSayisi: number = firma.yorum_sayisi ?? 0;
+  const ortalamaPuan: number | null = yorumSayisi > 0 && firma.ortalama_puan != null ? Number(firma.ortalama_puan) : null;
 
   const basHarfler = firmaBasHarfleri(firma.ad);
   const resimUrl = firma.fotograf_url || getKategoriResim(firma.sektor);

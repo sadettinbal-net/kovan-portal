@@ -53,16 +53,10 @@ export default async function FirmaDetay({ params }: PageProps) {
     .neq("id", id)
     .limit(3);
 
-  const { data: puanlar } = await supabase
-    .from("yorumlar")
-    .select("puan")
-    .eq("firma_id", id);
-
-  const yorumSayisi = puanlar?.length ?? 0;
+  // Puan özeti veritabanında hesaplanıp firma kaydında tutuluyor (gizli yorumlar sayılmaz)
+  const yorumSayisi: number = firma.yorum_sayisi ?? 0;
+  const ortalamaPuan: number | null = yorumSayisi > 0 && firma.ortalama_puan != null ? Number(firma.ortalama_puan) : null;
   const whatsappHref = whatsappAdresi(firma.whatsapp, firma.mobil_telefon);
-  const ortalamaPuan = yorumSayisi > 0
-    ? Math.round((puanlar!.reduce((t, y) => t + y.puan, 0) / yorumSayisi) * 10) / 10
-    : null;
 
   const hasSosyal = firma.instagram || firma.facebook || firma.twitter || firma.youtube || firma.linkedin || firma.tiktok || firma.nsosyal;
 

@@ -1,79 +1,44 @@
 import Link from "next/link";
 import FirmaKart, { FirmaKartData } from "@/components/FirmaKart";
 import { supabase } from "@/lib/supabase";
-import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { translations } from "@/lib/translations";
 import type { Lang } from "@/lib/translations";
 
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
+import { ONE_CIKMA_EN_AZ_YORUM } from "@/lib/yorumlar";
 
 export const dynamic = "force-dynamic";
 
 const SECIM_SELECT =
-  "id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url";
-const MIN_YORUM = 3;
+  "id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde";
+const MIN_YORUM = ONE_CIKMA_EN_AZ_YORUM;
 
 export default async function OzelFirmalarPage() {
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
   const t = translations[lang];
-  const [{ data: ozelFirmalar }, { data: tumYorumlar }] = await Promise.all([
+  // Elle seçilen özel firmalar + en az ${MIN_YORUM} yorumla %90+ olumlu olanlar (puan özeti veritabanında hesaplanıyor)
+  const [{ data: ozelFirmalar }, { data: yuksekPuanlilar }] = await Promise.all([
     supabase
       .from("firmalar")
       .select(SECIM_SELECT)
       .eq("ozel_firma", true)
       .eq("onay_durumu", "onaylandi"),
-    adminClient().from("yorumlar").select("firma_id, puan"),
-  ]);
-
-  // İstatistik haritası
-  const statsMap = new Map<number, { toplam: number; olumlu: number; puanToplam: number }>();
-  for (const y of tumYorumlar || []) {
-    const s = statsMap.get(y.firma_id) || { toplam: 0, olumlu: 0, puanToplam: 0 };
-    s.toplam++;
-    if (y.puan >= 4) s.olumlu++;
-    s.puanToplam += y.puan;
-    statsMap.set(y.firma_id, s);
-  }
-
-  function withStats(firma: FirmaKartData): FirmaKartData {
-    const s = statsMap.get(firma.id);
-    if (!s || s.toplam === 0) return firma;
-    return {
-      ...firma,
-      yorum_sayisi: s.toplam,
-      ortalama_puan: Math.round((s.puanToplam / s.toplam) * 10) / 10,
-    };
-  }
-
-  const ozelIds = new Set((ozelFirmalar || []).map((f) => f.id));
-  const yuksekPuanliIds: number[] = Array.from(statsMap.entries())
-    .filter(([firmaId, s]) =>
-      s.toplam >= MIN_YORUM && s.olumlu / s.toplam >= 0.9 && !ozelIds.has(firmaId)
-    )
-    .map(([firmaId]) => firmaId);
-
-  // Yüksek puanlı ama ozel_firma olmayan firmaları çek
-  let yorumlaGelen: FirmaKartData[] = [];
-  if (yuksekPuanliIds.length > 0) {
-    const { data } = await supabase
+    supabase
       .from("firmalar")
       .select(SECIM_SELECT)
-      .in("id", yuksekPuanliIds)
-      .eq("onay_durumu", "onaylandi");
-    // Bu firmalar %90+ puanlı → ozel_firma gibi göster
-    yorumlaGelen = (data || []).map((f) => ({ ...f, ozel_firma: true }));
-  }
+      .eq("ozel_firma", false)
+      .eq("onay_durumu", "onaylandi")
+      .gte("yorum_sayisi", MIN_YORUM)
+      .gte("olumlu_yuzde", 90)
+      .order("olumlu_yuzde", { ascending: false }),
+  ]);
+
+  // Bu firmalar %90+ puanlı → ozel_firma gibi göster
+  const yorumlaGelen: FirmaKartData[] = (yuksekPuanlilar || []).map((f) => ({ ...f, ozel_firma: true }));
 
   const tumOzeller: FirmaKartData[] = [
-    ...(ozelFirmalar || []).map(withStats),
-    ...yorumlaGelen.map(withStats),
+    ...(ozelFirmalar || []),
+    ...yorumlaGelen,
   ];
 
   return (

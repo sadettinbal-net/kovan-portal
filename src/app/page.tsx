@@ -11,17 +11,8 @@ import AnasayfaBanner from "@/components/AnasayfaBanner";
 import FirmaKart from "@/components/FirmaKart";
 import VideoReklam from "@/components/VideoReklam";
 import { supabase } from "@/lib/supabase";
-import { createClient } from "@supabase/supabase-js";
 import { Suspense } from "react";
 import { onayliFirmaOzetleri, sanayiSiteleriOzeti } from "@/lib/sanayiSiteleri";
-
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
-}
 
 // Anasayfada gösterilen sanayi sitesi sayısı (en çok firması olanlar)
 const ANASAYFA_SITE_SAYISI = 20;
@@ -35,41 +26,20 @@ export default async function Home() {
 
   const { data: ozelFirmalar } = await supabase
     .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url")
+    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde")
     .eq("ozel_firma", true)
     .eq("onay_durumu", "onaylandi")
     .limit(6);
 
   const { data: sonFirmalar } = await supabase
     .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url")
+    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde")
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi")
     .order("id", { ascending: false })
     .limit(21);
 
   const { count } = await supabase.from("firmalar").select("*", { count: "exact", head: true }).eq("onay_durumu", "onaylandi");
-
-  const { data: tumYorumlar } = await adminClient().from("yorumlar").select("firma_id, puan");
-
-  const statsMap = new Map<number, { toplam: number; puanToplam: number }>();
-  for (const y of tumYorumlar || []) {
-    const s = statsMap.get(y.firma_id) || { toplam: 0, puanToplam: 0 };
-    s.toplam++;
-    s.puanToplam += y.puan;
-    statsMap.set(y.firma_id, s);
-  }
-
-  const MIN_YORUM = 1;
-  function withStats<T extends { id: number }>(firma: T) {
-    const s = statsMap.get(firma.id);
-    if (!s || s.toplam < MIN_YORUM) return { ...firma, yorum_sayisi: s?.toplam || 0, ortalama_puan: null };
-    return {
-      ...firma,
-      yorum_sayisi: s.toplam,
-      ortalama_puan: Math.round((s.puanToplam / s.toplam) * 10) / 10,
-    };
-  }
 
   return (
     <>
@@ -95,7 +65,7 @@ export default async function Home() {
                 </div>
                 <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4">
                   {ozelFirmalar.map((firma) => (
-                    <FirmaKart key={firma.id} firma={withStats(firma)} />
+                    <FirmaKart key={firma.id} firma={firma} />
                   ))}
                 </div>
               </section>
@@ -110,7 +80,7 @@ export default async function Home() {
               </div>
               <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4">
                 {(sonFirmalar || []).map((firma) => (
-                  <FirmaKart key={firma.id} firma={withStats(firma)} />
+                  <FirmaKart key={firma.id} firma={firma} />
                 ))}
               </div>
               <div className="text-center mt-6">

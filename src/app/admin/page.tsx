@@ -1487,18 +1487,18 @@ function Istatistikler() {
 }
 
 // ─── Admin: Firma Yorum Yönetimi ─────────────────────────────────────────────
-type AdminYorumTip = { id: number; kullanici_ad: string; yorum: string; puan: number; created_at: string };
-type AdminStats = { toplam: number; olumlu: number; olumlu_yuzde: number | null; ortalama_puan: number | null };
+// Yönetici yorum ekleyemez/düzenleyemez; sadece gizleyebilir (sitede görünmez, puana katılmaz) veya silebilir.
+type AdminYorumTip = {
+  id: number; kullanici_ad: string; kullanici_email: string; yorum: string; puan: number;
+  created_at: string; guncelleme_tarihi: string | null; gizli: boolean;
+};
+type AdminOzet = { yorum_sayisi: number; ortalama_puan: number | null; olumlu_yuzde: number | null };
 
-function AdminYildizlar({ puan, interactive = false, onSet }: { puan: number; interactive?: boolean; onSet?: (p: number) => void }) {
+function AdminYildizlar({ puan }: { puan: number }) {
   return (
     <span>
       {[1, 2, 3, 4, 5].map((i) => (
-        <span
-          key={i}
-          onClick={interactive && onSet ? () => onSet(i) : undefined}
-          className={`${interactive ? 'cursor-pointer hover:scale-125 inline-block transition-transform' : ''} ${i <= puan ? 'text-yellow-400' : 'text-gray-300'}`}
-        >
+        <span key={i} className={i <= puan ? 'text-yellow-400' : 'text-gray-300'}>
           {i <= puan ? '⭐' : '☆'}
         </span>
       ))}
@@ -1508,177 +1508,78 @@ function AdminYildizlar({ puan, interactive = false, onSet }: { puan: number; in
 
 function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
   const [yorumlar, setYorumlar] = useState<AdminYorumTip[]>([]);
-  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [ozet, setOzet] = useState<AdminOzet | null>(null);
   const [yukleniyor, setYukleniyor] = useState(true);
-
-  const [duzenleId, setDuzenleId] = useState<number | null>(null);
-  const [duzenlePuan, setDuzenlePuan] = useState(0);
-  const [duzenleYorum, setDuzenleYorum] = useState('');
-  const [kaydediliyor, setKaydediliyor] = useState(false);
-
+  const [islemId, setIslemId] = useState<number | null>(null);
   const [silId, setSilId] = useState<number | null>(null);
-  const [siliyor, setSiliyor] = useState(false);
-
-  const [ekleAcik, setEkleAcik] = useState(false);
-  const [ekleAd, setEkleAd] = useState('');
-  const [eklePuan, setEklePuan] = useState(0);
-  const [ekleYorum, setEkleYorum] = useState('');
-  const [ekleniyor, setEkleniyor] = useState(false);
-
   const [mesaj, setMesaj] = useState<{ tip: 'basari' | 'hata'; metin: string } | null>(null);
 
   const fetchYorumlar = useCallback(async () => {
     setYukleniyor(true);
-    const res = await fetch(`/api/yorumlar?firmaId=${firmaId}`);
+    const res = await fetch(`/api/admin/yorumlar?firmaId=${firmaId}`);
+    const data = await res.json();
     if (res.ok) {
-      const data = await res.json();
       setYorumlar(data.yorumlar || []);
-      setStats(data.stats);
+      setOzet(data.ozet);
+    } else {
+      setMesaj({ tip: 'hata', metin: data.error || 'Yorumlar yüklenemedi.' });
     }
     setYukleniyor(false);
   }, [firmaId]);
 
   useEffect(() => { fetchYorumlar(); }, [fetchYorumlar]);
 
-  function duzenlemeBaslat(y: AdminYorumTip) {
-    setDuzenleId(y.id);
-    setDuzenlePuan(y.puan);
-    setDuzenleYorum(y.yorum);
+  async function gizliDegistir(y: AdminYorumTip) {
+    setIslemId(y.id);
     setMesaj(null);
-  }
-
-  async function duzenleKaydet() {
-    if (!duzenleId || !duzenlePuan) return;
-    setKaydediliyor(true);
-    const res = await fetch('/api/admin/yorum-guncelle', {
+    const res = await fetch('/api/admin/yorum-gizle', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: duzenleId, puan: duzenlePuan, yorum: duzenleYorum }),
+      body: JSON.stringify({ id: y.id, gizli: !y.gizli }),
     });
+    const data = await res.json();
     if (res.ok) {
-      setDuzenleId(null);
-      setMesaj({ tip: 'basari', metin: 'Yorum güncellendi.' });
+      setMesaj({ tip: 'basari', metin: y.gizli ? 'Yorum tekrar görünür.' : 'Yorum gizlendi; sitede görünmüyor ve puana katılmıyor.' });
       fetchYorumlar();
     } else {
-      const data = await res.json();
-      setMesaj({ tip: 'hata', metin: data.error || 'Güncelleme başarısız.' });
+      setMesaj({ tip: 'hata', metin: data.error || 'İşlem başarısız.' });
     }
-    setKaydediliyor(false);
+    setIslemId(null);
   }
 
   async function yorumSil(id: number) {
-    setSiliyor(true);
+    setIslemId(id);
     const res = await fetch('/api/admin/yorum-sil', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
+    const data = await res.json();
     if (res.ok) {
-      setSilId(null);
       setMesaj({ tip: 'basari', metin: 'Yorum silindi.' });
       fetchYorumlar();
     } else {
-      setMesaj({ tip: 'hata', metin: 'Silme başarısız.' });
-      setSilId(null);
+      setMesaj({ tip: 'hata', metin: data.error || 'Silme başarısız.' });
     }
-    setSiliyor(false);
-  }
-
-  async function yorumEkle() {
-    if (!eklePuan) { setMesaj({ tip: 'hata', metin: 'Puan seçin.' }); return; }
-    if (!ekleAd.trim()) { setMesaj({ tip: 'hata', metin: 'Kullanıcı adı girin.' }); return; }
-    setEkleniyor(true);
-    setMesaj(null);
-    const res = await fetch('/api/admin/yorum-ekle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firma_id: firmaId, kullanici_ad: ekleAd, puan: eklePuan, yorum: ekleYorum }),
-    });
-    if (res.ok) {
-      setEkleAcik(false);
-      setEkleAd('');
-      setEklePuan(0);
-      setEkleYorum('');
-      setMesaj({ tip: 'basari', metin: 'Değerlendirme eklendi.' });
-      fetchYorumlar();
-    } else {
-      const data = await res.json();
-      setMesaj({ tip: 'hata', metin: data.error || 'Eklenemedi.' });
-    }
-    setEkleniyor(false);
+    setSilId(null);
+    setIslemId(null);
   }
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
       {/* Başlık */}
-      <div className="bg-gray-50 border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="font-semibold text-gray-700 text-sm">⭐ Değerlendirmeler</span>
-          {stats && stats.toplam > 0 && (
-            <span className="text-xs text-gray-400">
-              {stats.toplam} yorum · %{stats.olumlu_yuzde ?? 0} olumlu · ort. {stats.ortalama_puan}
-            </span>
-          )}
-        </div>
-        <button
-          onClick={() => { setEkleAcik(!ekleAcik); setMesaj(null); }}
-          className="px-3 py-1 bg-[#1a3a6b] hover:bg-[#2554a0] text-white text-xs font-semibold rounded-lg transition-colors"
-        >
-          + Yeni Ekle
-        </button>
+      <div className="bg-gray-50 border-b border-gray-200 px-4 py-2.5 flex items-center gap-3">
+        <span className="font-semibold text-gray-700 text-sm">⭐ Değerlendirmeler</span>
+        {ozet && ozet.yorum_sayisi > 0 && (
+          <span className="text-xs text-gray-400">
+            {ozet.yorum_sayisi} görünür yorum · %{ozet.olumlu_yuzde ?? 0} olumlu · ort. {ozet.ortalama_puan}
+          </span>
+        )}
       </div>
 
       {mesaj && (
         <div className={`px-4 py-2 text-xs ${mesaj.tip === 'basari' ? 'bg-green-50 text-green-700 border-b border-green-100' : 'bg-red-50 text-red-700 border-b border-red-100'}`}>
           {mesaj.metin}
-        </div>
-      )}
-
-      {/* Yeni yorum formu */}
-      {ekleAcik && (
-        <div className="px-4 py-3 border-b border-gray-200 bg-blue-50">
-          <div className="grid grid-cols-2 gap-3 mb-2">
-            <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">Kullanıcı Adı *</label>
-              <input
-                value={ekleAd}
-                onChange={(e) => setEkleAd(e.target.value)}
-                placeholder="Değerlendiren adı"
-                className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-[#1a3a6b]"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1">Puan * (1-5 yıldız)</label>
-              <div className="flex items-center gap-0.5 pt-1">
-                <AdminYildizlar puan={eklePuan} interactive onSet={setEklePuan} />
-              </div>
-            </div>
-          </div>
-          <div className="mb-2">
-            <label className="text-xs font-semibold text-gray-600 block mb-1">Yorum (opsiyonel)</label>
-            <textarea
-              value={ekleYorum}
-              onChange={(e) => setEkleYorum(e.target.value)}
-              rows={2}
-              placeholder="Yorum metni..."
-              className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-[#1a3a6b] resize-none"
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={yorumEkle}
-              disabled={ekleniyor}
-              className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded transition-colors disabled:opacity-50"
-            >
-              {ekleniyor ? '...' : '✓ Kaydet'}
-            </button>
-            <button
-              onClick={() => setEkleAcik(false)}
-              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded transition-colors"
-            >
-              İptal
-            </button>
-          </div>
         </div>
       )}
 
@@ -1690,44 +1591,16 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
           <div className="p-4 text-center text-xs text-gray-400">Henüz değerlendirme yok.</div>
         ) : (
           yorumlar.map((y) => (
-            <div key={y.id} className="px-4 py-3">
-              {duzenleId === y.id ? (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-gray-500">Puan:</span>
-                    <AdminYildizlar puan={duzenlePuan} interactive onSet={setDuzenlePuan} />
-                  </div>
-                  <textarea
-                    value={duzenleYorum}
-                    onChange={(e) => setDuzenleYorum(e.target.value)}
-                    rows={2}
-                    className="w-full border border-gray-300 rounded px-2 py-1.5 text-xs outline-none focus:border-[#1a3a6b] resize-none mb-2"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={duzenleKaydet}
-                      disabled={kaydediliyor}
-                      className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded font-semibold disabled:opacity-50"
-                    >
-                      {kaydediliyor ? '...' : '✓ Kaydet'}
-                    </button>
-                    <button
-                      onClick={() => setDuzenleId(null)}
-                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs rounded"
-                    >
-                      İptal
-                    </button>
-                  </div>
-                </div>
-              ) : silId === y.id ? (
+            <div key={y.id} className={`px-4 py-3 ${y.gizli ? 'bg-gray-50' : ''}`}>
+              {silId === y.id ? (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-gray-600 flex-1">Bu yorum silinsin mi?</span>
+                  <span className="text-xs text-gray-600 flex-1">Bu yorum kalıcı olarak silinsin mi?</span>
                   <button
                     onClick={() => yorumSil(y.id)}
-                    disabled={siliyor}
+                    disabled={islemId === y.id}
                     className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded font-semibold disabled:opacity-50"
                   >
-                    {siliyor ? '...' : 'Evet, Sil'}
+                    {islemId === y.id ? '...' : 'Evet, Sil'}
                   </button>
                   <button
                     onClick={() => setSilId(null)}
@@ -1738,21 +1611,24 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
                 </div>
               ) : (
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
+                  <div className={`flex-1 min-w-0 ${y.gizli ? 'opacity-60' : ''}`}>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-xs text-gray-700">{y.kullanici_ad}</span>
                       <AdminYildizlar puan={y.puan} />
                       <span className="text-xs text-gray-400">{new Date(y.created_at).toLocaleDateString('tr-TR')}</span>
+                      {y.guncelleme_tarihi && <span className="text-[10px] text-gray-400">(düzenlendi)</span>}
+                      {y.gizli && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600 font-semibold">Gizli</span>}
                     </div>
+                    <p className="text-[11px] text-gray-400 break-all">{y.kullanici_email}</p>
                     {y.yorum && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{y.yorum}</p>}
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
                     <button
-                      onClick={() => duzenlemeBaslat(y)}
-                      className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs rounded transition-colors"
-                      title="Düzenle"
+                      onClick={() => gizliDegistir(y)}
+                      disabled={islemId === y.id}
+                      className="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs rounded transition-colors disabled:opacity-50"
                     >
-                      ✏️
+                      {islemId === y.id ? '...' : y.gizli ? '👁 Göster' : '🙈 Gizle'}
                     </button>
                     <button
                       onClick={() => { setSilId(y.id); setMesaj(null); }}

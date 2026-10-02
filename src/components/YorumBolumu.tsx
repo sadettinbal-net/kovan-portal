@@ -9,7 +9,10 @@ interface Yorum {
   yorum: string;
   puan: number;
   created_at: string;
+  guncelleme_tarihi: string | null;
 }
+
+type BenimYorum = Yorum & { gizli: boolean };
 
 interface Stats {
   toplam: number;
@@ -49,8 +52,12 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
   const [yorumMetin, setYorumMetin] = useState("");
   const [gonderiyor, setGonderiyor] = useState(false);
   const [hata, setHata] = useState("");
-  const [basarili, setBasarili] = useState(false);
+  const [bilgi, setBilgi] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [benim, setBenim] = useState<BenimYorum | null>(null);
+  const [sahibi, setSahibi] = useState(false);
+  const [duzenleniyor, setDuzenleniyor] = useState(false);
+  const [silOnay, setSilOnay] = useState(false);
 
   const fetchYorumlar = useCallback(async () => {
     setYukleniyor(true);
@@ -59,6 +66,8 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
       const data = await res.json();
       setYorumlar(data.yorumlar || []);
       setStats(data.stats);
+      setBenim(data.benim);
+      setSahibi(!!data.sahibi);
     }
     setYukleniyor(false);
   }, [firmaId]);
@@ -77,18 +86,55 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
 
     setGonderiyor(true);
     setHata("");
+    setBilgi("");
 
-    const res = await fetch("/api/yorum-ekle", {
-      method: "POST",
+    const res = await fetch("/api/yorum", {
+      method: duzenleniyor ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ firma_id: firmaId, yorum: yorumMetin, puan }),
     });
     const data = await res.json();
 
     if (res.ok) {
-      setBasarili(true);
+      setBilgi(duzenleniyor ? t.reviewUpdated : t.reviewAdded);
+      setDuzenleniyor(false);
       setYorumMetin("");
       setPuan(0);
+      fetchYorumlar();
+    } else {
+      setHata(data.error || t.reviewError);
+    }
+    setGonderiyor(false);
+  };
+
+  const duzenlemeyiBaslat = () => {
+    if (!benim) return;
+    setPuan(benim.puan);
+    setYorumMetin(benim.yorum);
+    setHata("");
+    setBilgi("");
+    setDuzenleniyor(true);
+  };
+
+  const duzenlemeyiBirak = () => {
+    setDuzenleniyor(false);
+    setPuan(0);
+    setYorumMetin("");
+    setHata("");
+  };
+
+  const handleSil = async () => {
+    setGonderiyor(true);
+    setHata("");
+    const res = await fetch("/api/yorum", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ firma_id: firmaId }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setBilgi(t.reviewDeleted);
+      setSilOnay(false);
       fetchYorumlar();
     } else {
       setHata(data.error || t.reviewError);
@@ -164,13 +210,66 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
 
       {/* Form */}
       <div className="px-6 py-5 border-b border-[#dde3ec]">
-        {basarili ? (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 text-sm font-medium flex items-center gap-2">
-            {t.reviewAdded}
+        {bilgi && (
+          <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4 text-green-700 text-sm font-medium">
+            {bilgi}
           </div>
-        ) : user ? (
+        )}
+        {!user ? (
+          <p className="text-sm text-gray-500">
+            {t.loginToReview}{" "}
+            <button
+              onClick={handleGoogleGiris}
+              className="text-[#1a3a6b] font-semibold underline underline-offset-2 hover:text-[#2554a0] transition-colors cursor-pointer"
+            >
+              {t.loginToReviewLink}
+            </button>{t.loginToReviewEnd}
+          </p>
+        ) : yukleniyor ? (
+          <p className="text-sm text-gray-400">{t.loadingText}</p>
+        ) : sahibi ? (
+          <p className="text-sm text-gray-500">{t.ownFirmNoReview}</p>
+        ) : benim && !duzenleniyor ? (
+          <div className={`rounded-lg border p-4 ${benim.gizli ? "bg-gray-50 border-gray-200" : "bg-blue-50 border-blue-100"}`}>
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <h3 className="font-semibold text-gray-700 text-sm">{t.yourReviewTitle}</h3>
+              <span className="text-xs text-gray-400">
+                {new Date(benim.created_at).toLocaleDateString(t.memberSinceDateLocale)}
+                {benim.guncelleme_tarihi && ` · ${t.editedLabel}`}
+              </span>
+            </div>
+            <Yildizlar puan={benim.puan} boyut="sm" />
+            {benim.yorum && <p className="text-sm text-gray-600 mt-2 whitespace-pre-line">{benim.yorum}</p>}
+            {benim.gizli && <p className="text-xs text-gray-500 mt-2">🙈 {t.reviewHiddenNote}</p>}
+            {hata && <p className="text-red-500 text-xs mt-2">{hata}</p>}
+            {silOnay ? (
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <span className="text-sm text-gray-700">{t.deleteReviewConfirm}</span>
+                <button onClick={handleSil} disabled={gonderiyor}
+                  className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg disabled:opacity-50">
+                  {gonderiyor ? t.deletingText : t.deleteReviewBtn}
+                </button>
+                <button onClick={() => setSilOnay(false)} disabled={gonderiyor}
+                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg">
+                  {t.cancelText}
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2 mt-3">
+                <button onClick={duzenlemeyiBaslat}
+                  className="px-3 py-1.5 bg-[#1a3a6b] hover:bg-[#2554a0] text-white text-xs font-semibold rounded-lg">
+                  ✏️ {t.editReviewBtn}
+                </button>
+                <button onClick={() => { setSilOnay(true); setBilgi(""); }}
+                  className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold rounded-lg">
+                  🗑️ {t.deleteReviewBtn}
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
           <div>
-            <h3 className="font-semibold text-gray-700 mb-3 text-sm">{t.addReviewTitle}</h3>
+            <h3 className="font-semibold text-gray-700 mb-3 text-sm">{duzenleniyor ? t.yourReviewTitle : t.addReviewTitle}</h3>
             <div className="flex items-center gap-1 mb-4">
               <span className="text-sm text-gray-500 mr-1">{t.yourRating}</span>
               {[1, 2, 3, 4, 5].map((i) => (
@@ -202,24 +301,25 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
               rows={3}
             />
             {hata && <p className="text-red-500 text-xs mt-1.5">{hata}</p>}
-            <button
-              onClick={handleGonder}
-              disabled={gonderiyor}
-              className="mt-3 bg-[#1a3a6b] hover:bg-[#2554a0] disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
-            >
-              {gonderiyor ? t.submittingBtn : t.submitReviewBtn}
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleGonder}
+                disabled={gonderiyor}
+                className="bg-[#1a3a6b] hover:bg-[#2554a0] disabled:opacity-50 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
+              >
+                {gonderiyor ? t.submittingBtn : duzenleniyor ? t.saveReviewBtn : t.submitReviewBtn}
+              </button>
+              {duzenleniyor && (
+                <button
+                  onClick={duzenlemeyiBirak}
+                  disabled={gonderiyor}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold px-5 py-2 rounded-lg transition-colors"
+                >
+                  {t.cancelText}
+                </button>
+              )}
+            </div>
           </div>
-        ) : (
-          <p className="text-sm text-gray-500">
-            {t.loginToReview}{" "}
-            <button
-              onClick={handleGoogleGiris}
-              className="text-[#1a3a6b] font-semibold underline underline-offset-2 hover:text-[#2554a0] transition-colors cursor-pointer"
-            >
-              {t.loginToReviewLink}
-            </button>{t.loginToReviewEnd}
-          </p>
         )}
       </div>
 
@@ -248,6 +348,7 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
                 </div>
                 <span className="text-xs text-gray-400 flex-shrink-0 pt-1">
                   {new Date(y.created_at).toLocaleDateString(t.memberSinceDateLocale)}
+                  {y.guncelleme_tarihi && ` · ${t.editedLabel}`}
                 </span>
               </div>
               <p className="text-sm text-gray-600 leading-relaxed pl-[42px]">{y.yorum}</p>
