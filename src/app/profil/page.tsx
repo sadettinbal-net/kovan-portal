@@ -10,6 +10,7 @@ import { createClient } from '@/utils/supabase/client';
 const supabase = createClient();
 import { useLanguage } from "@/contexts/LanguageContext";
 import FirmaSilPenceresi from '@/components/FirmaSilPenceresi';
+import SahipYeniYorumlar from '@/components/SahipYeniYorumlar';
 
 type User = {
   id: string;
@@ -261,6 +262,7 @@ export default function ProfilPage() {
                   {hata && <p className="mt-2 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{hata}</p>}
                 </div>
               )}
+              {firmalar.length > 0 && <SahipYeniYorumlar />}
               {silinecekFirma && (
                 <FirmaSilPenceresi
                   firmaId={silinecekFirma.id}

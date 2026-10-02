@@ -1,5 +1,20 @@
 # Proje Notları - Kovan Portal
 
+## 2026-10-02 - Puanlama Sistemi 2. Aşama
+
+### Yapılanlar
+- ✅ Migration `20261002040000_puanlama_asama2.sql` (canlıya uygulandı; DROP/DELETE/"or replace" yok).
+- ✅ **Firma yanıtı:** `yorumlar.cevap / cevap_tarihi / cevap_guncelleme_tarihi / cevap_gizli`. Firma sahibi her yoruma tek yanıt yazar, düzenler, boş kaydederek siler (`PUT /api/yorum/cevap`, 2-1000 karakter). Firma sayfasında yorumun altında "Firma yanıtı". Yönetici gizler/gösterir (`/api/admin/yorum-cevap-gizle`); gizli yanıt ziyaretçiye hiç gönderilmez, sahip "gizlendi" notuyla görür; düzenleme/silme gizliliği kaldırmaz.
+- ✅ **Şikâyet:** `yorum_sikayetleri` tablosu (RLS açık, politika yok, anon/authenticated yetkisi yok). Giriş yapmış üye ve firma sahibi sebep seçerek şikâyet eder (`POST /api/yorum/sikayet`); aynı kişi aynı yorumu bir kez (unique), kendi yorumunu ve gizli yorumu şikâyet edemez. Yönetici "🚩 Şikâyetler" sekmesinde yorumu gizler (şikâyetler "gizlendi") veya reddeder (yorum kalır, şikâyetler "reddedildi") — `/api/admin/sikayetler`. Yorum silinince şikâyetleri de silinir.
+- ✅ **Panel içi bildirim:** `yorum_bildirim_gorulme` (kişi + kapsam başına son bakılan zaman; RLS açık, dışarıya kapalı). Yönetici "🔔 Yeni Yorumlar" sekmesi (rozetli), firma sahibi profil sayfasında "Yeni yorumlar" kutusu + üst menüde rozet (`/api/bildirimler`). Düzenlenen yorumlar "yeni" sayılmaz; ilk açılışta tüm yorumlar yeni görünür.
+- Test: 3 geçici kullanıcıyla 34 kontrol geçti; açık anahtarla yeni tablolar okunamıyor/yazılamıyor (401).
+- Yönetici tarafı elle denendi; bunun için eklenen "DENEME FİRMASI (silinecek)" (id 5434) ve 3 yorumu, 1 yanıtı, 3 şikâyeti, 1 ziyaret kaydı silindi (doğrulandı: kalan 0; toplam yorum 8, onaylı firma 1898).
+
+### 📌 Yayın sonrası
+- Yeni yorum / şikâyet için e-posta bildirimi (firma sahibine ve yöneticiye). RESEND_API_KEY ve gönderen alan adı gerekli.
+
+---
+
 ## 2026-10-02 - Puanlama Sistemi 1. Aşama
 
 ### Yapılanlar

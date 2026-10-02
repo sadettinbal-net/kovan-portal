@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = servisIstemcisi();
   const [{ data: yorumlar, error }, { data: firma }] = await Promise.all([
-    supabase.from('yorumlar').select(`${YORUM_ALANLARI}, gizli, kullanici_email`).eq('firma_id', firmaId).order('created_at', { ascending: false }),
+    supabase.from('yorumlar').select(`${YORUM_ALANLARI}, gizli, kullanici_email, cevap, cevap_tarihi, cevap_guncelleme_tarihi, cevap_gizli`).eq('firma_id', firmaId).order('created_at', { ascending: false }),
     supabase.from('firmalar').select('yorum_sayisi, ortalama_puan, olumlu_yuzde').eq('id', firmaId).maybeSingle(),
   ]);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -11,6 +11,7 @@ import SanayiSiteleriYonetimi from '@/components/admin/SanayiSiteleriYonetimi';
 import KategoriYonetimi from '@/components/admin/KategoriYonetimi';
 import FirmaEkleFormu from '@/components/FirmaEkleFormu';
 import FirmaSilPenceresi from '@/components/FirmaSilPenceresi';
+import { AdminYeniYorumlar, AdminSikayetler } from '@/components/AdminYorumSekmeleri';
 import SosyalIkon from '@/components/SosyalIkon';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
@@ -1491,6 +1492,7 @@ function Istatistikler() {
 type AdminYorumTip = {
   id: number; kullanici_ad: string; kullanici_email: string; yorum: string; puan: number;
   created_at: string; guncelleme_tarihi: string | null; gizli: boolean;
+  cevap: string | null; cevap_tarihi: string | null; cevap_guncelleme_tarihi: string | null; cevap_gizli: boolean;
 };
 type AdminOzet = { yorum_sayisi: number; ortalama_puan: number | null; olumlu_yuzde: number | null };
 
@@ -1540,6 +1542,24 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
     const data = await res.json();
     if (res.ok) {
       setMesaj({ tip: 'basari', metin: y.gizli ? 'Yorum tekrar görünür.' : 'Yorum gizlendi; sitede görünmüyor ve puana katılmıyor.' });
+      fetchYorumlar();
+    } else {
+      setMesaj({ tip: 'hata', metin: data.error || 'İşlem başarısız.' });
+    }
+    setIslemId(null);
+  }
+
+  async function cevapGizliDegistir(y: AdminYorumTip) {
+    setIslemId(y.id);
+    setMesaj(null);
+    const res = await fetch('/api/admin/yorum-cevap-gizle', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: y.id, gizli: !y.cevap_gizli }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setMesaj({ tip: 'basari', metin: y.cevap_gizli ? 'Firma yanıtı tekrar görünür.' : 'Firma yanıtı gizlendi; sitede görünmüyor.' });
       fetchYorumlar();
     } else {
       setMesaj({ tip: 'hata', metin: data.error || 'İşlem başarısız.' });
@@ -1621,6 +1641,19 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
                     </div>
                     <p className="text-[11px] text-gray-400 break-all">{y.kullanici_email}</p>
                     {y.yorum && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{y.yorum}</p>}
+                    {y.cevap && (
+                      <div className={`mt-1.5 border-l-2 pl-2 ${y.cevap_gizli ? 'border-gray-300 opacity-60' : 'border-[#1a3a6b]'}`}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[11px] font-semibold text-[#1a3a6b]">💬 Firma yanıtı</span>
+                          {y.cevap_gizli && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-600 font-semibold">Gizli</span>}
+                          <button onClick={() => cevapGizliDegistir(y)} disabled={islemId === y.id}
+                            className="text-[11px] text-gray-500 hover:text-gray-800 underline disabled:opacity-50">
+                            {y.cevap_gizli ? 'Yanıtı göster' : 'Yanıtı gizle'}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-600 line-clamp-2">{y.cevap}</p>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-1 flex-shrink-0">
                     <button
@@ -1650,10 +1683,12 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
 
 // ─── Admin Panel ─────────────────────────────────────────────────────────────
 function AdminPanel() {
-  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri' | 'kategoriler' | 'firma-ekle'>('bekleyen');
+  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri' | 'kategoriler' | 'firma-ekle' | 'yeni-yorumlar' | 'sikayetler'>('bekleyen');
   const [bekleyenSayi, setBekleyenSayi] = useState(0);
   const [bekleyenIlanSayi, setBekleyenIlanSayi] = useState(0);
   const [bekleyenGuncellemeSayi, setBekleyenGuncellemeSayi] = useState(0);
+  const [yeniYorumSayi, setYeniYorumSayi] = useState(0);
+  const [bekleyenSikayetSayi, setBekleyenSikayetSayi] = useState(0);
   const [toplamFirmaSayisi, setToplamFirmaSayisi] = useState(0);
   const [firmalar, setFirmalar] = useState<Firma[]>([]);
   const [ara, setAra] = useState('');
@@ -1682,6 +1717,11 @@ function AdminPanel() {
       .then(({ count }) => setBekleyenIlanSayi(count || 0));
     supabase.from('firmalar').select('*', { count: 'exact', head: true }).not('bekleyen_degisiklikler', 'is', null)
       .then(({ count }) => setBekleyenGuncellemeSayi(count || 0));
+    // Panel içi bildirim: görülmemiş yeni yorumlar ve bekleyen şikâyetler
+    fetch('/api/bildirimler?kapsam=yonetici')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) { setYeniYorumSayi(d.sayi); setBekleyenSikayetSayi(d.bekleyenSikayet ?? 0); } })
+      .catch(() => {});
 
     // Gerçek toplam firma sayısını çek
     function sayiYukle() {
@@ -2013,6 +2053,20 @@ function AdminPanel() {
               <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{bekleyenGuncellemeSayi}</span>
             )}
           </button>
+          <button onClick={() => setAktifSekme('yeni-yorumlar')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'yeni-yorumlar' ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            🔔 Yeni Yorumlar
+            {yeniYorumSayi > 0 && (
+              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{yeniYorumSayi}</span>
+            )}
+          </button>
+          <button onClick={() => setAktifSekme('sikayetler')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'sikayetler' ? 'bg-red-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            🚩 Şikâyetler
+            {bekleyenSikayetSayi > 0 && (
+              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{bekleyenSikayetSayi}</span>
+            )}
+          </button>
           <button onClick={() => setAktifSekme('istatistikler')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'istatistikler' ? 'bg-[#e8a020] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             📊 İstatistikler
@@ -2047,6 +2101,9 @@ function AdminPanel() {
           <FirmaEkleFormu yonetici />
         </div>
       )}
+
+      {aktifSekme === 'yeni-yorumlar' && <AdminYeniYorumlar onSayi={setYeniYorumSayi} />}
+      {aktifSekme === 'sikayetler' && <AdminSikayetler onSayi={setBekleyenSikayetSayi} />}
 
       {aktifSekme === 'kategoriler' && (
         <div className="max-w-7xl mx-auto p-6">

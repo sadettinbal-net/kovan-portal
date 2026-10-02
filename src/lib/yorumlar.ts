@@ -39,3 +39,66 @@ export async function puanVerilebilirMi(
   }
   return null;
 }
+
+export const ayniEposta = (a: string | null | undefined, b: string | null | undefined) =>
+  !!a && !!b && a.toLowerCase() === b.toLowerCase();
+
+// ─── Firma yanıtı ───────────────────────────────────────────────────────────
+export const CEVAP_EN_AZ = 2;
+export const CEVAP_EN_FAZLA = 1000;
+
+// ─── Şikâyet ────────────────────────────────────────────────────────────────
+export const SIKAYET_SEBEPLERI = ['hakaret', 'yaniltici', 'kisisel_bilgi', 'reklam', 'konu_disi', 'diger'] as const;
+export type SikayetSebebi = typeof SIKAYET_SEBEPLERI[number];
+export const SIKAYET_ACIKLAMA_EN_FAZLA = 500;
+
+// Yönetici panelinde gösterilen Türkçe sebep adları (sitedeki adlar translations.ts'te)
+export const SIKAYET_SEBEP_ADLARI: Record<SikayetSebebi, string> = {
+  hakaret: 'Hakaret / küfür',
+  yaniltici: 'Yanıltıcı / sahte',
+  kisisel_bilgi: 'Kişisel bilgi içeriyor',
+  reklam: 'Reklam / spam',
+  konu_disi: 'Konu dışı',
+  diger: 'Diğer',
+};
+
+// ─── Panel içi bildirim ─────────────────────────────────────────────────────
+export type BildirimKapsami = 'yonetici' | 'sahip';
+
+// Kişinin "yorumlara en son baktığı" zamandan sonra gelen yorumlar.
+// Yönetici: tüm yorumlar (gizliler dahil). Firma sahibi: sadece kendi firmalarının görünür yorumları.
+export async function yeniYorumlar(supabase: SupabaseClient, kapsam: BildirimKapsami, email: string, limit = 50) {
+  const { data: gorulme } = await supabase
+    .from('yorum_bildirim_gorulme').select('son_gorulme')
+    .eq('kullanici_email', email.toLowerCase()).eq('kapsam', kapsam).maybeSingle();
+
+  const alanlar = kapsam === 'yonetici'
+    ? `${YORUM_ALANLARI}, firma_id, gizli, kullanici_email`
+    : `${YORUM_ALANLARI}, firma_id`;
+  let sorgu = supabase.from('yorumlar').select(alanlar, { count: 'exact' });
+  let firmaAdlari = new Map<number, string>();
+
+  if (kapsam === 'sahip') {
+    // Tam eşleşme (ilike kullanılmaz: e-postadaki "_" joker karakter sayılırdı)
+    const { data: firmalar } = await supabase.from('firmalar').select('id, ad')
+      .in('kullanici_email', [...new Set([email, email.toLowerCase()])]);
+    if (!firmalar?.length) return { sayi: 0, yorumlar: [], sahipMi: false };
+    firmaAdlari = new Map(firmalar.map(f => [f.id, f.ad]));
+    sorgu = sorgu.in('firma_id', firmalar.map(f => f.id)).eq('gizli', false);
+  }
+  if (gorulme?.son_gorulme) sorgu = sorgu.gt('created_at', gorulme.son_gorulme);
+
+  const { data, count } = await sorgu.order('created_at', { ascending: false }).limit(limit);
+  const yorumlar = (data || []) as unknown as Array<Record<string, unknown> & { firma_id: number }>;
+
+  if (kapsam === 'yonetici' && yorumlar.length) {
+    const ids = [...new Set(yorumlar.map(y => y.firma_id))];
+    const { data: firmalar } = await supabase.from('firmalar').select('id, ad').in('id', ids);
+    firmaAdlari = new Map((firmalar || []).map(f => [f.id, f.ad]));
+  }
+  return {
+    sayi: count ?? 0,
+    yorumlar: yorumlar.map(y => ({ ...y, firma_ad: firmaAdlari.get(y.firma_id) ?? '' })),
+    sahipMi: true,
+  };
+}

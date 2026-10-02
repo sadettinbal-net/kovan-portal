@@ -28,6 +28,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [user, setUser] = useState<User | null>(null);
+  // Firma sahibine: kendi firmalarına gelen, görülmemiş yorum sayısı (profil bağlantısında rozet)
+  const [yeniYorumSayi, setYeniYorumSayi] = useState(0);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [kvkkModal, setKvkkModal] = useState(false);
   const [uyeOlModal, setUyeOlModal] = useState(false);
@@ -68,6 +70,17 @@ export default function Navbar() {
       .then((data) => { if (data.user) setUser(data.user); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const yukle = () => fetch('/api/bildirimler?kapsam=sahip')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setYeniYorumSayi(d?.sayi ?? 0))
+      .catch(() => {});
+    yukle();
+    window.addEventListener('yorum-bildirimi-goruldu', yukle);
+    return () => window.removeEventListener('yorum-bildirimi-goruldu', yukle);
+  }, [user]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -286,6 +299,7 @@ export default function Navbar() {
                 </div>
               )}
               <span className={scrolled ? "text-[13px]" : "text-[15px]"}>{user.name.split(' ')[0]}</span>
+              {yeniYorumSayi > 0 && <span className="bg-red-500 text-white text-[11px] font-bold px-1.5 rounded-full" title={t.newReviewsTitle}>{yeniYorumSayi}</span>}
             </button>
           ) : (
             <button onClick={() => setKvkkModal(true)}
@@ -299,6 +313,7 @@ export default function Navbar() {
               <Link href="/profil" onClick={() => setUserMenuOpen(false)}
                 className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100">
                 {t.myProfile}
+                {yeniYorumSayi > 0 && <span className="ml-2 bg-red-500 text-white text-[11px] font-bold px-1.5 rounded-full">🔔 {yeniYorumSayi}</span>}
               </Link>
               <button onClick={async () => { setUserMenuOpen(false); await fetch('/api/auth/logout', { method: 'POST' }); setUser(null); router.push('/'); }}
                 className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
@@ -362,7 +377,7 @@ export default function Navbar() {
           ))}
           {user ? (
             <>
-              <Link href="/profil" className="block text-white px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors" onClick={() => setMenuOpen(false)}>{t.myProfile}</Link>
+              <Link href="/profil" className="block text-white px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors" onClick={() => setMenuOpen(false)}>{t.myProfile}{yeniYorumSayi > 0 && <span className="ml-2 bg-red-500 text-white text-[11px] font-bold px-1.5 rounded-full">🔔 {yeniYorumSayi}</span>}</Link>
               <button onClick={async () => { setMenuOpen(false); await fetch('/api/auth/logout', { method: 'POST' }); setUser(null); router.push('/'); }}
                 className="block w-full text-left text-red-400 px-4 py-3 text-base hover:bg-[#1a3a6b] transition-colors">
                 {t.signOut}

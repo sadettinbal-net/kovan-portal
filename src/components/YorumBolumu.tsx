@@ -2,17 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import YorumSatiri, { type YorumSatirVerisi } from "@/components/YorumSatiri";
 
-interface Yorum {
-  id: number;
-  kullanici_ad: string;
-  yorum: string;
-  puan: number;
-  created_at: string;
-  guncelleme_tarihi: string | null;
-}
+type Yorum = YorumSatirVerisi;
 
-type BenimYorum = Yorum & { gizli: boolean };
+type BenimYorum = Omit<Yorum, "cevap"> & { gizli: boolean };
 
 interface Stats {
   toplam: number;
@@ -56,11 +50,13 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [benim, setBenim] = useState<BenimYorum | null>(null);
   const [sahibi, setSahibi] = useState(false);
+  const [sikayetEttiklerim, setSikayetEttiklerim] = useState<number[]>([]);
   const [duzenleniyor, setDuzenleniyor] = useState(false);
   const [silOnay, setSilOnay] = useState(false);
 
-  const fetchYorumlar = useCallback(async () => {
-    setYukleniyor(true);
+  // sessiz: liste yerinde kalır (yanıt/şikâyet sonrası yenilemede satırlardaki mesajlar kaybolmasın)
+  const fetchYorumlar = useCallback(async (sessiz = false) => {
+    if (!sessiz) setYukleniyor(true);
     const res = await fetch(`/api/yorumlar?firmaId=${firmaId}`);
     if (res.ok) {
       const data = await res.json();
@@ -68,6 +64,7 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
       setStats(data.stats);
       setBenim(data.benim);
       setSahibi(!!data.sahibi);
+      setSikayetEttiklerim(data.sikayetEttiklerim || []);
     }
     setYukleniyor(false);
   }, [firmaId]);
@@ -333,26 +330,16 @@ export default function YorumBolumu({ firmaId }: { firmaId: number }) {
           </div>
         ) : (
           yorumlar.map((y) => (
-            <div key={y.id} className="px-6 py-4">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[#1a3a6b] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
-                    {y.kullanici_ad.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-sm text-gray-800 leading-tight">
-                      {y.kullanici_ad}
-                    </div>
-                    <Yildizlar puan={y.puan} boyut="sm" />
-                  </div>
-                </div>
-                <span className="text-xs text-gray-400 flex-shrink-0 pt-1">
-                  {new Date(y.created_at).toLocaleDateString(t.memberSinceDateLocale)}
-                  {y.guncelleme_tarihi && ` · ${t.editedLabel}`}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600 leading-relaxed pl-[42px]">{y.yorum}</p>
-            </div>
+            <YorumSatiri
+              key={y.id}
+              yorum={y}
+              sahibi={sahibi}
+              girisli={!!user}
+              kendiYorumu={benim?.id === y.id}
+              sikayetEdildi={sikayetEttiklerim.includes(y.id)}
+              yildizlar={<Yildizlar puan={y.puan} boyut="sm" />}
+              onDegisti={() => fetchYorumlar(true)}
+            />
           ))
         )}
       </div>
