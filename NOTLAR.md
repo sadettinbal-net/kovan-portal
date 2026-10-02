@@ -1,5 +1,17 @@
 # Proje Notları - Kovan Portal
 
+## 2026-10-02 - Firma WhatsApp Alanı
+
+### Yapılanlar
+- ✅ `firmalar.whatsapp` sütunu eklendi (canlı veritabanına uygulandı). Migration: `supabase/migrations/20261002010000_firma_whatsapp.sql`.
+- ✅ Alan numara (05xx..., 905xx..., +90...) veya WhatsApp Business linki kabul ediyor. Sadece `wa.me`, `api.whatsapp.com`, `whatsapp.com` (ve `www.`) adreslerine izin var; başka site, `javascript:` vb. reddediliyor.
+- ✅ Kontrol hem formda hem sunucuda yapılıyor (`src/lib/whatsapp.ts` → `whatsappKontrol`): Firma Ekle (`/api/firma-ekle`), firma sahibi düzenleme (`/api/firma-duzenle`), admin düzenleme (`/api/admin/firma-guncelle`).
+- ✅ Firma sayfasındaki buton "WhatsApp ile Yaz" oldu (7 dil, `whatsappBtn`). Numara → `https://wa.me/90...`, link → doğrudan link. Alan boşsa mobil telefonun ilk numarası kullanılıyor.
+- ✅ Formlarda alan açıklaması: "WhatsApp numarası veya WhatsApp Business linki". Mobil Telefon'daki "(WhatsApp için)" kaldırıldı.
+- ✅ Düzeltilen hata: Boşluklu ("0539 836 82 86") veya virgülle birden fazla yazılmış mobil numaralarda WhatsApp/Ara butonları bozuk adrese gidiyordu; artık ilk numara düzgün alınıyor (`ilkNumara`).
+
+---
+
 ## 2026-10-01 - Bugünkü Çalışmalar
 
 ### Yapılanlar

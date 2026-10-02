@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import SosyalIkon from '@/components/SosyalIkon';
+import { whatsappKontrol } from '@/lib/whatsapp';
 
 type EditForm = {
   ad: string;
@@ -11,6 +12,7 @@ type EditForm = {
   sanayi_sitesi: string;
   telefon: string;
   mobil_telefon: string;
+  whatsapp: string;
   adres: string;
   hizmetler: string[];
   aciklama: string;
@@ -100,6 +102,12 @@ export default function FirmaOwnerPanel({ firmaId, kullaniciEmail, firma, fotogr
   }
 
   async function kaydet() {
+    const whatsapp = whatsappKontrol(form.whatsapp);
+    if (whatsapp.hata) {
+      setDurum({ tip: 'hata', mesaj: whatsapp.hata });
+      return;
+    }
+
     setKaydediliyor(true);
     setDurum(null);
     setFotografHata(null);
@@ -338,9 +346,15 @@ export default function FirmaOwnerPanel({ firmaId, kullaniciEmail, firma, fotogr
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">📲 Mobil Telefon <span className="font-normal text-gray-400">(WhatsApp için)</span></label>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">📲 Mobil Telefon</label>
                 <input value={form.mobil_telefon || ''} onChange={e => setForm(f => ({ ...f, mobil_telefon: e.target.value }))}
                   placeholder="05xx xxx xx xx"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">💬 WhatsApp numarası veya WhatsApp Business linki</label>
+                <input value={form.whatsapp || ''} onChange={e => setForm(f => ({ ...f, whatsapp: e.target.value }))}
+                  placeholder="05xx xxx xx xx veya https://wa.me/message/..."
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]" />
               </div>
               <div className="grid grid-cols-2 gap-3">

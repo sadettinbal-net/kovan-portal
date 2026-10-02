@@ -133,7 +133,7 @@ type BekleyenGuncellemeTip = Firma & { bekleyen_degisiklikler: Record<string, un
 
 const GUNCELLEME_ALAN_ETIKETLER: Record<string, string> = {
   ad: 'Firma Adı', sahip: 'Sahip/Yetkili', sektor: 'Sektör', sanayi_sitesi: 'Sanayi Sitesi',
-  telefon: 'Telefon', mobil_telefon: 'Mobil Telefon', adres: 'Adres', hizmetler: 'Hizmetler', aciklama: 'Hakkında',
+  telefon: 'Telefon', mobil_telefon: 'Mobil Telefon', whatsapp: 'WhatsApp', adres: 'Adres', hizmetler: 'Hizmetler', aciklama: 'Hakkında',
   web_sitesi: 'Web Sitesi', instagram: 'Instagram', facebook: 'Facebook',
   twitter: 'X (Twitter)', youtube: 'YouTube', linkedin: 'LinkedIn', tiktok: 'TikTok', eposta: 'E-posta', nsosyal: 'N Sosyal',
 };
@@ -1895,6 +1895,7 @@ function AdminPanel() {
       sanayi_sitesi: seciliFirma.sanayi_sitesi,
       telefon: seciliFirma.telefon,
       mobil_telefon: seciliFirma.mobil_telefon ?? '',
+      whatsapp: seciliFirma.whatsapp ?? '',
       adres: seciliFirma.adres,
       plus_code: seciliFirma.plus_code ?? '',
       web_sitesi: seciliFirma.web_sitesi,
@@ -2282,6 +2283,7 @@ function AdminPanel() {
                     <div><span className="text-gray-400 text-xs">Sanayi Sitesi</span><p className="text-gray-800">{seciliFirma.sanayi_sitesi || '—'}</p></div>
                     <div><span className="text-gray-400 text-xs">Telefon</span><p className="text-gray-800">{seciliFirma.telefon || '—'}</p></div>
                     <div><span className="text-gray-400 text-xs">Mobil Telefon</span><p className="text-gray-800">{seciliFirma.mobil_telefon || '—'}</p></div>
+                    <div><span className="text-gray-400 text-xs">WhatsApp</span><p className="text-gray-800 break-all">{seciliFirma.whatsapp || '—'}</p></div>
                     <div><span className="text-gray-400 text-xs">Durum</span>
                       <p className={`font-medium ${seciliFirma.onay_durumu === 'onaylandi' ? 'text-green-600' : seciliFirma.onay_durumu === 'reddedildi' ? 'text-red-600' : 'text-yellow-600'}`}>
                         {seciliFirma.onay_durumu === 'onaylandi' ? '✓ Onaylı' : seciliFirma.onay_durumu === 'reddedildi' ? '✕ Reddedildi' : '⏳ Beklemede'}
@@ -2406,6 +2408,12 @@ function AdminPanel() {
                           placeholder="05xx xxx xx xx"
                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]" />
                       </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-600 block mb-1">WhatsApp numarası veya WhatsApp Business linki</label>
+                      <input value={duzenleForm.whatsapp || ''} onChange={e => setDuzenleForm(f => ({ ...f, whatsapp: e.target.value }))}
+                        placeholder="05xx xxx xx xx veya https://wa.me/message/..."
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#1a3a6b]" />
                     </div>
                     <div>
                       <label className="text-xs font-semibold text-gray-600 block mb-1">Durum</label>

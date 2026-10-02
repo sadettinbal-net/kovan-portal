@@ -3,6 +3,7 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
+import { whatsappKontrol } from '@/lib/whatsapp';
 
 export async function PATCH(request: NextRequest) {
   const supabaseAuth = await createServerClient();
@@ -12,6 +13,8 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json();
   const { id } = body;
   if (!id) return NextResponse.json({ error: 'ID gerekli.' }, { status: 400 });
+  const whatsapp = whatsappKontrol(body.whatsapp);
+  if (whatsapp.hata) return NextResponse.json({ error: whatsapp.hata }, { status: 400 });
 
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,6 +39,7 @@ export async function PATCH(request: NextRequest) {
     sanayi_sitesi: body.sanayi_sitesi,
     telefon: body.telefon,
     mobil_telefon: body.mobil_telefon || null,
+    whatsapp: whatsapp.deger,
     adres: body.adres,
     hizmetler: body.hizmetler,
     aciklama: body.aciklama || null,

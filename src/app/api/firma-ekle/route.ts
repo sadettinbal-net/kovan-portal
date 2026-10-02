@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/utils/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { yoneticiMi } from '@/lib/admin';
+import { whatsappKontrol } from '@/lib/whatsapp';
 import { FIRMA_TIPI, KATEGORI_TIPI, sektordenKategoriBul, type FirmaTipi, type KategoriTipi } from '@/lib/firmaKategorileri';
 
 const BUCKET = 'firma-fotograflari';
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
     let firma_tipi: FirmaTipi | null = firmaTipiRaw && firmaTipiRaw in KATEGORI_TIPI ? (firmaTipiRaw as FirmaTipi) : null;
     const telefon      = (formData.get('telefon') as string)?.trim();
     const mobil_telefon = (formData.get('mobil_telefon') as string)?.trim() || null;
+    const whatsappSonuc = whatsappKontrol(formData.get('whatsapp'));
     const adres        = (formData.get('adres') as string)?.trim() || null;
     const plus_code    = (formData.get('plus_code') as string)?.trim() || null;
     const web_sitesi   =(formData.get('web_sitesi') as string)?.trim() || null;
@@ -72,6 +74,8 @@ export async function POST(request: NextRequest) {
     if (!ad || !il_adi || (!sektor && isNaN(kategoriIdRaw)) || !telefon) {
       return NextResponse.json({ error: 'Zorunlu alanlar eksik.' }, { status: 400 });
     }
+    if (whatsappSonuc.hata) return NextResponse.json({ error: whatsappSonuc.hata }, { status: 400 });
+    const whatsapp = whatsappSonuc.deger;
 
     const hizmetler = hizmetlerRaw
       .split(',').map(h => h.trim()).filter(Boolean);
@@ -118,7 +122,7 @@ export async function POST(request: NextRequest) {
       .from('firmalar')
       .insert({
         ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, mahalle_id, sokak_id, sektor, kategori_id, firma_tipi,
-        telefon, mobil_telefon, adres, plus_code, web_sitesi, eposta, instagram, facebook, tiktok, nsosyal,
+        telefon, mobil_telefon, whatsapp, adres, plus_code, web_sitesi, eposta, instagram, facebook, tiktok, nsosyal,
         hizmetler, ozel_firma: false,
         fotograf_url: null, detay_fotograflar: [],
         onay_durumu: yonetici ? 'onaylandi' : 'beklemede',

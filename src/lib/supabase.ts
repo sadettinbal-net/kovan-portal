@@ -18,6 +18,7 @@ export type Firma = {
   adres: string;
   telefon: string;
   mobil_telefon?: string | null;
+  whatsapp?: string | null;
   hizmetler: string[];
   ozel_firma: boolean;
   fotograf_url: string | null;

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { aktifKategoriler, kategoriGruplari, KATEGORI_TIPI, type FirmaKategorisi } from '@/lib/firmaKategorileri';
 import SosyalIkon from '@/components/SosyalIkon';
 import KonumSecici, { BOS_KONUM, type Konum } from '@/components/KonumSecici';
+import { whatsappKontrol } from '@/lib/whatsapp';
 
 type Durum = { tip: 'basari' | 'hata'; mesaj: string } | null;
 
@@ -40,7 +41,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
   const [form, setForm] = useState({
     ad: '', sahip: '', site_id: '', kategori_id: '',
-    telefon: '', mobil_telefon: '', adres: '', plus_code: '', web_sitesi: '', eposta: '', instagram: '', facebook: '', tiktok: '', nsosyal: '', hizmetler: '',
+    telefon: '', mobil_telefon: '', whatsapp: '', adres: '', plus_code: '', web_sitesi: '', eposta: '', instagram: '', facebook: '', tiktok: '', nsosyal: '', hizmetler: '',
   });
 
   const [yeniKategoriModu, setYeniKategoriModu] = useState(false);
@@ -55,7 +56,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
   }, [yonetici]);
 
   function formuSifirla() {
-    setForm({ ad: '', sahip: '', site_id: '', kategori_id: '', telefon: '', mobil_telefon: '', adres: '', plus_code: '', web_sitesi: '', eposta: '', instagram: '', facebook: '', tiktok: '', nsosyal: '', hizmetler: '' });
+    setForm({ ad: '', sahip: '', site_id: '', kategori_id: '', telefon: '', mobil_telefon: '', whatsapp: '', adres: '', plus_code: '', web_sitesi: '', eposta: '', instagram: '', facebook: '', tiktok: '', nsosyal: '', hizmetler: '' });
     setKonum(BOS_KONUM);
     setYeniKategoriModu(false);
     setYeniKategori('');
@@ -160,6 +161,12 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
     if (!form.ad.trim() || !konum.il || !konum.ilce || !form.telefon.trim()) {
       setDurum({ tip: 'hata', mesaj: 'Lütfen yıldızlı zorunlu alanları doldurun.' });
+      return;
+    }
+
+    const whatsapp = whatsappKontrol(form.whatsapp);
+    if (whatsapp.hata) {
+      setDurum({ tip: 'hata', mesaj: whatsapp.hata });
       return;
     }
 
@@ -493,10 +500,19 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* Mobil Telefon */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">📲 Mobil Telefon <span className="text-gray-400 font-normal">(WhatsApp için)</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">📲 Mobil Telefon</label>
             <input type="tel" value={form.mobil_telefon} onChange={e => setField('mobil_telefon', e.target.value)}
               placeholder="05xx xxx xx xx"
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
+          </div>
+
+          {/* WhatsApp */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">💬 WhatsApp numarası veya WhatsApp Business linki</label>
+            <input type="text" value={form.whatsapp} onChange={e => setField('whatsapp', e.target.value)}
+              placeholder="05xx xxx xx xx veya https://wa.me/message/..."
+              className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
+            <p className="text-xs text-gray-400 mt-1">Boş bırakırsanız WhatsApp butonu mobil telefona yönlenir.</p>
           </div>
 
           {/* Web Sitesi */}
