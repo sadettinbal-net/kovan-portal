@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
 import { translations } from "@/lib/translations";
 import type { Lang } from "@/lib/translations";
+import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
 import { getKategoriResim } from "@/lib/kategoriResim";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ export default async function FirmaKartPage({ params }: PageProps) {
 
   const { data: firma } = await supabase
     .from("firmalar")
-    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu, yorum_sayisi, ortalama_puan")
+    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis")
     .eq("id", id)
     .single();
 
@@ -76,12 +77,18 @@ export default async function FirmaKartPage({ params }: PageProps) {
       {/* Firma kartı */}
       <div
         className={`bg-white rounded-xl border overflow-hidden shadow-sm ${
-          firma.ozel_firma ? "border-[#e8a020]" : "border-[#dde3ec]"
+          sponsorluMu(firma) ? "border-[#e8a020]" : musteriFavorisiMi(firma) ? "border-green-500" : "border-[#dde3ec]"
         }`}
       >
-        {firma.ozel_firma && (
-          <div className="bg-[#e8a020] text-white text-xs font-semibold px-4 py-1.5 flex items-center gap-1">
-            ⭐ {t.featuredBadge}
+        {sponsorluMu(firma) && (
+          <div className="bg-[#e8a020] text-white px-4 py-1.5 text-xs font-semibold flex items-center gap-1">
+            💎 {t.featuredBadge}
+            <span className="ml-auto font-normal opacity-90 text-xs">{t.sponsoredLabel}</span>
+          </div>
+        )}
+        {musteriFavorisiMi(firma) && (
+          <div className="bg-green-600 text-white px-4 py-1.5 text-xs font-semibold">
+            ⭐ {t.favoriteBadge}
           </div>
         )}
 

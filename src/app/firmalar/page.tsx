@@ -71,7 +71,7 @@ export default async function FirmalarPage(props: PageProps) {
 
   let query = supabase
     .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, hedef_sayfa, yorum_sayisi, ortalama_puan, olumlu_yuzde")
+    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, hedef_sayfa, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis")
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi")
     .order("ad");

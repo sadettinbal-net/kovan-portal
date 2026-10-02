@@ -12,6 +12,16 @@ import KategoriYonetimi from '@/components/admin/KategoriYonetimi';
 import FirmaEkleFormu from '@/components/FirmaEkleFormu';
 import FirmaSilPenceresi from '@/components/FirmaSilPenceresi';
 import { AdminYeniYorumlar, AdminSikayetler } from '@/components/AdminYorumSekmeleri';
+import { gunBaslangici, gunSonu, musteriFavorisiMi, ozelDurum, tarihKutusu, type OzelDurum } from '@/lib/ozelFirma';
+
+// Özel Firma (sponsorlu) durumunu yönetici paneli için kısa yazıya çevirir
+function ozelDurumYazisi(d: OzelDurum, bitis?: string | null): string {
+  const bit = bitis ? new Date(bitis).toLocaleDateString('tr-TR') : '';
+  if (d.durum === 'aktif') return `💎 Özel Firma · aktif, ${d.kalanGun} gün kaldı (bitiş ${bit})`;
+  if (d.durum === 'baslamadi') return '💎 Özel Firma · henüz başlamadı';
+  if (d.durum === 'doldu') return `💎 Özel Firma · süresi doldu (${bit})`;
+  return '';
+}
 import SosyalIkon from '@/components/SosyalIkon';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
@@ -1823,6 +1833,8 @@ function AdminPanel() {
       nsosyal: seciliFirma.nsosyal ?? '',
       hizmetler: seciliFirma.hizmetler,
       ozel_firma: seciliFirma.ozel_firma,
+      ozel_baslangic: seciliFirma.ozel_baslangic ?? null,
+      ozel_bitis: seciliFirma.ozel_bitis ?? null,
       onay_durumu: seciliFirma.onay_durumu,
       hedef_sayfa: seciliFirma.hedef_sayfa ?? null,
       kullanici_email: seciliFirma.kullanici_email ?? '',
@@ -2147,6 +2159,9 @@ function AdminPanel() {
                   <p className="text-xs text-gray-400 truncate">{firma.sektor}</p>
                 </div>
                 {firma.onay_durumu === 'pasif' && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">Yayında değil</span>}
+                {ozelDurum(firma).durum === 'aktif' && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800 flex-shrink-0">💎 {new Date(firma.ozel_bitis!).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}</span>
+                )}
                 {firma.fotograf_url && <span className="text-green-500 text-xs flex-shrink-0">📷</span>}
               </button>
             ))}
@@ -2262,7 +2277,12 @@ function AdminPanel() {
                       </p>
                     </div>
                     <div className="col-span-2 flex items-center gap-2 text-xs text-gray-500 flex-wrap">
-                      {seciliFirma.ozel_firma && <span className="bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full font-medium">⭐ Özel Firma</span>}
+                      {ozelDurum(seciliFirma).durum !== 'yok' && (
+                        <span className={`px-2 py-0.5 rounded-full font-medium ${ozelDurum(seciliFirma).durum === 'aktif' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'}`}>
+                          {ozelDurumYazisi(ozelDurum(seciliFirma), seciliFirma.ozel_bitis)}
+                        </span>
+                      )}
+                      {musteriFavorisiMi(seciliFirma) && <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">⭐ Müşteri Favorisi</span>}
                       {(seciliFirma as Firma & { hedef_sayfa?: number | null }).hedef_sayfa && (
                         <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
                           📌 Sayfa {(seciliFirma as Firma & { hedef_sayfa?: number | null }).hedef_sayfa}&apos;de sabit
@@ -2447,11 +2467,31 @@ function AdminPanel() {
                       />
                       <p className="text-xs text-gray-400 mt-1">Firmayı belirttiğiniz sayfanın en üstüne sabitler.</p>
                     </div>
-                    <label className="flex items-center gap-2 text-sm cursor-pointer">
-                      <input type="checkbox" checked={!!duzenleForm.ozel_firma} onChange={e => setDuzenleForm(f => ({ ...f, ozel_firma: e.target.checked }))}
-                        className="w-4 h-4 accent-[#e8a020]" />
-                      <span className="text-gray-700">Özel Firma (Öne Çıkar)</span>
-                    </label>
+                    <div className="border border-[#e8a020]/40 bg-[#fff8ec] rounded-lg p-3">
+                      <p className="text-xs font-semibold text-gray-700 mb-1">💎 Özel Firma (Sponsorlu)</p>
+                      <p className="text-[11px] text-gray-500 mb-2">Başlangıç günü 00:00'da başlar, bitiş günü 23:59'da biter; süre bitince etiket kendiliğinden kalkar.</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="text-[11px] text-gray-600">Başlangıç
+                          <input type="date" value={tarihKutusu(duzenleForm.ozel_baslangic)}
+                            onChange={e => setDuzenleForm(f => ({ ...f, ozel_firma: true, ozel_baslangic: e.target.value ? gunBaslangici(e.target.value) : null }))}
+                            className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-[#e8a020] bg-white" />
+                        </label>
+                        <label className="text-[11px] text-gray-600">Bitiş
+                          <input type="date" value={tarihKutusu(duzenleForm.ozel_bitis)}
+                            onChange={e => setDuzenleForm(f => ({ ...f, ozel_firma: true, ozel_bitis: e.target.value ? gunSonu(e.target.value) : null }))}
+                            className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm outline-none focus:border-[#e8a020] bg-white" />
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 mt-2">
+                        <span className="text-[11px] text-gray-600">
+                          {ozelDurum(duzenleForm).durum === 'yok' ? 'Özel firma değil.' : ozelDurumYazisi(ozelDurum(duzenleForm), duzenleForm.ozel_bitis)}
+                        </span>
+                        {(duzenleForm.ozel_firma || duzenleForm.ozel_baslangic || duzenleForm.ozel_bitis) && (
+                          <button type="button" onClick={() => setDuzenleForm(f => ({ ...f, ozel_firma: false, ozel_baslangic: null, ozel_bitis: null }))}
+                            className="text-[11px] text-red-600 hover:underline">Özel firmalığı kaldır</button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
 

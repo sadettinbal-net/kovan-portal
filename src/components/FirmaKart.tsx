@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { translations } from "@/lib/translations";
 import type { Lang } from "@/lib/translations";
 import { getKategoriResim } from "@/lib/kategoriResim";
+import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
 
 export interface FirmaKartData {
   id: number;
@@ -15,6 +16,8 @@ export interface FirmaKartData {
   telefon: string;
   hizmetler: string[];
   ozel_firma: boolean;
+  ozel_baslangic?: string | null;
+  ozel_bitis?: string | null;
   fotograf_url: string | null;
   olumlu_yuzde?: number | null;
   yorum_sayisi?: number;
@@ -35,16 +38,24 @@ export default async function FirmaKart({ firma }: { firma: FirmaKartData }) {
   const t = translations[lang];
   const basHarfler = firmaBasHarfleri(firma.ad);
   const resimUrl = getKategoriResim(firma.sektor);
+  const sponsorlu = sponsorluMu(firma);
+  const favori = musteriFavorisiMi(firma);
 
   return (
     <div
       className={`bg-white rounded-lg border hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full ${
-        firma.ozel_firma ? "border-[#e8a020] shadow-sm" : "border-[#dde3ec]"
+        sponsorlu ? "border-[#e8a020] shadow-sm" : favori ? "border-green-500 shadow-sm" : "border-[#dde3ec]"
       }`}
     >
-      {firma.ozel_firma && (
-        <div className="bg-[#e8a020] text-white text-xs font-semibold px-3 py-1 flex items-center gap-1">
-          ⭐ {t.featuredBadge}
+      {sponsorlu && (
+        <div className="bg-[#e8a020] text-white text-[8px] phone:text-[10px] sm:text-xs font-semibold px-1.5 sm:px-3 py-0.5 sm:py-1 flex items-center gap-1">
+          💎 {t.featuredBadge}
+          <span className="ml-auto font-normal opacity-90 text-[7px] phone:text-[9px] sm:text-[10px]">{t.sponsoredLabel}</span>
+        </div>
+      )}
+      {favori && (
+        <div className="bg-green-600 text-white text-[8px] phone:text-[10px] sm:text-xs font-semibold px-1.5 sm:px-3 py-0.5 sm:py-1 flex items-center gap-1">
+          ⭐ {t.favoriteBadge}
         </div>
       )}
 

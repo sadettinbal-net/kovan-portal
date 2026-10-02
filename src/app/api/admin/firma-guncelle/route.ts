@@ -16,6 +16,23 @@ export async function PATCH(request: NextRequest) {
 
   const { id, ...updates } = await request.json();
   if (!id) return NextResponse.json({ error: 'ID gerekli.' }, { status: 400 });
+  // Özel Firma (sponsorlu): açıksa başlangıç ve bitiş tarihi zorunlu, bitiş başlangıçtan sonra; kapatılınca tarihler silinir
+  if ('ozel_firma' in updates || 'ozel_baslangic' in updates || 'ozel_bitis' in updates) {
+    if (updates.ozel_firma) {
+      const bas = Date.parse(updates.ozel_baslangic ?? '');
+      const bit = Date.parse(updates.ozel_bitis ?? '');
+      if (isNaN(bas) || isNaN(bit)) {
+        return NextResponse.json({ error: 'Özel Firma için başlangıç ve bitiş tarihi seçin.' }, { status: 400 });
+      }
+      if (bit <= bas) return NextResponse.json({ error: 'Özel Firma bitiş tarihi başlangıçtan sonra olmalı.' }, { status: 400 });
+      updates.ozel_baslangic = new Date(bas).toISOString();
+      updates.ozel_bitis = new Date(bit).toISOString();
+    } else {
+      updates.ozel_firma = false;
+      updates.ozel_baslangic = null;
+      updates.ozel_bitis = null;
+    }
+  }
   if ('whatsapp' in updates) {
     const whatsapp = whatsappKontrol(updates.whatsapp);
     if (whatsapp.hata) return NextResponse.json({ error: whatsapp.hata }, { status: 400 });

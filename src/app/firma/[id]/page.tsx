@@ -12,6 +12,7 @@ import VideoReklamLink from "@/components/VideoReklamLink";
 import FotoGaleri from "@/components/FotoGaleri";
 import BolgeHaritasi, { type HaritaSorgusu } from "@/components/BolgeHaritasi";
 import { ilkNumara, whatsappAdresi } from "@/lib/whatsapp";
+import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
 
 export const dynamic = "force-dynamic";
 
@@ -80,9 +81,15 @@ export default async function FirmaDetay({ params }: PageProps) {
       </nav>
 
       <div className="bg-white rounded-xl border border-[#dde3ec] overflow-hidden shadow-sm mb-6">
-        {firma.ozel_firma && (
-          <div className="bg-[#e8a020] text-white px-6 py-2 text-sm font-semibold">
-            ⭐ {t.featuredBadge}
+        {sponsorluMu(firma) && (
+          <div className="bg-[#e8a020] text-white px-6 py-2 text-sm font-semibold flex items-center gap-1">
+            💎 {t.featuredBadge}
+            <span className="ml-auto font-normal opacity-90 text-xs">{t.sponsoredLabel}</span>
+          </div>
+        )}
+        {musteriFavorisiMi(firma) && (
+          <div className="bg-green-600 text-white px-6 py-2 text-sm font-semibold">
+            ⭐ {t.favoriteBadge}
           </div>
         )}
 

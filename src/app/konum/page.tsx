@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import FirmaKart from "@/components/FirmaKart";
 import { supabase } from "@/lib/supabase";
+import { aktifSponsorlar, OZEL_ALANLAR } from "@/lib/ozelFirma";
 import KonumFiltre from "./KonumFiltre";
 import { onayliFirmaOzetleri, sanayiSiteleriOzeti, siteSatirlari, type SiteOzeti } from "@/lib/sanayiSiteleri";
 import BolgeHaritasi, { type HaritaSorgusu } from "@/components/BolgeHaritasi";
@@ -28,20 +29,25 @@ export default async function KonumPage(props: PageProps) {
   let firmalar: import("@/lib/supabase").Firma[] = [];
   let toplam = 0;
   if (il) {
-    let sorgu = supabase
-      .from("firmalar")
-      .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url", { count: "exact" })
-      .eq("onay_durumu", "onaylandi")
-      .eq("il_adi", il)
-      .order("ozel_firma", { ascending: false })
-      .order("ad")
-      .limit(LIMIT);
-    if (ilce) sorgu = sorgu.eq("ilce_adi", ilce);
-    if (mahalleId) sorgu = sorgu.eq("mahalle_id", mahalleId);
-    if (sokakId) sorgu = sorgu.eq("sokak_id", sokakId);
-    const { data, count } = await sorgu;
-    firmalar = (data || []) as import("@/lib/supabase").Firma[];
-    toplam = count || 0;
+    const bolgeSorgusu = () => {
+      let sorgu = supabase
+        .from("firmalar")
+        .select(`id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ${OZEL_ALANLAR}`, { count: "exact" })
+        .eq("onay_durumu", "onaylandi")
+        .eq("il_adi", il);
+      if (ilce) sorgu = sorgu.eq("ilce_adi", ilce);
+      if (mahalleId) sorgu = sorgu.eq("mahalle_id", mahalleId);
+      if (sokakId) sorgu = sorgu.eq("sokak_id", sokakId);
+      return sorgu;
+    };
+    // Süresi devam eden sponsorlu (Özel) firmalar başta, geri kalanlar alfabetik
+    const { data: sponsorlar } = await aktifSponsorlar(bolgeSorgusu()).order("ad").limit(LIMIT);
+    const sponsorIdleri = (sponsorlar || []).map((f) => f.id);
+    let digerleri = bolgeSorgusu().order("ad").limit(Math.max(LIMIT - sponsorIdleri.length, 0));
+    if (sponsorIdleri.length) digerleri = digerleri.not("id", "in", `(${sponsorIdleri.join(",")})`);
+    const { data, count } = await digerleri;
+    firmalar = [...(sponsorlar || []), ...(data || [])] as import("@/lib/supabase").Firma[];
+    toplam = (count || 0) + sponsorIdleri.length;
   }
 
   // Seçilen il/ilçedeki sanayi siteleri: gruplar (İstanbul'da yakalar) → üst siteler → içindeki siteler

@@ -1,5 +1,21 @@
 # Proje Notları - Kovan Portal
 
+## 2026-10-02 - Özel Firmalar: iki ayrı etiket
+
+### Yapılanlar
+- ✅ **⭐ Müşteri Favorisi** (otomatik): en az 3 görünür yorum ve %90+ olumlu (`src/lib/ozelFirma.ts` → `musteriFavorisiMi`, puan özeti veritabanında). Yeşil etiket.
+- ✅ **💎 Özel Firma · Sponsorlu** (ücretli): yönetici Firma Yönetimi'nde başlangıç ve bitiş tarihiyle verir (`firmalar.ozel_baslangic / ozel_bitis`, migration `20261002050000_ozel_firma_sureli.sql`). Başlangıç günü 00:00, bitiş günü 23:59 (Türkiye saati). Süre kontrolü okuma anında (`sponsorluMu`, `aktifSponsorlar`); zamanlanmış iş yok, süre bitince etiket hemen kalkar. Sunucu (`/api/admin/firma-guncelle`) iki tarihi zorunlu tutar, bitiş başlangıçtan sonra olmalı; "Özel firmalığı kaldır" tarihleri siler.
+- ✅ Mevcut 7 özel firma (kullanıcı kararı): 2026-10-02'den 2026-12-31 23:59'a kadar.
+- ✅ Ana sayfa "Özel Firmalar": sadece süresi devam eden sponsorlular, 6'dan fazlaysa her açılışta karışık 6'sı. Hiç yoksa "💎 Firmanızı burada öne çıkarın → Reklam Ver" kutusu.
+- ✅ Özel Firmalar sayfası iki bölüm: 💎 Özel Firmalar (sponsorlu) ve ⭐ Müşteri Favorileri. Konuma Göre Ara'da süresi devam eden sponsorlular başta.
+- Firmalar sayfası sıralaması değişmedi (puanla öne çıkanlar + sayfa sabitleme).
+- Test: 23 kontrol geçti (süresi dolan / başlamayan / kapatılan firma etiket almıyor, boş durum kutusu, 7 firmanın tarihleri bozulmadı).
+
+### 📌 Sonra bakılacak
+- **Sayfa sabitleme (`hedef_sayfa`) de ücretli olursa ona da başlangıç/bitiş süresi eklenecek.** Şimdilik süresiz; 7 özel firmanın 5'i 1. sayfaya da sabitli.
+
+---
+
 ## 2026-10-02 - Puanlama Sistemi 2. Aşama
 
 ### Yapılanlar

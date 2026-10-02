@@ -1,45 +1,32 @@
 import Link from "next/link";
-import FirmaKart, { FirmaKartData } from "@/components/FirmaKart";
+import FirmaKart from "@/components/FirmaKart";
 import { supabase } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { translations } from "@/lib/translations";
 import type { Lang } from "@/lib/translations";
 
-import { ONE_CIKMA_EN_AZ_YORUM } from "@/lib/yorumlar";
+import { aktifSponsorlar, FAVORI_EN_AZ_OLUMLU, FAVORI_EN_AZ_YORUM, OZEL_ALANLAR } from "@/lib/ozelFirma";
 
 export const dynamic = "force-dynamic";
 
 const SECIM_SELECT =
-  "id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde";
-const MIN_YORUM = ONE_CIKMA_EN_AZ_YORUM;
+  `id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ${OZEL_ALANLAR}`;
 
+// İki bölüm: 💎 Özel Firmalar (yönetici verir, süreli, sponsorlu) ve ⭐ Müşteri Favorileri (puanla, otomatik).
 export default async function OzelFirmalarPage() {
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
   const t = translations[lang];
-  // Elle seçilen özel firmalar + en az ${MIN_YORUM} yorumla %90+ olumlu olanlar (puan özeti veritabanında hesaplanıyor)
-  const [{ data: ozelFirmalar }, { data: yuksekPuanlilar }] = await Promise.all([
+  const [{ data: sponsorlular }, { data: favoriler }] = await Promise.all([
+    aktifSponsorlar(supabase.from("firmalar").select(SECIM_SELECT).eq("onay_durumu", "onaylandi")).order("ad"),
     supabase
       .from("firmalar")
       .select(SECIM_SELECT)
-      .eq("ozel_firma", true)
-      .eq("onay_durumu", "onaylandi"),
-    supabase
-      .from("firmalar")
-      .select(SECIM_SELECT)
-      .eq("ozel_firma", false)
       .eq("onay_durumu", "onaylandi")
-      .gte("yorum_sayisi", MIN_YORUM)
-      .gte("olumlu_yuzde", 90)
-      .order("olumlu_yuzde", { ascending: false }),
+      .gte("yorum_sayisi", FAVORI_EN_AZ_YORUM)
+      .gte("olumlu_yuzde", FAVORI_EN_AZ_OLUMLU)
+      .order("olumlu_yuzde", { ascending: false })
+      .order("yorum_sayisi", { ascending: false }),
   ]);
-
-  // Bu firmalar %90+ puanlı → ozel_firma gibi göster
-  const yorumlaGelen: FirmaKartData[] = (yuksekPuanlilar || []).map((f) => ({ ...f, ozel_firma: true }));
-
-  const tumOzeller: FirmaKartData[] = [
-    ...(ozelFirmalar || []),
-    ...yorumlaGelen,
-  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -53,27 +40,49 @@ export default async function OzelFirmalarPage() {
 
       <div className="bg-gradient-to-r from-[#e8a020] to-[#c8851a] rounded-xl p-6 mb-6 text-white">
         <h1 className="text-2xl font-bold mb-1">{t.featuredPageTitle}</h1>
-        <p className="opacity-90 text-sm">
-          {t.featuredPageDesc}
-        </p>
+        <p className="opacity-90 text-sm">{t.featuredPageDesc}</p>
       </div>
 
-      <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-5 text-sm text-green-700">
-        {t.featuredPageInfo}
-      </div>
+      {/* 💎 Özel Firmalar (Sponsorlu) */}
+      <section className="mb-8">
+        <h2 className="text-[#1a3a6b] font-bold text-lg mb-3 flex items-center gap-2">
+          {t.sponsoredSectionTitle}
+          <span className="text-xs font-normal text-gray-400">{t.sponsoredLabel}</span>
+        </h2>
+        {sponsorlular && sponsorlular.length > 0 ? (
+          <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4">
+            {sponsorlular.map((firma) => (
+              <FirmaKart key={firma.id} firma={firma} />
+            ))}
+          </div>
+        ) : (
+          <Link href="/reklam-ver" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border-2 border-dashed border-[#e8a020] bg-[#fff8ec] hover:bg-[#fff1d6] px-5 py-5 transition-colors">
+            <div>
+              <p className="font-bold text-[#1a3a6b]">{t.promoteTitle}</p>
+              <p className="text-sm text-gray-600">{t.noSponsoredYet} {t.promoteDesc}</p>
+            </div>
+            <span className="bg-[#e8a020] text-white text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap">{t.promoteBtn} →</span>
+          </Link>
+        )}
+      </section>
 
-      {tumOzeller.length > 0 ? (
-        <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4">
-          {tumOzeller.map((firma) => (
-            <FirmaKart key={firma.id} firma={firma} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 bg-white rounded-lg border border-[#dde3ec]">
-          <div className="text-4xl mb-3">⭐</div>
-          <p className="text-gray-500">{t.noFeatured}</p>
-        </div>
-      )}
+      {/* ⭐ Müşteri Favorileri */}
+      <section>
+        <h2 className="text-[#1a3a6b] font-bold text-lg mb-1">{t.favoritesSectionTitle}</h2>
+        <p className="text-sm text-gray-500 mb-3">{t.favoritesSectionDesc}</p>
+        {favoriler && favoriler.length > 0 ? (
+          <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4">
+            {favoriler.map((firma) => (
+              <FirmaKart key={firma.id} firma={firma} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10 bg-white rounded-lg border border-[#dde3ec]">
+            <div className="text-4xl mb-2">⭐</div>
+            <p className="text-gray-500">{t.noFavoritesYet}</p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

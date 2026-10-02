@@ -13,6 +13,7 @@ import VideoReklam from "@/components/VideoReklam";
 import { supabase } from "@/lib/supabase";
 import { Suspense } from "react";
 import { onayliFirmaOzetleri, sanayiSiteleriOzeti } from "@/lib/sanayiSiteleri";
+import { aktifSponsorlar } from "@/lib/ozelFirma";
 
 // Anasayfada gösterilen sanayi sitesi sayısı (en çok firması olanlar)
 const ANASAYFA_SITE_SAYISI = 20;
@@ -24,16 +25,17 @@ export default async function Home() {
   // Sadece ana siteler (başka bir sitenin içinde olmayanlar); sayılarına alt siteler dahil
   const sanayiSiteleri = tumSiteler.filter((s) => s.ustId === null).slice(0, ANASAYFA_SITE_SAYISI);
 
-  const { data: ozelFirmalar } = await supabase
+  // Özel Firmalar: sadece süresi devam eden sponsorlu firmalar. 6'dan fazlaysa her açılışta karışık 6 tanesi
+  // gösterilir; böylece ücret ödeyen her firma ana sayfada sırayla yer alır.
+  const { data: tumSponsorlar } = await aktifSponsorlar(supabase
     .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde")
-    .eq("ozel_firma", true)
-    .eq("onay_durumu", "onaylandi")
-    .limit(6);
+    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis")
+    .eq("onay_durumu", "onaylandi"));
+  const ozelFirmalar = [...(tumSponsorlar || [])].sort(() => Math.random() - 0.5).slice(0, 6);
 
   const { data: sonFirmalar } = await supabase
     .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde")
+    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis")
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi")
     .order("id", { ascending: false })
@@ -53,23 +55,31 @@ export default async function Home() {
           </Suspense>
 
           <div className="flex-1 min-w-0">
-            {ozelFirmalar && ozelFirmalar.length > 0 && (
-              <section className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-[#1a3a6b] font-bold text-lg flex items-center gap-2">
-                    {t.featuredSection}
-                  </h2>
-                  <Link href="/ozel-firmalar" className="text-sm text-[#1a3a6b] hover:underline">
-                    {t.seeAll}
-                  </Link>
-                </div>
+            <section className="mb-6">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[#1a3a6b] font-bold text-lg flex items-center gap-2">
+                  {t.featuredSection}
+                </h2>
+                <Link href="/ozel-firmalar" className="text-sm text-[#1a3a6b] hover:underline">
+                  {t.seeAll}
+                </Link>
+              </div>
+              {ozelFirmalar.length > 0 ? (
                 <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4">
                   {ozelFirmalar.map((firma) => (
                     <FirmaKart key={firma.id} firma={firma} />
                   ))}
                 </div>
-              </section>
-            )}
+              ) : (
+                <Link href="/reklam-ver" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border-2 border-dashed border-[#e8a020] bg-[#fff8ec] hover:bg-[#fff1d6] px-5 py-5 transition-colors">
+                  <div>
+                    <p className="font-bold text-[#1a3a6b]">{t.promoteTitle}</p>
+                    <p className="text-sm text-gray-600">{t.promoteDesc}</p>
+                  </div>
+                  <span className="bg-[#e8a020] text-white text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap">{t.promoteBtn} →</span>
+                </Link>
+              )}
+            </section>
 
             <section>
               <div className="flex items-center justify-between mb-3">

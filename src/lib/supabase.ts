@@ -25,6 +25,9 @@ export type Firma = {
   olumlu_yuzde?: number | null;
   hizmetler: string[];
   ozel_firma: boolean;
+  // Özel Firma (sponsorlu) süresi: ozel_firma açık ve başlangıç ≤ şimdi < bitiş ise etiket görünür (bkz. lib/ozelFirma.ts)
+  ozel_baslangic?: string | null;
+  ozel_bitis?: string | null;
   fotograf_url: string | null;
   detay_fotograflar: string[] | null;
   onay_durumu: 'beklemede' | 'onaylandi' | 'reddedildi' | 'pasif';
