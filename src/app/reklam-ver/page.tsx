@@ -85,7 +85,7 @@ export default function ReklamVerPage() {
             </span>
           </a>
           <Link
-            href="/iletisim"
+            href="/iletisim?konu=reklam"
             className="flex items-center gap-3 rounded-lg bg-[#e8a020] hover:bg-[#c8851a] text-white p-3 transition-colors"
           >
             <span className="w-10 h-10 bg-white/25 rounded-full flex items-center justify-center text-xl flex-shrink-0">📝</span>

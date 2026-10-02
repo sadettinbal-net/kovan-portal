@@ -9,7 +9,8 @@ function kacis(metin: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { ad, telefon, email, mesaj } = await request.json();
+    const { ad, telefon, email, mesaj, konu: konuHam } = await request.json();
+    const konu = konuHam === 'reklam' ? 'reklam' : 'genel';
 
     if (typeof ad !== 'string' || !ad.trim() || typeof mesaj !== 'string' || !mesaj.trim()) {
       return NextResponse.json({ error: 'Ad ve mesaj zorunludur.' }, { status: 400 });
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
       telefon: typeof telefon === 'string' ? telefon.trim().slice(0, 50) || null : null,
       eposta: typeof email === 'string' ? email.trim().slice(0, 200) || null : null,
       mesaj: mesaj.trim(),
+      konu,
     });
     if (error) {
       console.error('Mesaj kaydedilemedi:', error);
@@ -40,7 +42,7 @@ export async function POST(request: NextRequest) {
     if (resendKey) {
       const icerik = `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
-          <h2 style="color:#1a3a6b">İletişim Formu Mesajı</h2>
+          <h2 style="color:#1a3a6b">${konu === 'reklam' ? '📢 Reklam Başvurusu' : 'İletişim Formu Mesajı'}</h2>
           <table style="border-collapse:collapse;width:100%;margin-top:16px">
             <tr style="background:#f5f7fa">
               <td style="padding:10px 14px;font-weight:bold;width:120px">Ad Soyad</td>
@@ -63,7 +65,7 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             from: 'onboarding@resend.dev',
             to: alici,
-            subject: `Kovan Portal - Yeni Mesaj: ${ad.trim().slice(0, 80)}`,
+            subject: `Kovan Portal - ${konu === 'reklam' ? '📢 Reklam Başvurusu' : 'Yeni Mesaj'}: ${ad.trim().slice(0, 80).replace(/[\r\n]+/g, ' ')}`,
             html: icerik,
           }),
         }).catch((e) => console.error(`${alici} adresine mail gönderilemedi:`, e));

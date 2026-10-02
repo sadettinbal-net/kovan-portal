@@ -1,12 +1,14 @@
 'use client';
 
 import Link from "next/link";
-import { useState } from "react";
+import { use, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SITE_EPOSTA, SITE_KONUM, SITE_TELEFON } from "@/lib/site";
 
-export default function IletisimPage() {
+// Reklam Ver sayfasından ?konu=reklam ile gelinirse mesaj "reklam" olarak kaydedilir (yönetici: Reklam Mesajları)
+export default function IletisimPage({ searchParams }: { searchParams: Promise<{ konu?: string }> }) {
   const { t } = useLanguage();
+  const reklam = use(searchParams).konu === 'reklam';
   const [form, setForm] = useState({ ad: '', telefon: '', email: '', mesaj: '' });
   const [durum, setDurum] = useState<'bos' | 'gonderiliyor' | 'basarili' | 'hata'>('bos');
 
@@ -22,7 +24,7 @@ export default function IletisimPage() {
       const res = await fetch('/api/mesaj-gonder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, konu: reklam ? 'reklam' : 'genel' }),
       });
       if (res.ok) {
         setDurum('basarili');
@@ -108,6 +110,11 @@ export default function IletisimPage() {
         {/* Contact Form */}
         <div className="bg-white rounded-xl border border-[#dde3ec] p-5">
           <h2 className="font-semibold text-[#1a3a6b] mb-4">{t.sendMessageTitle}</h2>
+          {reklam && (
+            <p className="mb-4 rounded-lg bg-[#fff8ec] border border-[#e8a020]/40 px-3 py-2 text-sm text-[#1a3a6b]">
+              📢 <strong>Reklam başvurusu</strong> — Hangi reklam alanıyla ilgilendiğinizi mesajınıza yazabilirsiniz.
+            </p>
+          )}
 
           {durum === 'basarili' ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-5 text-center">

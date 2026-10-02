@@ -1,5 +1,13 @@
 # Proje Notları - Kovan Portal
 
+## 2026-10-02 - Reklam Mesajları
+
+- ✅ Reklam Ver sayfasındaki "Mesaj Gönder" → `/iletisim?konu=reklam`; formda "📢 Reklam başvurusu" yazar, mesaj `iletisim_mesajlari.konu = reklam` olarak kaydedilir (migration `20261002100000_iletisim_mesaj_konu.sql`). Mesajlar tablosu açık anahtarla okunamıyor (401).
+- ✅ Yönetici paneli "📨 Reklam Mesajları" sekmesi (`/api/admin/mesajlar`): okunmamış rozeti, Reklam / Genel / Tümü süzgeci, okundu işareti, silme.
+- ⏳ **E-posta:** kod hazır (konu: "📢 Reklam Başvurusu", alıcı sadettinbal@gmail.com) ama `RESEND_API_KEY` tanımlı değil. Kullanıcı resend.com'da hesap açıp anahtarı verince .env.local'e (ve yayında Vercel'e) eklenecek. Gönderen adres şimdilik onboarding@resend.dev; kovanportal.com alan adı Resend'de doğrulanınca info@kovanportal.com yapılabilir.
+
+---
+
 ## 2026-10-02 - İlanlar 1. Aşama (güvenlik)
 
 ### Yapılanlar
