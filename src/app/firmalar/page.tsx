@@ -145,9 +145,12 @@ export default async function FirmalarPage(props: PageProps) {
     }
   }
 
-  // Sayfa sabitleme: hedef_sayfa dolu firmalar ilgili sayfanın başına eklenir
-  const sabitFirmalar = firmalar.filter(f => (f as typeof f & { hedef_sayfa?: number | null }).hedef_sayfa);
-  const normalFirmalar = firmalar.filter(f => !(f as typeof f & { hedef_sayfa?: number | null }).hedef_sayfa);
+  // Sayfa sabitleme: hedef_sayfa dolu firmalar ilgili sayfanın başına eklenir; o sayfa yoksa son sayfanın başına.
+  // Arama, sanayi sitesi ve kategori süzgeçlerinde sabitleme dikkate alınmaz, firma normal sırasında görünür.
+  const sabitlemeGecerli = !ara && !site && !kategori;
+  const hedefSayfa = (f: FirmaWithStats) => (sabitlemeGecerli ? f.hedef_sayfa ?? null : null);
+  const sabitFirmalar = firmalar.filter(f => hedefSayfa(f));
+  const normalFirmalar = firmalar.filter(f => !hedefSayfa(f));
 
   const toplamFirma = normalFirmalar.length;
   // Ekranda yazan toplam: sayfaya sabitlenmiş firmalar dahil bütün firmalar (kenar menüdeki sayıyla aynı)
@@ -164,9 +167,7 @@ export default async function FirmalarPage(props: PageProps) {
   const siraliFirmalar = [...oneCikanlar, ...geriKalan.slice(kaydirma), ...geriKalan.slice(0, kaydirma)];
   const gercekBaslangic = (gecerliSayfa - 1) * limit;
 
-  const sayfadakiSabitler = sabitFirmalar.filter(
-    f => (f as typeof f & { hedef_sayfa?: number | null }).hedef_sayfa === gecerliSayfa
-  );
+  const sayfadakiSabitler = sabitFirmalar.filter(f => Math.min(hedefSayfa(f)!, toplamSayfa) === gecerliSayfa);
   const normalSayfaFirmalar = siraliFirmalar.slice(gercekBaslangic, gercekBaslangic + limit);
   const sayfaFirmalar = [...sayfadakiSabitler, ...normalSayfaFirmalar];
 

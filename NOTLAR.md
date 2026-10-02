@@ -18,6 +18,7 @@
 - Yorum şikâyet ("bildir") butonu
 
 - ✅ Firmalar sayfası: öne çıkanlar (≥3 yorum, %75+ olumlu) her gün 1. sayfanın başında sabit; günlük sayfa kaydırma (her gece 1→2, 2→3, ..., son→1) sadece geri kalan firmalara uygulanıyor. Yöneticinin `hedef_sayfa` ile sabitlediği firmalar yine kendi sayfalarının en başında (öne çıkanlardan da önce). Test: 1892 firmanın tamamı sayfalarda tam birer kez görünüyor.
+- ✅ Sayfa sabitleme düzeltmesi: istenen sayfa listede yoksa sabitli firma son sayfanın başına konuyor (ör. siteli + 99'luk görünüm 19 sayfa → AYDIN AMORTİSÖR 19. sayfanın başında). Arama, sanayi sitesi ve kategori süzgeçlerinde sabitleme dikkate alınmıyor; firma normal sırasında çıkıyor. Önceden 20. sayfaya sabitli AYDIN AMORTİSÖR Kadosan listesinde ve adıyla aramada hiç görünmüyordu.
 
 ---
 
