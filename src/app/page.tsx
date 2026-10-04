@@ -23,7 +23,8 @@ export default async function Home() {
   const t = translations[lang];
   const tumSiteler = await sanayiSiteleriOzeti(await onayliFirmaOzetleri());
   // Sadece ana siteler (başka bir sitenin içinde olmayanlar); sayılarına alt siteler dahil
-  const sanayiSiteleri = tumSiteler.filter((s) => s.ustId === null).slice(0, ANASAYFA_SITE_SAYISI);
+  // Henüz firması olmayan siteler anasayfada gösterilmez (hepsi "Tüm sanayi siteleri" sayfasında)
+  const sanayiSiteleri = tumSiteler.filter((s) => s.ustId === null && s.toplamFirma > 0).slice(0, ANASAYFA_SITE_SAYISI);
 
   // Özel Firmalar: sadece süresi devam eden sponsorlu firmalar. 6'dan fazlaysa her açılışta karışık 6 tanesi
   // gösterilir; böylece ücret ödeyen her firma ana sayfada sırayla yer alır.

@@ -24,7 +24,8 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
   const searchParams = useSearchParams();
   const activeKategori = searchParams.get("kategori") || "";
   const [menuOpen, setMenuOpen] = useState(false);
-  const [sekme, setSekme] = useState<'sitesiz' | 'kurumsal'>('sitesiz');
+  // Sanayi dışı firma yoksa sağ menü firması olan Kurumsal sekmesiyle açılır
+  const [sekme, setSekme] = useState<'sitesiz' | 'kurumsal'>(toplamSanayiDisi === 0 && toplamKurumsal > 0 ? 'kurumsal' : 'sitesiz');
   const [acikAnaKategoriler, setAcikAnaKategoriler] = useState<Set<string>>(new Set());
   const [aramaMetni, setAramaMetni] = useState("");
   const [aramaSonuclari, setAramaSonuclari] = useState<any[]>([]);
@@ -206,6 +207,9 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
                 </li>
               );
             })}
+            {toplamSanayiDisi === 0 && (
+              <li className="px-3 py-3 text-xs text-gray-500">Henüz sanayi dışı firma eklenmedi.</li>
+            )}
           </ul>
         )}
 

@@ -38,12 +38,24 @@ function GoogleReklam() {
     } catch {
       // AdSense betiği yüklenmedi (ör. reklam engelleyici); aşağıdaki süre dolunca yer tutucu görünür
     }
-    const zamanlayici = setTimeout(() => {
-      const ins = insRef.current;
+    // AdSense "unfilled" (reklam yok) cevabını süre dolduktan sonra da verebiliyor; o an yer tutucuya geçilir
+    const ins = insRef.current;
+    const durumuOku = () => {
       const durum = ins?.getAttribute("data-ad-status");
-      setDoldu(durum === "filled" || (durum === null && !!ins?.querySelector("iframe")));
+      if (durum === "filled") setDoldu(true);
+      else if (durum === "unfilled") setDoldu(false);
+    };
+    const gozlemci = new MutationObserver(durumuOku);
+    if (ins) gozlemci.observe(ins, { attributes: true, attributeFilter: ["data-ad-status"] });
+    const zamanlayici = setTimeout(() => {
+      const durum = ins?.getAttribute("data-ad-status");
+      if (durum !== "filled" && !ins?.querySelector("iframe")) setDoldu(false);
+      else durumuOku();
     }, ADSENSE_BEKLEME_MS);
-    return () => clearTimeout(zamanlayici);
+    return () => {
+      clearTimeout(zamanlayici);
+      gozlemci.disconnect();
+    };
   }, []);
 
   if (doldu === false) return <YerTutucu />;

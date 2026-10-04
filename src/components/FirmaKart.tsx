@@ -82,10 +82,12 @@ export default async function FirmaKart({ firma }: { firma: FirmaKartData }) {
             <span className="text-[#e8a020] text-[8px] phone:text-[10px] sm:text-xs flex-shrink-0">🏷️</span>
             <span className="text-gray-600 text-[8px] phone:text-[10px] sm:text-xs line-clamp-1">{firma.sektor}</span>
           </div>
-          <div className="flex items-start gap-0.5">
-            <span className="text-[#1a3a6b] text-[8px] phone:text-[10px] sm:text-xs flex-shrink-0">🏭</span>
-            <span className="text-gray-600 text-[8px] phone:text-[10px] sm:text-xs line-clamp-1">{firma.sanayi_sitesi}</span>
-          </div>
+          {firma.sanayi_sitesi && (
+            <div className="flex items-start gap-0.5">
+              <span className="text-[#1a3a6b] text-[8px] phone:text-[10px] sm:text-xs flex-shrink-0">🏭</span>
+              <span className="text-gray-600 text-[8px] phone:text-[10px] sm:text-xs line-clamp-1">{firma.sanayi_sitesi}</span>
+            </div>
+          )}
           {firma.yorum_sayisi != null && firma.yorum_sayisi > 0 && firma.ortalama_puan != null && (
             <div className="flex items-center gap-0.5">
               <span className="text-[8px] phone:text-[10px] sm:text-xs">⭐</span>

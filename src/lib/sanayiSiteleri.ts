@@ -110,12 +110,15 @@ export function siteSatirlari(siteler: SiteOzeti[], il?: string): SiteSatiri[] {
 
   const YAKA_SIRASI = ["Avrupa Yakası", "Anadolu Yakası", null] as const;
 
+  const grupToplami = (grup: SiteOzeti[]) => grup.reduce((t, s) => t + s.toplamFirma, 0);
+
   if (il) {
     if (!istanbulMu(il)) return agac(ustler);
-    return YAKA_SIRASI.flatMap((yaka) => {
-      const grup = ustler.filter((s) => istanbulYakasi(s.ilce) === yaka);
-      return grup.length ? [{ tip: "baslik" as const, ad: yaka || "Diğer" }, ...agac(grup)] : [];
-    });
+    // Firması çok olan yaka üstte (eşitse Avrupa, Anadolu, Diğer sırası)
+    return YAKA_SIRASI.map((yaka) => ({ yaka, grup: ustler.filter((s) => istanbulYakasi(s.ilce) === yaka) }))
+      .filter(({ grup }) => grup.length)
+      .sort((a, b) => grupToplami(b.grup) - grupToplami(a.grup))
+      .flatMap(({ yaka, grup }) => [{ tip: "baslik" as const, ad: yaka || "Diğer" }, ...agac(grup)]);
   }
 
   // Tüm Türkiye: il başlıkları (en çok firması olan il üstte), İstanbul iki yakaya ayrılır
@@ -142,6 +145,7 @@ export function siteSatirlari(siteler: SiteOzeti[], il?: string): SiteSatiri[] {
       ([a, ga], [b, gb]) =>
         (ilToplami.get(ilOf(b)) || 0) - (ilToplami.get(ilOf(a)) || 0) ||
         ilOf(a).localeCompare(ilOf(b), "tr") ||
+        grupToplami(gb.siteler) - grupToplami(ga.siteler) ||
         ga.sira - gb.sira
     )
     .flatMap(([ad, grup]) => [{ tip: "baslik" as const, ad }, ...agac(grup.siteler)]);

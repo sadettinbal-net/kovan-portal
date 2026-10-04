@@ -1095,7 +1095,7 @@ function UyeListesi() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {uye.avatar_url ? (
-                        <img src={uye.avatar_url} alt={uye.ad} className="w-7 h-7 rounded-full flex-shrink-0" />
+                        <img src={uye.avatar_url} alt={uye.ad} referrerPolicy="no-referrer" className="w-7 h-7 rounded-full flex-shrink-0" />
                       ) : (
                         <div className="w-7 h-7 rounded-full bg-[#1a3a6b] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                           {uye.ad.charAt(0).toUpperCase()}

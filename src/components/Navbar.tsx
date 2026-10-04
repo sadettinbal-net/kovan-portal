@@ -32,6 +32,7 @@ export default function Navbar() {
   const [yeniYorumSayi, setYeniYorumSayi] = useState(0);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [kvkkModal, setKvkkModal] = useState(false);
+  const [avatarHatali, setAvatarHatali] = useState(false);
   const [uyeOlModal, setUyeOlModal] = useState(false);
   const [uyeOlForm, setUyeOlForm] = useState({ isim: '', soyisim: '', sabit_telefon: '', mobil_telefon: '', email: '' });
   const [uyeOlYukleniyor, setUyeOlYukleniyor] = useState(false);
@@ -268,11 +269,13 @@ export default function Navbar() {
             className={`text-white rounded-md bg-white/10 border border-white/30 hover:bg-[#2554a0] hover:border-white/60 transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
             Site Kullanımı
           </button>
-          <button
-            onClick={() => { setUyeOlModal(true); setUyeOlMesaj(null); }}
-            className={`text-[#1a3a6b] bg-[#e8a020] hover:bg-[#c8851a] rounded-md border border-[#e8a020] font-semibold transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
-            Üye Ol
-          </button>
+          {!user && (
+            <button
+              onClick={() => { setUyeOlModal(true); setUyeOlMesaj(null); }}
+              className={`text-[#1a3a6b] bg-[#e8a020] hover:bg-[#c8851a] rounded-md border border-[#e8a020] font-semibold transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
+              Üye Ol
+            </button>
+          )}
           {linksSonra.map((link) => (
             <Link key={link.href} href={link.href}
               className={`text-white rounded-md bg-white/10 border border-white/30 hover:bg-[#2554a0] hover:border-white/60 transition-colors whitespace-nowrap ${scrolled ? "text-[13px] px-2 py-1.5" : "text-[15px] px-3 py-2"}`}>
@@ -291,8 +294,10 @@ export default function Navbar() {
           {user ? (
             <button onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center gap-2 text-white hover:bg-[#2554a0] rounded transition-colors px-2 py-1.5">
-              {user.avatar_url ? (
-                <img src={user.avatar_url} alt={user.name} className={`rounded-full ${scrolled ? "w-6 h-6" : "w-8 h-8"}`} />
+              {/* Google resmi tarayıcının gönderdiği site adresi yüzünden reddedilebiliyor; açılmazsa baş harf gösterilir */}
+              {user.avatar_url && !avatarHatali ? (
+                <img src={user.avatar_url} alt={user.name} referrerPolicy="no-referrer" onError={() => setAvatarHatali(true)}
+                  className={`rounded-full ${scrolled ? "w-6 h-6" : "w-8 h-8"}`} />
               ) : (
                 <div className={`rounded-full bg-[#e8a020] text-white font-bold flex items-center justify-center ${scrolled ? "w-6 h-6 text-xs" : "w-8 h-8 text-sm"}`}>
                   {user.name.charAt(0).toUpperCase()}
@@ -363,11 +368,13 @@ export default function Navbar() {
             className="block w-full text-left text-white px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors">
             Site Kullanımı
           </button>
-          <button
-            onClick={() => { setMenuOpen(false); setUyeOlModal(true); setUyeOlMesaj(null); }}
-            className="block w-full text-left text-[#e8a020] font-semibold px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors">
-            Üye Ol
-          </button>
+          {!user && (
+            <button
+              onClick={() => { setMenuOpen(false); setUyeOlModal(true); setUyeOlMesaj(null); }}
+              className="block w-full text-left text-[#e8a020] font-semibold px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors">
+              Üye Ol
+            </button>
+          )}
           {linksSonra.map((link) => (
             <Link key={link.href} href={link.href}
               className="block text-white px-4 py-3 text-base border-b border-[#1a3a6b] hover:bg-[#1a3a6b] transition-colors"

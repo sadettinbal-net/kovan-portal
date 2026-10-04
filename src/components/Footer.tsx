@@ -86,7 +86,7 @@ export default async function Footer({ lang = "tr" }: { lang?: Lang }) {
           <div className="flex flex-col items-center gap-2">
             <div className="bg-white rounded-xl p-1.5 shadow-lg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrUrl(SITE_URL)} alt="iOS QR Code" width={110} height={110} loading="lazy" className="rounded-lg" />
+              <img src={qrUrl(SITE_URL)} alt="iOS QR Code" width={110} height={110} className="rounded-lg" />
             </div>
             <div className="flex items-center gap-1.5 text-sm text-gray-200 font-semibold">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-200">
@@ -100,7 +100,7 @@ export default async function Footer({ lang = "tr" }: { lang?: Lang }) {
           <div className="flex flex-col items-center gap-2">
             <div className="bg-white rounded-xl p-1.5 shadow-lg">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrUrl(SITE_URL)} alt="Android QR Code" width={110} height={110} loading="lazy" className="rounded-lg" />
+              <img src={qrUrl(SITE_URL)} alt="Android QR Code" width={110} height={110} className="rounded-lg" />
             </div>
             <div className="flex items-center gap-1.5 text-sm text-gray-200 font-semibold">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-green-400">

@@ -140,6 +140,7 @@ export default function ProfilPage() {
               {user.avatar_url ? (
                 <img
                   src={user.avatar_url}
+                  referrerPolicy="no-referrer"
                   alt={user.name}
                   className="w-24 h-24 rounded-full border-4 border-[#e8a020]"
                 />

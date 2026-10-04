@@ -49,7 +49,7 @@ export default function VideoReklam({
       />
     );
     return (
-      <div className="my-6">
+      <div className="my-6 icerik-reklami">
         <p className="text-[10px] text-gray-400 text-center mb-1 tracking-wide uppercase">Reklam</p>
         {reklam.link_url ? (
           <a
@@ -84,7 +84,7 @@ export default function VideoReklam({
   }
 
   return (
-    <div className="my-6">
+    <div className="my-6 icerik-reklami">
       <p className="text-[10px] text-gray-400 text-center mb-1 tracking-wide uppercase">Reklam</p>
       <ins
         className="adsbygoogle"
