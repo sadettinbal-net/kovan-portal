@@ -25,10 +25,18 @@ export function getKategoriResim(sektor: string): string {
   if (cached) return cached;
 
   const slug = normSektor(sektor);
-  const imgPath = path.join(process.cwd(), "public", "kategori-kartlar", `${slug}.png`);
-  const result = fs.existsSync(imgPath)
-    ? `/kategori-kartlar/${slug}.png`
-    : "/kart-varsayilan.png";
+  // Önce PNG ara, yoksa JPG ara
+  const pngPath = path.join(process.cwd(), "public", "kategori-kartlar", `${slug}.png`);
+  const jpgPath = path.join(process.cwd(), "public", "kategori-kartlar", `${slug}.jpg`);
+
+  let result: string;
+  if (fs.existsSync(pngPath)) {
+    result = `/kategori-kartlar/${slug}.png`;
+  } else if (fs.existsSync(jpgPath)) {
+    result = `/kategori-kartlar/${slug}.jpg`;
+  } else {
+    result = "/kart-varsayilan.png";
+  }
 
   CACHE.set(sektor, result);
   return result;
