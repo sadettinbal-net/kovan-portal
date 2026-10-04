@@ -8,6 +8,7 @@ import SosyalIkon from '@/components/SosyalIkon';
 import KonumSecici, { BOS_KONUM, type Konum } from '@/components/KonumSecici';
 import { whatsappKontrol } from '@/lib/whatsapp';
 import { gonderimSiniriUyarisi, GONDERIM_SINIRI_MB, resmiKucult, toplamMB } from '@/lib/resimKucult';
+import type { BenzerFirma } from '@/app/api/benzer-firma/route';
 
 type Durum = { tip: 'basari' | 'hata'; mesaj: string } | null;
 
@@ -42,6 +43,11 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
   const [durum, setDurum] = useState<Durum>(null);
   const [kullanici, setKullanici] = useState<{ email: string } | null | 'yukleniyor'>(yonetici ? { email: '' } : 'yukleniyor');
   const [eklenenId, setEklenenId] = useState<number | null>(null);
+  // Çift tıklamada ikinci gönderimi engeller (state güncellenmeden ikinci tıklama gelebilir)
+  const gonderimKilidi = useRef(false);
+  // Benzer firma uyarısı: liste doluysa onay penceresi açık; cevap onayCevabi ile döner
+  const [benzerler, setBenzerler] = useState<BenzerFirma[] | null>(null);
+  const onayCevabi = useRef<((devam: boolean) => void) | null>(null);
 
   const [kartResmi, setKartResmi] = useState<File | null>(null);
   const [kartOnizleme, setKartOnizleme] = useState<string | null>(null);
@@ -186,9 +192,50 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
       return;
     }
 
+    if (gonderimKilidi.current) return;
+    gonderimKilidi.current = true;
     setGonderiyor(true);
     setDurum(null);
 
+    try {
+      // Aynı il/ilçede adı benzeyen firma varsa önce kullanıcıya sorulur; kontrol yapılamazsa kayda devam edilir
+      const benzer = await benzerFirmalariGetir();
+      if (benzer.length > 0) {
+        const devam = await new Promise<boolean>(resolve => {
+          onayCevabi.current = resolve;
+          setBenzerler(benzer);
+        });
+        if (!devam) return;
+      }
+      await kaydet(kategoriDegeri, fotoMB);
+    } finally {
+      gonderimKilidi.current = false;
+      setGonderiyor(false);
+    }
+  }
+
+  async function benzerFirmalariGetir(): Promise<BenzerFirma[]> {
+    try {
+      const res = await fetch('/api/benzer-firma', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ad: form.ad, il: konum.il, ilce: konum.ilce }),
+      });
+      if (!res.ok) return [];
+      const json = await res.json();
+      return Array.isArray(json.firmalar) ? json.firmalar : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function benzerCevapla(devam: boolean) {
+    setBenzerler(null);
+    onayCevabi.current?.(devam);
+    onayCevabi.current = null;
+  }
+
+  async function kaydet(kategoriDegeri: string, fotoMB: number) {
     const fd = new FormData();
     Object.entries(form).forEach(([k, v]) => fd.append(k, v));
 
@@ -218,17 +265,20 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
       const res = await fetch('/api/firma-ekle', { method: 'POST', body: fd });
       if (res.status === 413) { setDurum({ tip: 'hata', mesaj: gonderimSiniriUyarisi(fotoMB) }); return; }
       const json = await res.json();
-      if (!res.ok) {
-        const mesaj = [json.error, json.detail, json.code].filter(Boolean).join(' — ');
-        setDurum({ tip: 'hata', mesaj });
-      } else {
+      if (res.ok) {
         setEklenenId(json.id ?? null);
         setDurum({ tip: 'basari', mesaj: '' });
+      } else if (res.status === 409 || json.code === '23505') {
+        setDurum({ tip: 'hata', mesaj: 'Bu firma bu il, ilçe ve kategoride zaten kayıtlı.' });
+      } else if (res.status < 500 && json.error) {
+        // Eksik alan, fotoğraf türü gibi kullanıcının düzeltebileceği hatalar
+        setDurum({ tip: 'hata', mesaj: json.error });
+      } else {
+        console.error('Firma kaydı hatası:', json);
+        setDurum({ tip: 'hata', mesaj: 'Kayıt sırasında bir hata oluştu. Lütfen tekrar deneyin.' });
       }
     } catch {
       setDurum({ tip: 'hata', mesaj: 'Bağlantı hatası. Lütfen tekrar deneyin.' });
-    } finally {
-      setGonderiyor(false);
     }
   }
 
@@ -648,6 +698,37 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
           </button>
         </form>
       </div>
+
+      {/* Benzer firma uyarısı */}
+      {benzerler && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => benzerCevapla(false)}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
+            <h2 className="text-lg font-bold text-amber-700 mb-2">⚠️ Benzer firmalar var</h2>
+            <p className="text-sm text-gray-600 mb-3">Bu bölgede benzer firmalar kayıtlı:</p>
+            <ul className="bg-amber-50 border border-amber-100 rounded-lg p-3 mb-4 space-y-2 text-sm">
+              {benzerler.map(f => (
+                <li key={f.id}>
+                  <a href={`/firma/${f.id}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1a3a6b] hover:underline break-words">
+                    {f.ad}
+                  </a>
+                  <p className="text-xs text-gray-500">{[f.kategori, f.sanayi_sitesi].filter(Boolean).join(' · ')}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-gray-700 mb-4">Yine de kaydetmek istiyor musunuz?</p>
+            <div className="flex gap-3 justify-end">
+              <button type="button" onClick={() => benzerCevapla(false)} autoFocus
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold">
+                Vazgeç
+              </button>
+              <button type="button" onClick={() => benzerCevapla(true)}
+                className="px-4 py-2 bg-[#1a3a6b] hover:bg-[#2554a0] text-white rounded-lg text-sm font-semibold">
+                Yine de Kaydet
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -128,6 +128,13 @@ export async function POST(request: NextRequest) {
       .select('id')
       .single();
 
+    // Aynı ad (sadeleştirilmiş) + il + ilçe + kategori zaten kayıtlı: veritabanındaki tekil kayıt kuralı engelledi
+    if (insertError?.code === '23505') {
+      return NextResponse.json({
+        error: 'Bu firma bu il, ilçe ve kategoride zaten kayıtlı.',
+        code: insertError.code,
+      }, { status: 409 });
+    }
     if (insertError || !firma) {
       console.error('Insert error:', insertError);
       return NextResponse.json({
