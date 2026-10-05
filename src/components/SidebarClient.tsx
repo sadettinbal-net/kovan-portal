@@ -27,10 +27,10 @@ interface Props {
   sanayiSiteleri: SanayiSitesi[];
   kategoriSayilariPerSite: Record<string, KategoriSayisi>;
   tumKategoriler: string[];
-  toplamFirma: number;
+  siteFirmaSayisi: number; // sadece bir sanayi sitesinde kayıtlı firmalar
 }
 
-export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, toplamFirma }: Props) {
+export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, siteFirmaSayisi }: Props) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -109,7 +109,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
         >
           {t.industrialZones}
           <span className="flex items-center gap-1.5">
-            <span className="bg-white text-[#1a3a6b] text-[10px] px-1.5 py-0.5 rounded-full">{toplamFirma}</span>
+            <span className="bg-white text-[#1a3a6b] text-[10px] px-1.5 py-0.5 rounded-full">{siteFirmaSayisi}</span>
             <svg className={`w-3 h-3 transition-transform duration-200 lg:hidden ${sanayiOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
@@ -179,7 +179,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
               className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-blue-50 transition-colors ${!activeSite ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
             >
               <span>{t.sidebarAll}</span>
-              <span className="bg-[#1a3a6b] text-white text-[10px] px-1.5 py-0.5 rounded-full">{toplamFirma}</span>
+              <span className="bg-[#1a3a6b] text-white text-[10px] px-1.5 py-0.5 rounded-full">{siteFirmaSayisi}</span>
             </Link>
           </li>
 

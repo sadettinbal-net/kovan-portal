@@ -57,11 +57,16 @@ export default async function Home() {
 
           <div className="flex-1 min-w-0">
             <section className="mb-6">
-              <div className="flex items-center justify-between mb-3">
+              {/* Başlık satırı kartlarla aynı 3 sütun: toplam işletme sayısı ortadaki kartın üstünde */}
+              <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4 items-center mb-3">
                 <h2 className="text-[#1a3a6b] font-bold text-lg flex items-center gap-2">
                   {t.featuredSection}
                 </h2>
-                <Link href="/ozel-firmalar" className="text-sm text-[#1a3a6b] hover:underline">
+                <div className="flex flex-wrap items-center justify-center gap-1 text-center text-[#1a3a6b] font-bold text-[10px] lg:text-xs">
+                  <span className="whitespace-nowrap">TOPLAM SANAYİ İŞLETMELERİ</span>
+                  <span className="bg-[#e8a020] text-white rounded-full px-1.5 py-0.5">{count || 0}</span>
+                </div>
+                <Link href="/ozel-firmalar" className="text-sm text-[#1a3a6b] hover:underline justify-self-end">
                   {t.seeAll}
                 </Link>
               </div>

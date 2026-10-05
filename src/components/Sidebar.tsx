@@ -62,7 +62,7 @@ export default async function Sidebar({ il }: { il?: string }) {
       )}
       kategoriSayilariPerSite={kategoriPerSite}
       tumKategoriler={tumKategoriler}
-      toplamFirma={firmalar.length}
+      siteFirmaSayisi={firmalar.filter((f) => f.sanayi_sitesi).length}
     />
   );
 }
