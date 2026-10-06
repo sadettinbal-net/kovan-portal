@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { createClient as createBrowserClient } from "@/utils/supabase/client";
 import DilSecici from "@/components/DilSecici";
+import { aramaKosulu } from "@/lib/aramaDeseni";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 
@@ -101,7 +102,7 @@ export default function Navbar() {
       const { data } = await createBrowserClient()
         .from("firmalar")
         .select("id, ad, sanayi_sitesi, sektor")
-        .or(`ad.ilike.%${q}%,sektor.ilike.%${q}%,sanayi_sitesi.ilike.%${q}%`)
+        .or(aramaKosulu(q, ["ad", "sektor", "sanayi_sitesi"]))
         .not("ad", "ilike", "(Firma%")
         .eq("onay_durumu", "onaylandi")
         .limit(8);

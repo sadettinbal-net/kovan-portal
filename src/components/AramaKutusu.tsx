@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { supabase } from "@/lib/supabase";
+import { aramaKosulu } from "@/lib/aramaDeseni";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const MAX_SUGGESTIONS = 8;
@@ -43,7 +44,7 @@ export default function AramaKutusu({ count }: { count?: number | null }) {
       const { data } = await supabase
         .from("firmalar")
         .select("id, ad, sanayi_sitesi, sektor")
-        .or(`ad.ilike.%${q}%,sektor.ilike.%${q}%,sanayi_sitesi.ilike.%${q}%`)
+        .or(aramaKosulu(q, ["ad", "sektor", "sanayi_sitesi"]))
         .not("ad", "ilike", "(Firma%")
         .limit(MAX_SUGGESTIONS);
       const results = data || [];

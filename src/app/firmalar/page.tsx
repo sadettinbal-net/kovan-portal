@@ -138,9 +138,12 @@ export default async function FirmalarPage(props: PageProps) {
   if (ara) {
     const tokens = tokenize(ara);
     if (tokens.length > 0) {
+      // Ad, sektör, site ve sahipte kelime parçası yeter; hizmetlerde (çoğu uzun tanıtım yazısı) tam kelime aranır.
+      // Yoksa "Hayat Şifa Hastanesi" araması, hizmetlerinde "hayata", "şifa", "hastanesi" geçen başka bir hastaneyi bulur.
       firmalar = firmalar.filter((f) => {
-        const haystack = [norm(f.ad), norm(f.sektor || ""), norm(f.sanayi_sitesi || ""), norm(f.sahip || ""), ...(f.hizmetler || []).map(norm)].join(" ");
-        return tokens.every((t) => haystack.includes(t));
+        const haystack = [norm(f.ad), norm(f.sektor || ""), norm(f.sanayi_sitesi || ""), norm(f.sahip || "")].join(" ");
+        const hizmetKelimeleri = new Set((f.hizmetler || []).flatMap(tokenize));
+        return tokens.every((t) => haystack.includes(t) || hizmetKelimeleri.has(t));
       });
     }
   }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { aramaKosulu } from "@/lib/aramaDeseni";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
   const { data: siteler } = await supabase
     .from("sanayi_siteleri")
     .select("id, site_adi, il_adi, ilce_adi")
-    .ilike("site_adi", `%${q}%`)
+    .or(aramaKosulu(q, ["site_adi"]))
     .limit(5);
 
   // Sanayi sitelerindeki firmalarda ara
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     .select("id, ad, sanayi_sitesi, sektor")
     .not("sanayi_sitesi", "is", null)
     .not("sanayi_sitesi", "eq", "")
-    .or(`ad.ilike.%${q}%,sektor.ilike.%${q}%`)
+    .or(aramaKosulu(q, ["ad", "sektor"]))
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi")
     .limit(5);

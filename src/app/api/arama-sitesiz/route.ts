@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { aramaKosulu } from "@/lib/aramaDeseni";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     .from("firmalar")
     .select("id, ad, sektor, il_adi, ilce_adi")
     .or("sanayi_sitesi.is.null,sanayi_sitesi.eq.")
-    .or(`ad.ilike.%${q}%,sektor.ilike.%${q}%`)
+    .or(aramaKosulu(q, ["ad", "sektor"]))
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi")
     .limit(8);
