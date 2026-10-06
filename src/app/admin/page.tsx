@@ -1832,6 +1832,7 @@ function AdminPanel() {
       instagram: seciliFirma.instagram ?? '',
       facebook: seciliFirma.facebook ?? '',
       tiktok: seciliFirma.tiktok ?? '',
+      youtube: seciliFirma.youtube ?? '',
       nsosyal: seciliFirma.nsosyal ?? '',
       hizmetler: seciliFirma.hizmetler,
       ozel_firma: seciliFirma.ozel_firma,
@@ -2442,6 +2443,7 @@ function AdminPanel() {
                         ['instagram', 'Instagram', 'instagram.com/firmaniz'],
                         ['facebook', 'Facebook', 'facebook.com/firmaniz'],
                         ['tiktok', 'TikTok', '@firmaniz'],
+                        ['youtube', 'YouTube', 'youtube.com/@firmaniz'],
                         ['nsosyal', 'N Sosyal', 'nsosyal.com/firmaniz'],
                       ] as const).map(([alan, etiket, ornek]) => (
                         <div key={alan}>
