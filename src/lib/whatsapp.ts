@@ -27,11 +27,12 @@ function linkDuzelt(deger: string): string | null {
 }
 
 // Formdan gelen değeri kontrol eder. Boşsa { deger: null }, geçersizse { hata }.
+// Gizli işaret: -- yazılırsa boş kabul edilir.
 export function whatsappKontrol(girdi: unknown): { deger: string | null; hata?: string } {
   if (girdi == null) return { deger: null };
   if (typeof girdi !== 'string') return { deger: null, hata: WHATSAPP_HATA };
   const deger = girdi.trim();
-  if (!deger) return { deger: null };
+  if (!deger || deger === '--') return { deger: null };
   if (numaraDuzelt(deger)) return { deger };
   const link = linkDuzelt(deger);
   return link ? { deger: link } : { deger: null, hata: WHATSAPP_HATA };

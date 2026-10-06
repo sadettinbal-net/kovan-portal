@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
     const instagram    = (formData.get('instagram') as string)?.trim() || null;
     const facebook     = (formData.get('facebook') as string)?.trim() || null;
     const tiktok       = (formData.get('tiktok') as string)?.trim() || null;
+    const youtube      = (formData.get('youtube') as string)?.trim() || null;
     const nsosyal      = (formData.get('nsosyal') as string)?.trim() || null;
     const hizmetlerRaw = (formData.get('hizmetler') as string) || '';
     const kartResmi    = formData.get('kart_resmi') as File | null;
@@ -60,7 +61,18 @@ export async function POST(request: NextRequest) {
     const yeniKategori = formData.get('yeni_kategori') === '1';
     const yeniKategoriTipi = (formData.get('yeni_kategori_tipi') as string) || null;
 
-    if (!ad || !il_adi || (!sektor && isNaN(kategoriIdRaw)) || !telefon) {
+    // Gizli işaret: -- yazılırsa boş kabul edilir
+    const doluMu = (deger: string | null | undefined) => {
+      const temiz = (deger || '').trim();
+      return temiz !== '' && temiz !== '--';
+    };
+    // -- işaretlerini temizle (veritabanına null olarak kaydet)
+    const temizle = (deger: string | null | undefined) => {
+      const temiz = (deger || '').trim();
+      return temiz === '--' ? null : temiz || null;
+    };
+
+    if (!doluMu(ad) || !il_adi || (!sektor && isNaN(kategoriIdRaw)) || !doluMu(telefon)) {
       return NextResponse.json({ error: 'Zorunlu alanlar eksik.' }, { status: 400 });
     }
     if (whatsappSonuc.hata) return NextResponse.json({ error: whatsappSonuc.hata }, { status: 400 });
@@ -112,14 +124,37 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 1. Firmayı kaydet (fotoğraf URL'leri olmadan)
+    // 1. Firmayı kaydet (fotoğraf URL'leri olmadan; -- işaretleri temizlenmiş)
     const { data: firma, error: insertError } = await supabase
       .from('firmalar')
       .insert({
-        ad, sahip, sanayi_sitesi, site_id, il_adi, ilce_adi, mahalle_id, sokak_id, sektor, kategori_id, firma_tipi,
-        telefon, mobil_telefon, whatsapp, adres, plus_code, web_sitesi, eposta, instagram, facebook, tiktok, nsosyal,
-        hizmetler, ozel_firma: false,
-        fotograf_url: null, detay_fotograflar: [],
+        ad: temizle(ad),
+        sahip,
+        sanayi_sitesi,
+        site_id,
+        il_adi,
+        ilce_adi,
+        mahalle_id,
+        sokak_id,
+        sektor,
+        kategori_id,
+        firma_tipi,
+        telefon: temizle(telefon),
+        mobil_telefon,
+        whatsapp,
+        adres,
+        plus_code,
+        web_sitesi,
+        eposta,
+        instagram,
+        facebook,
+        tiktok,
+        youtube,
+        nsosyal,
+        hizmetler,
+        ozel_firma: false,
+        fotograf_url: null,
+        detay_fotograflar: [],
         onay_durumu: yonetici ? 'onaylandi' : 'beklemede',
         kullanici_email: kullanici_email,
         yeni_kategori: yeniKategori,

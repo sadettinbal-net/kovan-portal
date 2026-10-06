@@ -56,7 +56,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
   const [form, setForm] = useState({
     ad: '', sahip: '', site_id: '', kategori_id: '',
-    telefon: '', mobil_telefon: '', whatsapp: '', adres: '', plus_code: '', web_sitesi: '', eposta: '', instagram: '', facebook: '', tiktok: '', nsosyal: '', hizmetler: '',
+    telefon: '', mobil_telefon: '', whatsapp: '', adres: '', plus_code: '', web_sitesi: '', eposta: '', instagram: '', facebook: '', tiktok: '', youtube: '', nsosyal: '', hizmetler: '',
   });
 
   const [yeniKategoriModu, setYeniKategoriModu] = useState(false);
@@ -71,7 +71,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
   }, [yonetici]);
 
   function formuSifirla() {
-    setForm({ ad: '', sahip: '', site_id: '', kategori_id: '', telefon: '', mobil_telefon: '', whatsapp: '', adres: '', plus_code: '', web_sitesi: '', eposta: '', instagram: '', facebook: '', tiktok: '', nsosyal: '', hizmetler: '' });
+    setForm({ ad: '', sahip: '', site_id: '', kategori_id: '', telefon: '', mobil_telefon: '', whatsapp: '', adres: '', plus_code: '', web_sitesi: '', eposta: '', instagram: '', facebook: '', tiktok: '', youtube: '', nsosyal: '', hizmetler: '' });
     setKonum(BOS_KONUM);
     setYeniKategoriModu(false);
     setYeniKategori('');
@@ -158,6 +158,12 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
     setDetayOnizlemeler(prev => prev.filter((_, i) => i !== idx));
   }
 
+  // Gizli işaret: -- yazılırsa boş kabul edilir
+  function doluMu(deger: string | null | undefined): boolean {
+    const temiz = (deger || '').trim();
+    return temiz !== '' && temiz !== '--';
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -174,8 +180,9 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
       return;
     }
 
-    if (!form.ad.trim() || !konum.il || !konum.ilce || !form.telefon.trim()) {
-      setDurum({ tip: 'hata', mesaj: 'Lütfen yıldızlı zorunlu alanları doldurun.' });
+    // Zorunlu alanlar: firma adı, il, ilçe, telefon (-- ile boş geçilebilir)
+    if (!doluMu(form.ad) || !konum.il || !konum.ilce || !doluMu(form.telefon)) {
+      setDurum({ tip: 'hata', mesaj: 'Lütfen yıldızlı zorunlu alanları doldurun (veya -- yazarak geçin).' });
       return;
     }
 
@@ -606,6 +613,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
                 ['instagram', 'Instagram', 'instagram.com/firmaniz'],
                 ['facebook', 'Facebook', 'facebook.com/firmaniz'],
                 ['tiktok', 'TikTok', '@firmaniz'],
+                ['youtube', 'YouTube', 'youtube.com/@firmaniz'],
                 ['nsosyal', 'N Sosyal', 'nsosyal.com/firmaniz'],
               ] as const).map(([alan, etiket, ornek]) => (
                 <div key={alan}>

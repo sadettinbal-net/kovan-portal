@@ -1,5 +1,5 @@
 // Sosyal medya alanlarının başındaki marka simgeleri (firma sayfasındaki düğmelerle aynı renkler)
-export default function SosyalIkon({ ad }: { ad: 'instagram' | 'facebook' | 'tiktok' | 'nsosyal' }) {
+export default function SosyalIkon({ ad }: { ad: 'instagram' | 'facebook' | 'tiktok' | 'youtube' | 'nsosyal' }) {
   const kutu = 'w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0';
   if (ad === 'instagram') return (
     <span className={`${kutu} bg-gradient-to-tr from-orange-400 via-pink-500 to-purple-500`}>
@@ -14,6 +14,11 @@ export default function SosyalIkon({ ad }: { ad: 'instagram' | 'facebook' | 'tik
   if (ad === 'tiktok') return (
     <span className={`${kutu} bg-black`}>
       <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.19 8.19 0 004.79 1.53V6.77a4.85 4.85 0 01-1.02-.08z"/></svg>
+    </span>
+  );
+  if (ad === 'youtube') return (
+    <span className={`${kutu} bg-[#FF0000]`}>
+      <svg viewBox="0 0 24 24" className="w-3 h-3 fill-white"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
     </span>
   );
   return <span className={`${kutu} bg-[#e30a17] text-white font-black text-[11px] leading-none`}>N</span>;
