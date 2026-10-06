@@ -151,6 +151,11 @@ const GUNCELLEME_ALAN_ETIKETLER: Record<string, string> = {
   twitter: 'X (Twitter)', youtube: 'YouTube', linkedin: 'LinkedIn', tiktok: 'TikTok', eposta: 'E-posta', nsosyal: 'N Sosyal',
 };
 
+// Panel aramaları için Türkçe harf duyarlı küçültme: "GÜNEŞLİ" ile "güneşli" eşleşir (ı/i farkı da gözetilmez)
+function aramaIcin(metin: string | null | undefined): string {
+  return (metin || '').toLocaleLowerCase('tr-TR').replace(/ı/g, 'i');
+}
+
 function BekleyenGuncellemeler({ onSayi }: { onSayi: (n: number) => void }) {
   const [liste, setListe] = useState<BekleyenGuncellemeTip[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -768,9 +773,9 @@ function IlanYonetimi() {
   }
 
   const filtrelenmis = ilanlar.filter(i =>
-    i.baslik.toLowerCase().includes(ara.toLowerCase()) ||
-    i.ilan_veren_ad.toLowerCase().includes(ara.toLowerCase()) ||
-    i.kategori.toLowerCase().includes(ara.toLowerCase())
+    aramaIcin(i.baslik).includes(aramaIcin(ara)) ||
+    aramaIcin(i.ilan_veren_ad).includes(aramaIcin(ara)) ||
+    aramaIcin(i.kategori).includes(aramaIcin(ara))
   );
 
   function ilanSec(ilan: Ilan) {
@@ -1056,8 +1061,8 @@ function UyeListesi() {
   }
 
   const filtrelenmis = uyeler.filter(u =>
-    u.ad.toLowerCase().includes(ara.toLowerCase()) ||
-    u.email.toLowerCase().includes(ara.toLowerCase()) ||
+    aramaIcin(u.ad).includes(aramaIcin(ara)) ||
+    aramaIcin(u.email).includes(aramaIcin(ara)) ||
     (u.telefon || '').includes(ara)
   );
 
@@ -1771,13 +1776,13 @@ function AdminPanel() {
   }, []);
 
   const filtrelenmiş = firmalar.filter(f => {
-    const q = ara.toLowerCase();
+    const q = aramaIcin(ara);
     return (
-      f.ad?.toLowerCase().includes(q) ||
-      f.sektor?.toLowerCase().includes(q) ||
-      f.sahip?.toLowerCase().includes(q) ||
-      f.sanayi_sitesi?.toLowerCase().includes(q) ||
-      f.telefon?.toLowerCase().includes(q)
+      aramaIcin(f.ad).includes(q) ||
+      aramaIcin(f.sektor).includes(q) ||
+      aramaIcin(f.sahip).includes(q) ||
+      aramaIcin(f.sanayi_sitesi).includes(q) ||
+      aramaIcin(f.telefon).includes(q)
     );
   });
 
