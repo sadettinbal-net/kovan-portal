@@ -48,3 +48,6 @@ next-env.d.ts
 database/check-adana-mahalleler-yeni.js
 database/check-adana-seyhan-duplicates.js
 database/check-all-adana-mahalleler.js
+
+# arka plan sunucu kaydi
+sunucu.log
