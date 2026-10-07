@@ -186,7 +186,10 @@ export async function POST(request: NextRequest) {
     // 2. Kart resmi yükle (içeriğinden anlaşılan tür ve uzantıyla)
     if (kart.resimler.length > 0) {
       const url = await resimYukle(supabase, BUCKET, `kart/${id}-${ts}`, kart.resimler[0]);
-      if (url) updates.fotograf_url = url;
+      if (url) {
+        updates.fotograf_url = url;
+        updates.ana_sayfa_resim = url; // Kategori resmi ana sayfa resmi olarak da kullanılır
+      }
     }
 
     // 3. Detay fotoğrafları yükle (max 5)

@@ -58,6 +58,7 @@ export async function PATCH(request: NextRequest) {
     const url = await resimYukle(supabase, BUCKET, `kart/${id}-${ts}`, kart.resimler[0]);
     if (!url) return NextResponse.json({ error: 'Kart resmi yüklenemedi.' }, { status: 500 });
     updates.fotograf_url = url;
+    updates.ana_sayfa_resim = url; // Kategori resmi ana sayfa resmi olarak da kullanılır
     if (firma.fotograf_url) silinecekDosyalar.push(firma.fotograf_url);
   } else if (silKart && firma.fotograf_url) {
     updates.fotograf_url = null;
