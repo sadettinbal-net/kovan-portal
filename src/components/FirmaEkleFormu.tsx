@@ -574,15 +574,16 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* Mobil Telefon */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">📲 Mobil Telefon</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">📲 Mobil Telefon <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
             <input type="tel" value={form.mobil_telefon} onChange={e => setField('mobil_telefon', e.target.value)}
               placeholder="05xx xxx xx xx"
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
+            <p className="text-xs text-gray-400 mt-1">WhatsApp için mobil telefon gereklidir.</p>
           </div>
 
           {/* WhatsApp */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">💬 WhatsApp numarası veya WhatsApp Business linki</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">💬 WhatsApp <span className="text-gray-400 font-normal">(numara veya Business linki)</span></label>
             <input type="text" value={form.whatsapp} onChange={e => setField('whatsapp', e.target.value)}
               placeholder="05xx xxx xx xx veya https://wa.me/message/..."
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
