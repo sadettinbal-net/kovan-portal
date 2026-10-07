@@ -428,7 +428,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* Yetkili */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Yetkili Kişi</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Yetkili Kişi <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
             <input type="text" value={form.sahip} onChange={e => setField('sahip', e.target.value)}
               placeholder="İsim soyisim"
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
@@ -556,7 +556,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
                 className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Adres</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Adres <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
               <input type="text" value={form.adres} onChange={e => setField('adres', e.target.value)}
                 placeholder="Sanayi sitesi içindeki konumunuz"
                 className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
@@ -565,7 +565,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* Plus Code */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">📍 Plus Code <span className="text-gray-400 font-normal">(Google Haritalar)</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">📍 Plus Code <span className="text-gray-400 font-normal">(opsiyonel - Google Haritalar)</span></label>
             <input type="text" value={form.plus_code} onChange={e => setField('plus_code', e.target.value)}
               placeholder="Örn: 8GHC+2X Ümraniye, İstanbul"
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
@@ -592,7 +592,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* Web Sitesi */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Web Sitesi</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Web Sitesi <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
             <input type="url" value={form.web_sitesi} onChange={e => setField('web_sitesi', e.target.value)}
               placeholder="https://www.firmaniz.com"
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
@@ -600,7 +600,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* E-posta */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">✉️ E-posta Adresi</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">✉️ E-posta Adresi <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
             <input type="email" value={form.eposta} onChange={e => setField('eposta', e.target.value)}
               placeholder="info@firmaniz.com"
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors" />
@@ -608,7 +608,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* Sosyal medya */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">📱 Sosyal Medya <span className="text-gray-400 font-normal">(sayfa bağlantısı veya kullanıcı adı)</span></label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">📱 Sosyal Medya <span className="text-gray-400 font-normal">(opsiyonel - sayfa bağlantısı veya kullanıcı adı)</span></label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {([
                 ['instagram', 'Instagram', 'instagram.com/firmaniz'],
@@ -632,7 +632,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* Hizmetler */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Sunduğunuz Hizmetler</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Sunduğunuz Hizmetler <span className="text-gray-400 font-normal">(opsiyonel)</span></label>
             <textarea rows={2} value={form.hizmetler} onChange={e => setField('hizmetler', e.target.value)}
               placeholder="Virgülle ayırarak yazın: Motor, Yağ değişimi, Fren..."
               className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors resize-none" />
@@ -640,7 +640,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* ── KART RESMİ ── */}
           <div className="border-t border-gray-100 pt-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-1">Kart Resmi</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">Kart Resmi <span className="text-gray-400 font-normal">(opsiyonel)</span></h3>
             <p className="text-xs text-gray-400 mb-3">Firma listesindeki kartta görünür. 1 adet; fotoğraf otomatik küçültülür.</p>
 
             {kartOnizleme ? (
@@ -666,7 +666,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
 
           {/* ── DETAY FOTOĞRAFLARI ── */}
           <div className="border-t border-gray-100 pt-5">
-            <h3 className="text-sm font-semibold text-gray-700 mb-1">Detay Fotoğrafları</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">Detay Fotoğrafları <span className="text-gray-400 font-normal">(opsiyonel)</span></h3>
             <p className="text-xs text-gray-400 mb-3">Firma detay sayfasında görünür. En fazla {MAX_DETAY} adet; fotoğraflar otomatik küçültülür (toplam en fazla {GONDERIM_SINIRI_MB} MB).</p>
 
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 mb-3">
