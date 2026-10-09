@@ -23,7 +23,7 @@ export async function sagMenuAramasi(request: Request, tip: "sitesiz" | "kurumsa
       : query.eq("firma_tipi", "kurumsal");
 
   // Sonuç kutusu kendi içinde kaydırılır; yüksekliği sol menüdeki sanayi siteleri listesiyle aynı
-  const { data: firmalar } = await query.limit(15);
+  const { data: firmalar } = await query.limit(16);
 
   const sonuclar = (firmalar || []).map(f => ({
     id: f.id,
