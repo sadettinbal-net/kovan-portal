@@ -4,24 +4,35 @@ import { aktifKategoriler, kategoriGruplari, type FirmaKategorisi, type Kategori
 
 // Sağ menü: Sanayi Dışı ve Kurumsal kategoriler (firma_kategorileri tablosundan), onaylı firma sayılarıyla.
 // Firması olmayan kategoriler menüde gösterilmez.
-async function onayliFirmalar(firmaTipi: "sitesiz" | "kurumsal") {
+// Sayılar veritabanında hesaplanır (satır çekip saymak Supabase'in 1000 satır sınırına takılıyordu).
+type Grup = "sitesiz" | "kurumsal";
+
+// Toplam rozet sayısı: gerçek sayım (count: exact), süzgeçler eskisiyle aynı
+async function onayliFirmaSayisi(firmaTipi: Grup) {
   let query = supabase
     .from("firmalar")
-    .select("kategori_id")
+    .select("id", { count: "exact", head: true })
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi");
   query =
     firmaTipi === "sitesiz"
       ? query.or("firma_tipi.eq.sitesiz,and(firma_tipi.is.null,or(sanayi_sitesi.is.null,sanayi_sitesi.eq.))")
       : query.eq("firma_tipi", "kurumsal");
-  const { data } = await query;
-  return data || [];
+  const { count } = await query;
+  return count || 0;
 }
 
-function grupla(kategoriler: FirmaKategorisi[], tip: KategoriTipi, firmalar: { kategori_id: number | null }[]) {
-  const sayi = new Map<number, number>();
-  for (const f of firmalar) if (f.kategori_id) sayi.set(f.kategori_id, (sayi.get(f.kategori_id) || 0) + 1);
+// Kategori başına sayılar tek RPC ile (supabase/migrations/20261009010000_firma_kategori_sayilari.sql)
+async function kategoriSayilari() {
+  const { data } = await supabase.rpc("firma_kategori_sayilari");
+  const sayilar: Record<Grup, Map<number, number>> = { sitesiz: new Map(), kurumsal: new Map() };
+  for (const r of (data || []) as { grup: Grup; kategori_id: number | null; sayi: number }[]) {
+    if (r.kategori_id) sayilar[r.grup]?.set(Number(r.kategori_id), Number(r.sayi));
+  }
+  return sayilar;
+}
 
+function grupla(kategoriler: FirmaKategorisi[], tip: KategoriTipi, sayi: Map<number, number>) {
   return kategoriGruplari(kategoriler, tip)
     .map(({ ana, altlar }) => {
       // Alt kategorisi olmayan ana kategori kendi başına tek satır olarak listelenir
@@ -38,18 +49,19 @@ function grupla(kategoriler: FirmaKategorisi[], tip: KategoriTipi, firmalar: { k
 }
 
 export default async function RightSidebarWrapper() {
-  const [kategoriler, sitesizFirmalar, kurumsalFirmalar] = await Promise.all([
+  const [kategoriler, sayilar, toplamSanayiDisi, toplamKurumsal] = await Promise.all([
     aktifKategoriler(supabase),
-    onayliFirmalar("sitesiz"),
-    onayliFirmalar("kurumsal"),
+    kategoriSayilari(),
+    onayliFirmaSayisi("sitesiz"),
+    onayliFirmaSayisi("kurumsal"),
   ]);
 
   return (
     <RightSidebar
-      sanayiDisiKategoriler={grupla(kategoriler, "sanayi_disi", sitesizFirmalar)}
-      toplamSanayiDisi={sitesizFirmalar.length}
-      kurumsalKategoriler={grupla(kategoriler, "kurumsal", kurumsalFirmalar)}
-      toplamKurumsal={kurumsalFirmalar.length}
+      sanayiDisiKategoriler={grupla(kategoriler, "sanayi_disi", sayilar.sitesiz)}
+      toplamSanayiDisi={toplamSanayiDisi}
+      kurumsalKategoriler={grupla(kategoriler, "kurumsal", sayilar.kurumsal)}
+      toplamKurumsal={toplamKurumsal}
     />
   );
 }

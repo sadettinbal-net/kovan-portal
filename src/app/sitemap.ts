@@ -13,13 +13,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/iletisim`, priority: 0.5, changeFrequency: "monthly" },
   ];
 
-  const { data: firmalar } = await supabase
-    .from("firmalar")
-    .select("id, created_at")
-    .eq("onay_durumu", "onaylandi")
-    .not("ad", "ilike", "(Firma%");
+  // Supabase tek sorguda en fazla 1000 satır döndürür; bütün firmalar 1000'lik parçalarla çekilir
+  const firmalar: { id: number; created_at: string | null }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data } = await supabase
+      .from("firmalar")
+      .select("id, created_at")
+      .eq("onay_durumu", "onaylandi")
+      .not("ad", "ilike", "(Firma%")
+      .order("id")
+      .range(from, from + 999);
+    firmalar.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
 
-  const firmaPages: MetadataRoute.Sitemap = (firmalar || []).map((f) => ({
+  const firmaPages: MetadataRoute.Sitemap = firmalar.map((f) => ({
     url: `${baseUrl}/firmalar/${f.id}`,
     lastModified: f.created_at ? new Date(f.created_at) : new Date(),
     priority: 0.7,
