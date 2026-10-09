@@ -30,7 +30,11 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
   const [aramaMetni, setAramaMetni] = useState("");
   const [aramaSonuclari, setAramaSonuclari] = useState<any[]>([]);
   const [aramaAcik, setAramaAcik] = useState(false);
+  const [devamVar, setDevamVar] = useState(false);
+  const [devamYukleniyor, setDevamYukleniyor] = useState(false);
   const aramaRef = useRef<HTMLDivElement>(null);
+  // Yazı değişince eski aramanın geç gelen sonuçları yenisine karışmasın
+  const aramaNo = useRef(0);
 
   useEffect(() => {
     setMenuOpen(window.innerWidth >= 768);
@@ -49,22 +53,45 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
     });
   };
 
+  const aramaGetir = async (bas: number) => {
+    const apiUrl = sekme === 'sitesiz' ? '/api/arama-sitesiz' : '/api/arama-kurumsal';
+    const res = await fetch(`${apiUrl}?q=${encodeURIComponent(aramaMetni)}&bas=${bas}`);
+    return res.json();
+  };
+
   // Arama debounce
   useEffect(() => {
+    const no = ++aramaNo.current;
     if (aramaMetni.length < 2) {
       setAramaSonuclari([]);
+      setDevamVar(false);
       setAramaAcik(false);
       return;
     }
     const timeout = setTimeout(async () => {
-      const apiUrl = sekme === 'sitesiz' ? '/api/arama-sitesiz' : '/api/arama-kurumsal';
-      const res = await fetch(`${apiUrl}?q=${encodeURIComponent(aramaMetni)}`);
-      const data = await res.json();
+      const data = await aramaGetir(0);
+      if (no !== aramaNo.current) return;
       setAramaSonuclari(data.sonuclar || []);
+      setDevamVar(!!data.devamVar);
       setAramaAcik(true);
     }, 300);
     return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aramaMetni, sekme]);
+
+  // Sonsuz kaydırma: kutunun sonuna yaklaşınca sıradaki sonuçlar eklenir
+  const sonucKaydirildi = async (e: React.UIEvent<HTMLDivElement>) => {
+    const kutu = e.currentTarget;
+    if (!devamVar || devamYukleniyor) return;
+    if (kutu.scrollTop + kutu.clientHeight < kutu.scrollHeight - 100) return;
+    const no = aramaNo.current;
+    setDevamYukleniyor(true);
+    const data = await aramaGetir(aramaSonuclari.length);
+    setDevamYukleniyor(false);
+    if (no !== aramaNo.current) return;
+    setAramaSonuclari(prev => [...prev, ...(data.sonuclar || [])]);
+    setDevamVar(!!data.devamVar);
+  };
 
   // Click outside
   useEffect(() => {
@@ -136,13 +163,18 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
               className="w-full border border-[#dde3ec] rounded pl-6 pr-2 py-1.5 text-xs bg-white outline-none focus:border-[#e8a020]"
             />
             {aramaAcik && aramaSonuclari.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] max-h-[28rem] overflow-y-auto">
-                {aramaSonuclari.map((sonuc, i) => (
+              // Kutu 17 sonuç boyunda (her satır 3rem); gerisi kutu içinde kaydırdıkça yüklenir
+              <div
+                onScroll={sonucKaydirildi}
+                style={{ maxHeight: "calc(17 * 3rem)" }}
+                className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] overflow-y-auto"
+              >
+                {aramaSonuclari.map((sonuc) => (
                   <Link
-                    key={i}
+                    key={sonuc.id}
                     href={sonuc.url}
                     onClick={() => { setAramaAcik(false); setAramaMetni(""); }}
-                    className="flex items-start gap-2 px-3 py-2 text-xs hover:bg-yellow-50 transition-colors border-b border-gray-100 last:border-b-0"
+                    className="flex items-center gap-2 px-3 h-12 text-xs hover:bg-yellow-50 transition-colors border-b border-gray-100 last:border-b-0"
                   >
                     <span className="w-5 h-5 rounded bg-[#e8a020] text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
                       {sonuc.baslik.charAt(0)}
@@ -153,6 +185,7 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
                     </div>
                   </Link>
                 ))}
+                {devamYukleniyor && <div className="px-3 py-2 text-[10px] text-gray-400 text-center">Yükleniyor…</div>}
               </div>
             )}
           </div>

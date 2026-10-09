@@ -2,13 +2,18 @@ import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { aramaKosulu } from "@/lib/aramaDeseni";
 
+// Sonuçlar parça parça gelir: kutu kaydırıldıkça bir sonraki parça istenir (sonsuz kaydırma)
+const PARCA = 20;
+
 // Sağ menüdeki Sanayi Dışı / Kurumsal sekmelerinin arama kutusu.
 // Süzgeçler RightSidebarWrapper'daki sayımla aynı: sekmede sayılan firmalar aranır.
 export async function sagMenuAramasi(request: Request, tip: "sitesiz" | "kurumsal") {
-  const q = new URL(request.url).searchParams.get("q") || "";
+  const params = new URL(request.url).searchParams;
+  const q = params.get("q") || "";
+  const bas = Math.max(parseInt(params.get("bas") || "") || 0, 0);
 
   if (q.length < 2) {
-    return NextResponse.json({ sonuclar: [] });
+    return NextResponse.json({ sonuclar: [], devamVar: false });
   }
 
   let query = supabase
@@ -22,8 +27,8 @@ export async function sagMenuAramasi(request: Request, tip: "sitesiz" | "kurumsa
       ? query.or("firma_tipi.eq.sitesiz,and(firma_tipi.is.null,or(sanayi_sitesi.is.null,sanayi_sitesi.eq.))")
       : query.eq("firma_tipi", "kurumsal");
 
-  // Sonuç kutusu kendi içinde kaydırılır; yüksekliği sol menüdeki sanayi siteleri listesiyle aynı
-  const { data: firmalar } = await query.limit(16);
+  // Sabit sıra şart: yoksa parçalar arasında aynı firma iki kez gelebilir ya da biri atlanabilir
+  const { data: firmalar } = await query.order("ad").order("id").range(bas, bas + PARCA - 1);
 
   const sonuclar = (firmalar || []).map(f => ({
     id: f.id,
@@ -32,5 +37,5 @@ export async function sagMenuAramasi(request: Request, tip: "sitesiz" | "kurumsa
     url: `/firma/${f.id}`
   }));
 
-  return NextResponse.json({ sonuclar });
+  return NextResponse.json({ sonuclar, devamVar: sonuclar.length === PARCA });
 }
