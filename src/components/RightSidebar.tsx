@@ -163,10 +163,10 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
               className="w-full border border-[#dde3ec] rounded pl-6 pr-2 py-1.5 text-xs bg-white outline-none focus:border-[#e8a020]"
             />
             {aramaAcik && aramaSonuclari.length > 0 && (
-              // Kutu 17 sonuç boyunda (her satır 3rem); gerisi kutu içinde kaydırdıkça yüklenir
+              // Kutu 10 sonuç boyunda (her satır 3rem); gerisi kutu içinde kaydırdıkça yüklenir
               <div
                 onScroll={sonucKaydirildi}
-                style={{ maxHeight: "calc(17 * 3rem)" }}
+                style={{ maxHeight: "calc(10 * 3rem)" }}
                 className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] overflow-y-auto"
               >
                 {aramaSonuclari.map((sonuc) => (
