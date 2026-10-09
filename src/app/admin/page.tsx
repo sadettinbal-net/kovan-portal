@@ -1999,6 +1999,28 @@ function AdminPanel() {
     setYukleniyorFoto(false);
   }
 
+  // Kart fotoğrafı yapay zekâ görseli mi? Kapalıysa sitede "Temsili görsel" etiketi çıkmaz (firmanın gerçek fotoğrafı)
+  async function temsiliGorselDegistir(temsili: boolean) {
+    if (!seciliFirma) return;
+    setYukleniyorFoto(true);
+    setDurum(null);
+    const res = await fetch('/api/admin/firma-guncelle', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: seciliFirma.id, temsili_gorsel: temsili }),
+    });
+    if (res.ok) {
+      const güncel = { ...seciliFirma, temsili_gorsel: temsili };
+      setSeciliFirma(güncel);
+      setFirmalar(prev => prev.map(f => f.id === seciliFirma.id ? güncel : f));
+      setDurum({ tip: 'basari', mesaj: temsili ? '"Temsili görsel" etiketi açıldı.' : 'Gerçek fotoğraf olarak işaretlendi; "Temsili görsel" etiketi gösterilmeyecek.' });
+    } else {
+      const data = await res.json();
+      setDurum({ tip: 'hata', mesaj: data.error || 'Kaydedilemedi.' });
+    }
+    setYukleniyorFoto(false);
+  }
+
   async function fotografSil() {
     if (!seciliFirma?.fotograf_url) return;
     setYukleniyorFoto(true);
@@ -2549,6 +2571,21 @@ function AdminPanel() {
                         )}
                       </div>
                     </div>
+                    {seciliFirma.fotograf_url && (
+                      <label className="flex items-start gap-2 mt-2 text-xs text-gray-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={seciliFirma.temsili_gorsel === false}
+                          disabled={yukleniyorFoto}
+                          onChange={e => temsiliGorselDegistir(!e.target.checked)}
+                          className="mt-0.5"
+                        />
+                        <span>
+                          Bu, firmanın kendi gerçek fotoğrafı
+                          <span className="block text-gray-400">İşaretli değilse sitede görselin köşesinde &quot;Temsili görsel&quot; yazar.</span>
+                        </span>
+                      </label>
+                    )}
                   </div>
 
                   {/* Detay fotoğraflar */}

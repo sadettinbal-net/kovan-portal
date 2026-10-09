@@ -29,6 +29,8 @@ export type Firma = {
   ozel_baslangic?: string | null;
   ozel_bitis?: string | null;
   fotograf_url: string | null;
+  // fotograf_url yapay zekâ ile üretilmiş temsili görselse true (varsayılan); gerçek fotoğrafta yönetici false yapar
+  temsili_gorsel?: boolean;
   detay_fotograflar: string[] | null;
   onay_durumu: 'beklemede' | 'onaylandi' | 'reddedildi' | 'pasif';
   aciklama?: string | null;

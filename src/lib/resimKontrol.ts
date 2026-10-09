@@ -35,9 +35,36 @@ export async function resimleriKontrolEt(
   return { resimler };
 }
 
-// Kontrol edilmiş resmi, içeriğinden anlaşılan tür ve uzantıyla depoya yükler; herkese açık adresini döndürür.
+// Büyük fotoğraflar yüklenmeden önce küçültülür: en fazla 1200px genişlik, WebP (kalite 80).
+// 300 KB altı ve 1200px'ten dar olanlara dokunulmaz; GIF'ler (hareketli olabilir) olduğu gibi kalır.
+export const KUCULTME_SINIRI_BAYT = 300 * 1024;
+export const KUCULTME_EN_FAZLA_GENISLIK = 1200;
+export const WEBP_KALITE = 80;
+
+export async function resmiKucult(resim: { veri: Buffer; tur: ResimTuru }): Promise<{ veri: Buffer; tur: ResimTuru }> {
+  if (resim.tur.mime === 'image/gif') return resim;
+  try {
+    const sharp = (await import('sharp')).default;
+    const { width = 0 } = await sharp(resim.veri).metadata();
+    if (resim.veri.length <= KUCULTME_SINIRI_BAYT && width <= KUCULTME_EN_FAZLA_GENISLIK) return resim;
+    const veri = await sharp(resim.veri)
+      .rotate() // telefon fotoğraflarındaki yön bilgisini uygula
+      .resize({ width: KUCULTME_EN_FAZLA_GENISLIK, withoutEnlargement: true })
+      .webp({ quality: WEBP_KALITE })
+      .toBuffer();
+    // Nadiren WebP daha büyük çıkar (zaten sıkıştırılmış küçük resimler); o zaman aslını yükle
+    if (veri.length >= resim.veri.length && width <= KUCULTME_EN_FAZLA_GENISLIK) return resim;
+    return { veri, tur: { mime: 'image/webp', uzanti: 'webp' } };
+  } catch (e) {
+    console.error('Resim küçültülemedi, aslı yüklenecek:', e);
+    return resim;
+  }
+}
+
+// Kontrol edilmiş resmi (gerekirse küçültüp) içeriğinden anlaşılan tür ve uzantıyla depoya yükler; herkese açık adresini döndürür.
 type Depo = { storage: { from(b: string): { upload(yol: string, veri: Buffer, s: { contentType: string; upsert: boolean }): PromiseLike<{ error: unknown }>; getPublicUrl(yol: string): { data: { publicUrl: string } } } } };
-export async function resimYukle(supabase: Depo, depo: string, yolOneki: string, resim: { veri: Buffer; tur: ResimTuru }): Promise<string | null> {
+export async function resimYukle(supabase: Depo, depo: string, yolOneki: string, asil: { veri: Buffer; tur: ResimTuru }): Promise<string | null> {
+  const resim = await resmiKucult(asil);
   const yol = `${yolOneki}.${resim.tur.uzanti}`;
   const { error } = await supabase.storage.from(depo).upload(yol, resim.veri, { contentType: resim.tur.mime, upsert: false });
   if (error) { console.error('Resim yüklenemedi:', yol, error); return null; }

@@ -188,7 +188,6 @@ export async function POST(request: NextRequest) {
       const url = await resimYukle(supabase, BUCKET, `kart/${id}-${ts}`, kart.resimler[0]);
       if (url) {
         updates.fotograf_url = url;
-        updates.ana_sayfa_resim = url; // Kategori resmi ana sayfa resmi olarak da kullanılır
       }
     }
 

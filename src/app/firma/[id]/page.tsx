@@ -15,6 +15,7 @@ import { ilkNumara, whatsappAdresi } from "@/lib/whatsapp";
 import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
 import { firmaSaglikUyarisi } from "@/lib/firmaKategorileri";
 import AcilUyari from "@/components/AcilUyari";
+import TemsiliEtiket from "@/components/TemsiliEtiket";
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +109,7 @@ export default async function FirmaDetay({ params }: PageProps) {
               sizes="(max-width: 768px) 100vw, 800px"
               priority
             />
+            {firma.temsili_gorsel !== false && <TemsiliEtiket />}
           </div>
         )}
 

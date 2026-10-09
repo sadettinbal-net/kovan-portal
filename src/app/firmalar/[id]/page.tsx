@@ -10,6 +10,7 @@ import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
 import { getKategoriResim } from "@/lib/kategoriResim";
 import { firmaSaglikUyarisi } from "@/lib/firmaKategorileri";
 import AcilUyari from "@/components/AcilUyari";
+import TemsiliEtiket from "@/components/TemsiliEtiket";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export default async function FirmaKartPage({ params }: PageProps) {
 
   const { data: firma } = await supabase
     .from("firmalar")
-    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kategori_id")
+    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kategori_id, temsili_gorsel")
     .eq("id", id)
     .single();
 
@@ -106,6 +107,8 @@ export default async function FirmaKartPage({ params }: PageProps) {
             sizes="(max-width: 640px) 100vw, 576px"
             priority
           />
+          {/* Firma fotoğrafı yoksa kategori resmi gösterilir; o da temsili */}
+          {(!firma.fotograf_url || firma.temsili_gorsel !== false) && <TemsiliEtiket />}
           <span className="absolute bottom-2 right-2 text-white font-black text-2xl bg-[#1a3a6b]/70 px-2 py-1 rounded">
             {basHarfler}
           </span>

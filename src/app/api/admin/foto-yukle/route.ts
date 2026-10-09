@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   if (!publicUrl) return NextResponse.json({ error: 'Yüklenemedi.' }, { status: 500 });
 
   if (tip === 'kart') {
-    const { data, error } = await supabase.from('firmalar').update({ fotograf_url: publicUrl, ana_sayfa_resim: publicUrl }).eq('id', id).select('id');
+    const { data, error } = await supabase.from('firmalar').update({ fotograf_url: publicUrl }).eq('id', id).select('id');
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     if (!data?.length) return NextResponse.json({ error: 'Firma bulunamadı (0 kayıt).' }, { status: 404 });
   } else {

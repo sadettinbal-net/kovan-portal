@@ -5,6 +5,7 @@ import { translations } from "@/lib/translations";
 import type { Lang } from "@/lib/translations";
 import { getKategoriResim } from "@/lib/kategoriResim";
 import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
+import TemsiliEtiket from "./TemsiliEtiket";
 
 export interface FirmaKartData {
   id: number;
@@ -67,6 +68,8 @@ export default async function FirmaKart({ firma }: { firma: FirmaKartData }) {
           className="object-cover"
           sizes="(max-width: 768px) 33vw, 400px"
         />
+        {/* Kartta her zaman kategori resmi gösteriliyor; firmanın gerçek fotoğrafı değil */}
+        <TemsiliEtiket kucuk />
         <span className="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 text-white font-black leading-none tracking-widest text-[12px] phone:text-[15px] sm:text-[21px] bg-[#1a3a6b]/70 px-1 sm:px-1.5 py-0.5 rounded">
           {basHarfler}
         </span>
