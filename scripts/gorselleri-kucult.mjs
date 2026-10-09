@@ -4,6 +4,8 @@
 //
 // Kullanım:  node scripts/gorselleri-kucult.mjs          (sadece listeler, değişiklik yapmaz)
 //            node scripts/gorselleri-kucult.mjs --uygula (küçültür, yükler, adresleri günceller)
+//            node scripts/gorselleri-kucult.mjs --dosya kart/5413-1790839414946.png --uygula
+//              (sadece verilen dosya(lar), boyut sınırına bakmadan; --dosya birden çok kez yazılabilir)
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import sharp from 'sharp';
@@ -16,6 +18,8 @@ const SINIR = 300 * 1024;
 const GENISLIK = 1200;
 const KALITE = 80;
 const UYGULA = process.argv.includes('--uygula');
+const SECILENLER = process.argv.flatMap((a, i, t) => (a === '--dosya' && t[i + 1] ? [t[i + 1]] : []));
+const RAPOR = 'scripts/eski-gorseller.json';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const herkeseAcik = (yol) => supabase.storage.from(BUCKET).getPublicUrl(yol).data.publicUrl;
@@ -38,8 +42,11 @@ async function dosyalariListele(klasor = '') {
 const kb = (b) => `${Math.round(b / 1024)} KB`;
 
 async function main() {
-  const buyukler = (await dosyalariListele()).filter((d) => d.boyut > SINIR).sort((a, b) => b.boyut - a.boyut);
-  console.log(`${buyukler.length} görsel 300 KB'tan büyük.${UYGULA ? '' : ' (Deneme: değişiklik yapılmadı, uygulamak için --uygula)'}\n`);
+  const tumu = await dosyalariListele();
+  const buyukler = (SECILENLER.length ? tumu.filter((d) => SECILENLER.includes(d.yol)) : tumu.filter((d) => d.boyut > SINIR))
+    .sort((a, b) => b.boyut - a.boyut);
+  const aciklama = SECILENLER.length ? `seçilen ${SECILENLER.length} dosyadan ${buyukler.length} tanesi bulundu` : `${buyukler.length} görsel 300 KB'tan büyük`;
+  console.log(`${aciklama}.${UYGULA ? '' : ' (Deneme: değişiklik yapılmadı, uygulamak için --uygula)'}\n`);
 
   const rapor = [];
   for (const d of buyukler) {
@@ -68,10 +75,12 @@ async function main() {
   }
 
   if (UYGULA) {
-    fs.writeFileSync('scripts/eski-gorseller.json', JSON.stringify(rapor, null, 2));
+    // Önceki çalıştırmaların kayıtları korunur, yeniler sona eklenir
+    const onceki = fs.existsSync(RAPOR) ? JSON.parse(fs.readFileSync(RAPOR, 'utf8')) : [];
+    fs.writeFileSync(RAPOR, JSON.stringify([...onceki.filter((r) => !rapor.some((y) => y.eski === r.eski)), ...rapor], null, 2));
     const once = rapor.reduce((t, r) => t + r.eskiBoyutKB, 0);
     const sonra = rapor.reduce((t, r) => t + r.yeniBoyutKB, 0);
-    console.log(`\n${rapor.length} görsel küçültüldü: toplam ${once} KB → ${sonra} KB. Eski dosyalar silinmedi, liste: scripts/eski-gorseller.json`);
+    console.log(`\n${rapor.length} görsel küçültüldü: toplam ${once} KB → ${sonra} KB. Eski dosyalar silinmedi, liste: ${RAPOR}`);
   }
 }
 
