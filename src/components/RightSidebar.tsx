@@ -79,9 +79,10 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
 
   return (
     <aside className="w-full md:w-72 flex-shrink-0">
-      <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
+      {/* Dış çerçevede overflow-hidden yok: arama sonuç kutusu menünün dışına taşabilsin (yoksa kesiliyordu) */}
+      <div className="bg-white rounded-lg border border-[#dde3ec]">
         {/* Sekme Başlıkları */}
-        <div className="flex">
+        <div className="flex rounded-t-lg overflow-hidden">
           <button
             onClick={() => { setSekme('sitesiz'); setMenuOpen(true); }}
             className={`flex-1 px-3 py-2 font-bold text-sm transition-colors flex items-center justify-between gap-1.5 ${
@@ -135,7 +136,7 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
               className="w-full border border-[#dde3ec] rounded pl-6 pr-2 py-1.5 text-xs bg-white outline-none focus:border-[#e8a020]"
             />
             {aramaAcik && aramaSonuclari.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] max-h-64 overflow-y-auto">
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-200 z-[9999] max-h-[28rem] overflow-y-auto">
                 {aramaSonuclari.map((sonuc, i) => (
                   <Link
                     key={i}
