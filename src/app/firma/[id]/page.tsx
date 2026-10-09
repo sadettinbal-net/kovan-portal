@@ -13,6 +13,8 @@ import FotoGaleri from "@/components/FotoGaleri";
 import BolgeHaritasi, { type HaritaSorgusu } from "@/components/BolgeHaritasi";
 import { ilkNumara, whatsappAdresi } from "@/lib/whatsapp";
 import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
+import { firmaSaglikUyarisi } from "@/lib/firmaKategorileri";
+import AcilUyari from "@/components/AcilUyari";
 
 export const dynamic = "force-dynamic";
 
@@ -47,12 +49,15 @@ export default async function FirmaDetay({ params }: PageProps) {
 
   if (!firma) notFound();
 
-  const { data: benzerFirmalar } = await supabase
-    .from("firmalar")
-    .select("id, ad, sanayi_sitesi")
-    .eq("sektor", firma.sektor)
-    .neq("id", id)
-    .limit(3);
+  const [{ data: benzerFirmalar }, acilUyari] = await Promise.all([
+    supabase
+      .from("firmalar")
+      .select("id, ad, sanayi_sitesi")
+      .eq("sektor", firma.sektor)
+      .neq("id", id)
+      .limit(3),
+    firmaSaglikUyarisi(supabase, firma.kategori_id),
+  ]);
 
   // Puan özeti veritabanında hesaplanıp firma kaydında tutuluyor (gizli yorumlar sayılmaz)
   const yorumSayisi: number = firma.yorum_sayisi ?? 0;
@@ -169,6 +174,8 @@ export default async function FirmaDetay({ params }: PageProps) {
               </div>
             </div>
           )}
+
+          {acilUyari && <AcilUyari tur={acilUyari} detay className="mb-3" />}
 
           {firma.telefon && (
             <div className="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg">

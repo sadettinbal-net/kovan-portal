@@ -11,7 +11,8 @@ import type { Lang } from "@/lib/translations";
 import KategoriSuzgeci from "@/components/KategoriSuzgeci";
 import RightSidebarWrapper from "@/components/RightSidebarWrapper";
 import { ONE_CIKMA_EN_AZ_YORUM } from "@/lib/yorumlar";
-import { aktifKategoriler, adinKategoriIdleri, KATEGORI_TIPI, type FirmaTipi } from "@/lib/firmaKategorileri";
+import { aktifKategoriler, adinKategoriIdleri, saglikUyarisi, KATEGORI_TIPI, type FirmaTipi } from "@/lib/firmaKategorileri";
+import AcilUyari from "@/components/AcilUyari";
 
 export const dynamic = "force-dynamic";
 
@@ -98,11 +99,14 @@ export default async function FirmalarPage(props: PageProps) {
   // Üst site seçildiyse içindeki sitelerin firmaları da gelir
   if (site) query = query.in("sanayi_sitesi", await siteVeAltSiteAdlari(site));
   // Kategori: ana kategori seçildiyse alt kategorilerindeki firmalar da gelir. Tabloda olmayan bir ad gelirse eski sektör yazısıyla aranır.
+  let kategoriIdleri: number[] = [];
   if (kategori) {
     const tip = firma_tipi && firma_tipi in KATEGORI_TIPI ? KATEGORI_TIPI[firma_tipi as FirmaTipi] : undefined;
-    const idler = adinKategoriIdleri(kategoriListesi, kategori, tip);
-    query = idler.length ? query.in("kategori_id", idler) : query.eq("sektor", kategori);
+    kategoriIdleri = adinKategoriIdleri(kategoriListesi, kategori, tip);
+    query = kategoriIdleri.length ? query.in("kategori_id", kategoriIdleri) : query.eq("sektor", kategori);
   }
+  // Sağlık kategorisi listeleniyorsa firma listesinin üstünde 112 uyarısı
+  const acilUyari = saglikUyarisi(kategoriListesi, kategoriIdleri);
 
   const tumFirmalarArr: import("@/lib/supabase").Firma[] = [];
   {
@@ -270,6 +274,8 @@ export default async function FirmalarPage(props: PageProps) {
               )}
             </div>
           )}
+
+          {acilUyari && <AcilUyari tur={acilUyari} className="mb-4" />}
 
           {/* Firma grid */}
           {sayfaFirmalar.length > 0 ? (

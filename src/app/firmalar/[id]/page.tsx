@@ -8,6 +8,8 @@ import { translations } from "@/lib/translations";
 import type { Lang } from "@/lib/translations";
 import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
 import { getKategoriResim } from "@/lib/kategoriResim";
+import { firmaSaglikUyarisi } from "@/lib/firmaKategorileri";
+import AcilUyari from "@/components/AcilUyari";
 
 export const dynamic = "force-dynamic";
 
@@ -50,11 +52,13 @@ export default async function FirmaKartPage({ params }: PageProps) {
 
   const { data: firma } = await supabase
     .from("firmalar")
-    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis")
+    .select("id, ad, sektor, sanayi_sitesi, il_adi, ilce_adi, adres, telefon, mobil_telefon, hizmetler, ozel_firma, fotograf_url, onay_durumu, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kategori_id")
     .eq("id", id)
     .single();
 
   if (!firma || firma.onay_durumu !== "onaylandi") notFound();
+
+  const acilUyari = await firmaSaglikUyarisi(supabase, firma.kategori_id);
 
   // Puan özeti veritabanında hesaplanıp firma kaydında tutuluyor (gizli yorumlar sayılmaz)
   const yorumSayisi: number = firma.yorum_sayisi ?? 0;
@@ -133,6 +137,7 @@ export default async function FirmaKartPage({ params }: PageProps) {
                 <span>{firma.adres}</span>
               </div>
             )}
+            {acilUyari && <AcilUyari tur={acilUyari} detay />}
             {firma.telefon && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span>📞</span>

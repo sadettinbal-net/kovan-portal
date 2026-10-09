@@ -58,6 +58,27 @@ export function adinKategoriIdleri(kategoriler: FirmaKategorisi[], ad: string, t
   return Array.from(idler);
 }
 
+// Sağlık sayfalarındaki 112 uyarısı: SAĞLIK ana kategorisi ve altları numarayla tanınır (ad karşılaştırması yok)
+export const SAGLIK_KATEGORI_ID = 75;
+export const AMBULANS_KATEGORI_ID = 138;
+export type SaglikUyarisi = 'saglik' | 'ambulans' | null;
+
+// Listede seçilen kategori numaralarının hepsi sağlıktansa uyarı türünü döner
+export function saglikUyarisi(kategoriler: Pick<FirmaKategorisi, 'id' | 'ust_kategori_id'>[], idler: number[]): SaglikUyarisi {
+  if (!idler.length) return null;
+  const saglikMi = (id: number) =>
+    id === SAGLIK_KATEGORI_ID || kategoriler.find((k) => k.id === id)?.ust_kategori_id === SAGLIK_KATEGORI_ID;
+  if (!idler.every(saglikMi)) return null;
+  return idler.every((id) => id === AMBULANS_KATEGORI_ID) ? 'ambulans' : 'saglik';
+}
+
+// Tek firmanın kategorisi için uyarı türü (firma detay sayfaları)
+export async function firmaSaglikUyarisi(db: SupabaseClient, kategoriId: number | null | undefined): Promise<SaglikUyarisi> {
+  if (!kategoriId) return null;
+  const { data } = await db.from('firma_kategorileri').select('id, ust_kategori_id').eq('id', kategoriId).maybeSingle();
+  return data ? saglikUyarisi([data], [kategoriId]) : null;
+}
+
 // Sektör yazısından kategori bul (sunucuda, firma kaydı/düzenlemesi sırasında). Önce aynı tiptekine bakar.
 export async function sektordenKategoriBul(db: SupabaseClient, sektor: string, firmaTipi?: string | null) {
   const { data } = await db.from('firma_kategorileri').select('id, ad, tip, ust_kategori_id').ilike('ad', sektor.trim());
