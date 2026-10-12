@@ -23,10 +23,14 @@ export default function KonumSecici({
   onChange,
   zorunluIlIlce = false,
   kompakt = false,
+  onMahalleSayisi,
 }: {
   deger: Konum;
   onChange: (konum: Konum) => void;
+  // Firma kaydı: il, ilçe ve (ilçenin mahalle listesi varsa) mahalle zorunlu
   zorunluIlIlce?: boolean;
+  // Seçili ilçedeki mahalle sayısı (mahalle zorunluluğu için; listesi olmayan ilçelerde 0)
+  onMahalleSayisi?: (sayi: number) => void;
   // Anasayfa arama kutusu: başlıksız, tek satırda dört kutu, sokak arama alanı yok
   kompakt?: boolean;
 }) {
@@ -52,6 +56,10 @@ export default function KonumSecici({
       .order('ilce_adi')
       .then(({ data }) => setIlceler(data || []));
   }, [ilKaydi?.id]);
+
+  useEffect(() => {
+    onMahalleSayisi?.(mahalleler.length);
+  }, [mahalleler.length]);
 
   useEffect(() => {
     if (!ilceKaydi) return setMahalleler([]);
@@ -132,7 +140,7 @@ export default function KonumSecici({
       </div>
 
       <div>
-        {etiket('Mahalle')}
+        {etiket('Mahalle', mahalleler.length > 0 || !deger.ilce)}
         <select
           value={deger.mahalleId}
           aria-label="Mahalle"
@@ -143,7 +151,13 @@ export default function KonumSecici({
           }}
           className={sinif}
         >
-          <option value="">{kompakt ? (deger.ilce ? 'Mahalle (tümü)' : 'Mahalle') : deger.ilce ? 'Tüm mahalleler' : 'Önce ilçe seçin'}</option>
+          <option value="">
+            {kompakt
+              ? deger.ilce ? 'Mahalle (tümü)' : 'Mahalle'
+              : !deger.ilce ? 'Önce ilçe seçin'
+              : zorunluIlIlce ? (mahalleler.length ? 'Seçin...' : 'Bu ilçede mahalle kaydı yok')
+              : 'Tüm mahalleler'}
+          </option>
           {mahalleler.map((m) => (
             <option key={m.mahalle_id} value={m.mahalle_id}>
               {m.mahalle_adi}

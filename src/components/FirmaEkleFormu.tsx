@@ -36,7 +36,8 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
   const detayRef = useRef<HTMLInputElement>(null);
 
   const [konum, setKonum] = useState<Konum>(BOS_KONUM);
-  const [sanayiSiteleri, setSanayiSiteleri] = useState<{ id: number; site_adi: string; ilce_adi: string | null }[]>([]);
+  const [mahalleSayisi, setMahalleSayisi] = useState(0);
+  const [sanayiSiteleri, setSanayiSiteleri] =useState<{ id: number; site_adi: string; ilce_adi: string | null }[]>([]);
   const [firmaTipi, setFirmaTipi] = useState<'siteli' | 'sitesiz' | 'kurumsal'>('siteli');
   const [kategoriler, setKategoriler] = useState<FirmaKategorisi[]>([]);
   const [gonderiyor, setGonderiyor] = useState(false);
@@ -183,6 +184,12 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
     // Zorunlu alanlar: firma adı, il, ilçe, telefon (-- ile boş geçilebilir)
     if (!doluMu(form.ad) || !konum.il || !konum.ilce || !doluMu(form.telefon)) {
       setDurum({ tip: 'hata', mesaj: 'Lütfen yıldızlı zorunlu alanları doldurun (veya -- yazarak geçin).' });
+      return;
+    }
+
+    // Mahalle zorunlu (konuma göre aramada bulunabilmesi için); mahalle listesi olmayan ilçelerde boş geçilir
+    if (mahalleSayisi > 0 && !konum.mahalleId) {
+      setDurum({ tip: 'hata', mesaj: 'Lütfen mahalle seçin. Firma, konuma göre aramada mahallesiyle bulunur.' });
       return;
     }
 
@@ -435,7 +442,7 @@ export default function FirmaEkleFormu({ yonetici = false }: { yonetici?: boolea
           </div>
 
           {/* İl, İlçe, Mahalle, Sokak */}
-          <KonumSecici deger={konum} onChange={konumSec} zorunluIlIlce />
+          <KonumSecici deger={konum} onChange={konumSec} zorunluIlIlce onMahalleSayisi={setMahalleSayisi} />
 
           {/* Firma Tipi Seçimi */}
           <div>

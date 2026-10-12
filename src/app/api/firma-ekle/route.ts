@@ -89,6 +89,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = getAdmin();
 
+    // Konuma göre aramada bulunabilmesi için ilçe ve (ilçenin mahalle listesi varsa) mahalle zorunlu
+    if (!ilce_adi) return NextResponse.json({ error: 'Lütfen ilçe seçin.' }, { status: 400 });
+    if (!mahalle_id) {
+      const { data: ilKaydi } = await supabase.from('iller').select('id').eq('sehir_adi', il_adi).maybeSingle();
+      const { data: ilceKaydi } = ilKaydi
+        ? await supabase.from('ilceler').select('id').eq('sehir_id', ilKaydi.id).eq('ilce_adi', ilce_adi).maybeSingle()
+        : { data: null };
+      if (ilceKaydi) {
+        const { count } = await supabase
+          .from('mahalleler_yeni').select('mahalle_id', { count: 'exact', head: true }).eq('ilce_id', ilceKaydi.id);
+        if (count) return NextResponse.json({ error: 'Lütfen mahalle seçin.' }, { status: 400 });
+      }
+    }
+
     // Kategori: listeden seçildiyse firma_kategorileri kaydından; sektör yazısı ve firma tipi oradan gelir.
     let kategori_id: number | null = null;
     if (!isNaN(kategoriIdRaw)) {
