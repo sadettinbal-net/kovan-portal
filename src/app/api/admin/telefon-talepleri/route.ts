@@ -5,6 +5,7 @@ import { yoneticiMi } from '@/lib/admin';
 import { servisIstemcisi } from '@/lib/firmaSilme';
 
 // Yönetici: telefon talepleri listesi ve onay/red.
+// Cep numaralarında kişi ekrandaki kodu WhatsApp'tan sitenin hattına gönderir; yönetici kodu ve gönderen numarayı karşılaştırır.
 // GET   ?durum=onay_bekliyor|dogrulama_bekliyor|onaylandi|reddedildi|iptal|tumu
 // PATCH { id, islem: 'onayla' | 'reddet', red_nedeni? }
 
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   let sorgu = servisIstemcisi()
     .from('telefon_talepleri')
-    .select('id, firma_id, kullanici_email, ad_soyad, telefon, tur, durum, dogrulandi_at, kvkk_onay_at, kvkk_surum, karar_at, karar_veren, red_nedeni, created_at, firmalar(id, ad, sektor, adres, telefon, mobil_telefon, eposta, kullanici_email)')
+    .select('id, firma_id, kullanici_email, ad_soyad, telefon, tur, durum, dogrulama_kodu, dogrulandi_at, kvkk_onay_at, kvkk_surum, karar_at, karar_veren, red_nedeni, created_at, firmalar(id, ad, sektor, adres, telefon, mobil_telefon, eposta, kullanici_email)')
     .order('created_at', { ascending: false })
     .limit(200);
   if (durum !== 'tumu') {
@@ -70,7 +71,10 @@ export async function PATCH(request: NextRequest) {
 
   const { error: fHata } = await db.from('firmalar').update(yeni).eq('id', t.firma_id);
   if (fHata) return NextResponse.json({ error: fHata.message }, { status: 500 });
-  await db.from('telefon_talepleri').update({ durum: 'onaylandi', onceki_degerler: onceki, ...karar }).eq('id', id);
+  await db.from('telefon_talepleri').update({
+    durum: 'onaylandi', onceki_degerler: onceki, ...karar,
+    ...(t.tur === 'cep' && !t.dogrulandi_at ? { dogrulandi_at: karar.karar_at } : {}),
+  }).eq('id', id);
 
   revalidatePath('/');
   revalidatePath(`/firma/${t.firma_id}`);

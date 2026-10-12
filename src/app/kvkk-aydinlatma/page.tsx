@@ -36,9 +36,10 @@ export default function KvkkAydinlatmaPage() {
         <ul className="list-disc pl-5 space-y-1">
           <li>Google hesabınızın e-posta adresi ve adınız soyadınız,</li>
           <li>Firmanız için girdiğiniz telefon numarası,</li>
-          <li>Doğrulama kayıtları: doğrulama zamanı, bu metni onayladığınız zaman ve sürüm, IP adresi.</li>
+          <li>Doğrulama kayıtları: doğrulama zamanı, bu metni onayladığınız zaman ve sürüm, IP adresi,</li>
+          <li>Cep numarası için: doğrulama kodunu içeren ve bize WhatsApp üzerinden gönderdiğiniz mesaj.</li>
         </ul>
-        <p>SMS doğrulama kodu ve e-posta onay bağlantısı tarafımızda açık hâliyle saklanmaz.</p>
+        <p>E-posta onay bağlantısı tarafımızda açık hâliyle saklanmaz. Gerekirse numaranın size ait olduğunu teyit etmek için bu numaradan sizi arayabiliriz.</p>
       </Bolum>
 
       <Bolum baslik="3. Hangi amaçla işliyoruz?">
@@ -59,8 +60,9 @@ export default function KvkkAydinlatmaPage() {
       <Bolum baslik="5. Kimlere aktarılır?">
         <p>
           Onayladığınız telefon numarası ve e-posta adresi firma sayfasında herkese açık olarak yayınlanır. Doğrulama
-          için SMS ve e-posta gönderim hizmeti aldığımız firmalara yalnızca gönderim için gereken bilgi (numara veya
-          e-posta adresi) iletilir. Veriler, barındırma hizmeti aldığımız altyapı sağlayıcılarında saklanır.
+          e-postası için e-posta gönderim hizmeti aldığımız firmaya yalnızca e-posta adresiniz iletilir. WhatsApp ile
+          gönderdiğiniz doğrulama mesajı WhatsApp (Meta) altyapısı üzerinden bize ulaşır. Veriler, barındırma hizmeti
+          aldığımız altyapı sağlayıcılarında saklanır.
         </p>
       </Bolum>
 

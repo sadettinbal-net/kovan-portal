@@ -4,18 +4,15 @@ import { htmlKacis } from '@/lib/htmlKacis';
 import { SITE_URL } from '@/lib/site';
 
 // Telefon talebi: işletme sahibi, telefonu olmayan firmasının detay sayfasından numara ekler.
-// Cep numarasına SMS kodu, sabit hatta ise Google hesabının e-postasına onay bağlantısı gider.
+// Cep numarası: kişi kendi WhatsApp'ından sitenin hattına kod gönderir (yönetici kodu ve numarayı karşılaştırır).
+// Sabit hat: Google hesabının e-postasına onay bağlantısı gider.
 // Doğrulanan talep yönetici onayına düşer; onaylanınca numara firma kartında görünür.
 
-export const KVKK_SURUM = '2026-10-12';
+export const KVKK_SURUM = '2026-10-13';
 
 export const SINIR = {
   epostaGunluk: 5, // bir hesap 24 saatte en fazla bu kadar talep açar
   telefonGunluk: 3, // aynı numara 24 saatte en fazla bu kadar talepte kullanılır
-  kodGecerlilikDk: 10,
-  kodDeneme: 5, // bu kadar yanlış kod → talep iptal
-  kodYenileme: 3,
-  kodYenilemeAraligiSn: 60,
   epostaGecerlilikSaat: 24,
 };
 
@@ -54,24 +51,19 @@ export function yeniKod() {
   return crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
 }
 
+// Cep doğrulaması: sitenin WhatsApp hattı (SITE_TELEFON). wa.me için 90XXXXXXXXXX biçimi.
+export function waNumara(telefon: string) {
+  const r = telefon.replace(/\D/g, '');
+  return r.startsWith('0') ? '90' + r.slice(1) : r;
+}
+
 export function yeniToken() {
   return crypto.randomBytes(32).toString('base64url');
 }
 
-// Test modu: SMS sağlayıcısı henüz seçilmedi. Canlıda değilsek kod / bağlantı ekranda gösterilir.
+// Deneme modu: canlıda değilsek e-posta onay bağlantısı ekranda da gösterilir.
 export function testModu() {
   return process.env.NODE_ENV !== 'production' || process.env.TELEFON_TEST_MODU === '1';
-}
-
-// SMS gönderimi. Sağlayıcı (Netgsm, İleti Merkezi vb.) seçilince burası doldurulacak.
-export async function smsGonder(telefon: string, mesaj: string): Promise<{ gonderildi: boolean }> {
-  if (!process.env.SMS_SAGLAYICI) {
-    console.info(`[SMS test modu] ${telefon}: ${mesaj}`);
-    return { gonderildi: false };
-  }
-  // TODO: sağlayıcı entegrasyonu
-  console.warn(`SMS sağlayıcısı "${process.env.SMS_SAGLAYICI}" henüz bağlanmadı.`);
-  return { gonderildi: false };
 }
 
 export function siteKoku(istekUrl: string) {
@@ -121,7 +113,8 @@ export type TalepGorunumu = {
   tur: TalepTuru;
   durum: TalepDurumu;
   red_nedeni: string | null;
+  dogrulama_kodu: string | null;
   created_at: string;
 };
 
-export const GORUNUM_ALANLARI = 'id, telefon, tur, durum, red_nedeni, created_at';
+export const GORUNUM_ALANLARI = 'id, telefon, tur, durum, red_nedeni, dogrulama_kodu, created_at';

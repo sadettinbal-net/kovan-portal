@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { SITE_TELEFON } from '@/lib/site';
 
 // Telefonu olmayan firmanın detay sayfasında: işletme sahibi Google ile bağlanıp numarasını ekler.
-// Cep → SMS kodu, sabit hat → e-postaya onay bağlantısı. Doğrulanan numara yönetici onayından sonra görünür.
+// Cep → kişi ekrandaki kodu kendi WhatsApp'ından sitenin hattına gönderir; sabit hat → e-postaya onay bağlantısı.
+// Numara yönetici onayından sonra görünür.
 
 type Talep = {
   id: number;
@@ -12,11 +14,12 @@ type Talep = {
   tur: 'cep' | 'sabit';
   durum: 'dogrulama_bekliyor' | 'onay_bekliyor' | 'onaylandi' | 'reddedildi' | 'iptal';
   red_nedeni: string | null;
+  dogrulama_kodu: string | null;
 };
 
 type Kisi = { email: string; ad: string };
 
-type Asama = 'kapali' | 'yukleniyor' | 'giris' | 'form' | 'kod' | 'eposta' | 'onayda' | 'onaylandi' | 'reddedildi';
+type Asama = 'kapali' | 'yukleniyor' | 'giris' | 'form' | 'eposta' | 'onayda' | 'onaylandi' | 'reddedildi';
 
 function numaraTuru(deger: string): 'cep' | 'sabit' | null {
   let r = deger.replace(/\D/g, '');
@@ -26,6 +29,12 @@ function numaraTuru(deger: string): 'cep' | 'sabit' | null {
   if (!/^[2-5]\d{9}$/.test(r)) return null;
   return r[0] === '5' ? 'cep' : 'sabit';
 }
+
+// Sitenin WhatsApp hattı (wa.me biçimi: 90XXXXXXXXXX)
+const WA_HAT = (() => {
+  const r = SITE_TELEFON.replace(/\D/g, '');
+  return r.startsWith('0') ? '90' + r.slice(1) : r;
+})();
 
 function goster(t: string) {
   return t.length === 11 ? `${t.slice(0, 4)} ${t.slice(4, 7)} ${t.slice(7, 9)} ${t.slice(9)}` : t;
@@ -44,19 +53,15 @@ export default function TelefonEkleKutusu({ firmaId, firmaAd }: { firmaId: numbe
   const [adSoyad, setAdSoyad] = useState('');
   const [telefon, setTelefon] = useState('');
   const [kvkk, setKvkk] = useState(false);
-  const [kod, setKod] = useState('');
   const [hata, setHata] = useState('');
-  const [bilgi, setBilgi] = useState('');
   const [mesgul, setMesgul] = useState(false);
-  const [testKod, setTestKod] = useState('');
   const [testBaglanti, setTestBaglanti] = useState('');
-  const [bekle, setBekle] = useState(0);
   const [epostaSonuc, setEpostaSonuc] = useState<string | null>(null);
 
   const talebeGore = useCallback((t: Talep | null) => {
     setTalep(t);
     if (!t) return setAsama('form');
-    if (t.durum === 'dogrulama_bekliyor') return setAsama(t.tur === 'cep' ? 'kod' : 'eposta');
+    if (t.durum === 'dogrulama_bekliyor') return setAsama('eposta');
     if (t.durum === 'onay_bekliyor') return setAsama('onayda');
     if (t.durum === 'onaylandi') return setAsama('onaylandi');
     if (t.durum === 'reddedildi') return setAsama('reddedildi');
@@ -92,12 +97,6 @@ export default function TelefonEkleKutusu({ firmaId, firmaAd }: { firmaId: numbe
     return () => clearTimeout(z);
   }, [ac]);
 
-  useEffect(() => {
-    if (bekle <= 0) return;
-    const z = setTimeout(() => setBekle((b) => b - 1), 1000);
-    return () => clearTimeout(z);
-  }, [bekle]);
-
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
     setHata('');
@@ -112,56 +111,13 @@ export default function TelefonEkleKutusu({ firmaId, firmaAd }: { firmaId: numbe
     const d = await r.json().catch(() => ({}));
     setMesgul(false);
     if (!r.ok) return setHata(d.error || 'Bir hata oluştu.');
-    setBilgi(d.mesaj || '');
-    setTestKod(d.test_kod || '');
     setTestBaglanti(d.test_baglanti || '');
-    setKod('');
-    setBekle(60);
     talebeGore(d.talep);
-  }
-
-  async function dogrula(e: React.FormEvent) {
-    e.preventDefault();
-    if (!talep) return;
-    setHata('');
-    setMesgul(true);
-    const r = await fetch('/api/telefon-talebi/dogrula', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: talep.id, kod }),
-    });
-    const d = await r.json().catch(() => ({}));
-    setMesgul(false);
-    if (!r.ok) {
-      setHata(d.error || 'Bir hata oluştu.');
-      if (/iptal/.test(d.error || '')) talebeGore(null);
-      return;
-    }
-    setTestKod('');
-    talebeGore(d.talep);
-  }
-
-  async function yenile() {
-    if (!talep) return;
-    setHata('');
-    const r = await fetch('/api/telefon-talebi/kod-yenile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: talep.id }),
-    });
-    const d = await r.json().catch(() => ({}));
-    if (!r.ok) return setHata(d.error || 'Bir hata oluştu.');
-    setBilgi(d.mesaj || '');
-    setTestKod(d.test_kod || '');
-    setBekle(60);
   }
 
   function bastan() {
     setTalep(null);
-    setKod('');
-    setTestKod('');
     setTestBaglanti('');
-    setBilgi('');
     setHata('');
     setAsama('form');
   }
@@ -251,7 +207,7 @@ export default function TelefonEkleKutusu({ firmaId, firmaAd }: { firmaId: numbe
                 {tur && (
                   <p className="text-[11px] text-gray-600 mt-1">
                     {tur === 'cep'
-                      ? '📲 Cep telefonu: bu numaraya SMS ile 6 haneli kod göndereceğiz.'
+                      ? '📲 Cep telefonu: sonraki adımda bu numaranın WhatsApp’ından bize kısa bir mesaj göndereceksiniz.'
                       : `☎️ Sabit hat: ${kisi.email} adresine onay bağlantısı göndereceğiz.`}
                   </p>
                 )}
@@ -271,44 +227,8 @@ export default function TelefonEkleKutusu({ firmaId, firmaAd }: { firmaId: numbe
                 disabled={mesgul}
                 className="bg-[#1a3a6b] hover:bg-[#142d54] disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-lg"
               >
-                {mesgul ? 'Gönderiliyor…' : tur === 'sabit' ? 'Onay e-postası gönder' : 'Doğrulama kodu gönder'}
+                {mesgul ? 'Gönderiliyor…' : tur === 'sabit' ? 'Onay e-postası gönder' : 'Devam et'}
               </button>
-            </form>
-          )}
-
-          {asama === 'kod' && talep && (
-            <form onSubmit={dogrula} className="mt-3 space-y-3">
-              <p className="text-xs text-gray-600">
-                {bilgi || `${goster(talep.telefon)} numarasına doğrulama kodu gönderildi.`} Kod 10 dakika geçerlidir.
-              </p>
-              {testKod && (
-                <div className="text-xs bg-yellow-100 border border-yellow-300 text-yellow-900 rounded-lg px-3 py-2">
-                  🧪 <b>Deneme modu:</b> SMS firması henüz bağlanmadı. Kodunuz: <b className="tracking-widest">{testKod}</b>
-                </div>
-              )}
-              <input
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                placeholder="______"
-                value={kod}
-                onChange={(e) => setKod(e.target.value.replace(/\D/g, ''))}
-                className="w-40 text-center text-lg tracking-[0.5em] bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#e8a020]"
-              />
-              {hata && <div className="text-xs text-red-600">{hata}</div>}
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="submit"
-                  disabled={mesgul || kod.length !== 6}
-                  className="bg-[#1a3a6b] hover:bg-[#142d54] disabled:opacity-60 text-white text-sm font-semibold px-4 py-2 rounded-lg"
-                >
-                  Doğrula
-                </button>
-                <button type="button" onClick={yenile} disabled={bekle > 0} className="text-xs text-[#1a3a6b] underline disabled:no-underline disabled:text-gray-400">
-                  {bekle > 0 ? `Kodu tekrar gönder (${bekle})` : 'Kodu tekrar gönder'}
-                </button>
-                <button type="button" onClick={bastan} className="text-xs text-gray-500 underline">Numarayı değiştir</button>
-              </div>
             </form>
           )}
 
@@ -327,7 +247,38 @@ export default function TelefonEkleKutusu({ firmaId, firmaAd }: { firmaId: numbe
             </div>
           )}
 
-          {asama === 'onayda' && talep && (
+          {asama === 'onayda' && talep && talep.tur === 'cep' && talep.dogrulama_kodu && (
+            <div className="mt-3 space-y-3">
+              <p className="text-sm text-gray-700">
+                Son adım: numaranın size ait olduğunu doğrulamak için <b>{goster(talep.telefon)}</b> numaralı telefonunuzdan
+                WhatsApp ile bize aşağıdaki kodu gönderin.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-xs text-gray-500">Doğrulama kodunuz</span>
+                <span className="font-mono text-2xl font-bold tracking-[0.3em] text-[#1a3a6b] bg-white border border-gray-200 rounded-lg px-3 py-1">
+                  {talep.dogrulama_kodu}
+                </span>
+              </div>
+              <a
+                href={`https://wa.me/${WA_HAT}?text=${encodeURIComponent(`Kovan Portal doğrulama kodu: ${talep.dogrulama_kodu}\nFirma: ${firmaAd}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#1ebe5b] text-white text-sm font-semibold px-4 py-2 rounded-lg"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.7 15.6 2.2 13.8 2.2 12 2.2 6.6 6.6 2.2 12 2.2S21.8 6.6 21.8 12 17.4 21.8 12 21.8zM12 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6C8 23.4 10 24 12 24c6.6 0 12-5.4 12-12S18.6 0 12 0z" />
+                </svg>
+                WhatsApp ile doğrula
+              </a>
+              <p className="text-xs text-gray-500">
+                Düğme WhatsApp’ı hazır mesajla açar, sadece “Gönder”e basmanız yeterli. Mesaj gelmezse sizi bu numaradan arayarak
+                doğrularız. Kontrolden sonra numaranız firmanızın kartında yayınlanır.
+              </p>
+              <button type="button" onClick={bastan} className="text-xs text-gray-500 underline">Numarayı değiştir</button>
+            </div>
+          )}
+
+          {asama === 'onayda' && talep && !(talep.tur === 'cep' && talep.dogrulama_kodu) && (
             <div className="mt-2 rounded-lg bg-green-50 border border-green-200 px-3 py-2 text-sm text-green-800">
               ✅ <b>{goster(talep.telefon)}</b> doğrulandı. Kısa süre içinde kontrol edilip firmanızın kartında yayınlanacak.
             </div>

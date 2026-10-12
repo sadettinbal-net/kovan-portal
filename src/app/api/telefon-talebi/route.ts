@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { servisIstemcisi } from '@/lib/firmaSilme';
 import {
-  GORUNUM_ALANLARI, KVKK_SURUM, SINIR, istemciIp, numaraVeTur, onayEpostasiGonder, ozet, smsGonder,
+  GORUNUM_ALANLARI, KVKK_SURUM, SINIR, istemciIp, numaraVeTur, onayEpostasiGonder, ozet,
   siteKoku, telefonGoster, testModu, yeniKod, yeniToken,
 } from '@/lib/telefonTalebi';
 
 // Telefonu olmayan firmaya numara ekleme talebi.
 // GET  ?firma_id=  → giriş yapan kişinin bu firma için son talebi
-// POST { firma_id, telefon, ad_soyad?, kvkk: true } → yeni talep + doğrulama (SMS kodu veya e-posta bağlantısı)
+// POST { firma_id, telefon, ad_soyad?, kvkk: true } → yeni talep
+//   cep  : doğrudan yönetici listesine düşer; kişi ekrandaki kodu WhatsApp'tan sitenin hattına gönderir
+//   sabit: e-postadaki bağlantıya tıklanınca yönetici listesine düşer
 
 async function girisYapan() {
   const supabase = await createClient();
@@ -65,11 +67,12 @@ export async function POST(request: NextRequest) {
   // Bu kişinin bu firma için açık talebi
   const { data: acik } = await db
     .from('telefon_talepleri')
-    .select('id, durum')
+    .select('id, durum, dogrulandi_at')
     .eq('firma_id', firmaId)
     .eq('kullanici_email', kisi.email)
     .in('durum', ['dogrulama_bekliyor', 'onay_bekliyor']);
-  if (acik?.some((t) => t.durum === 'onay_bekliyor')) {
+  // E-postayla doğrulanmış talep değiştirilemez; WhatsApp kodu bekleyen cep talebi ise yeni numarayla değiştirilebilir
+  if (acik?.some((t) => t.durum === 'onay_bekliyor' && t.dogrulandi_at)) {
     return NextResponse.json({ error: 'Bu firma için talebiniz zaten yönetici onayında.' }, { status: 409 });
   }
 
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Çok fazla deneme yapıldı. Lütfen 24 saat sonra tekrar deneyin.' }, { status: 429 });
   }
 
-  // Yarım kalmış eski doğrulamayı kapat (yeni numara/yeni kod ile baştan başlar)
+  // Yarım kalmış eski talebi kapat (yeni numara/yeni kod ile baştan başlar)
   const eskiler = (acik || []).map((t) => t.id);
   if (eskiler.length) await db.from('telefon_talepleri').update({ durum: 'iptal' }).in('id', eskiler);
 
@@ -98,9 +101,8 @@ export async function POST(request: NextRequest) {
       ad_soyad: adSoyad || kisi.ad || null,
       telefon: numara.telefon,
       tur: numara.tur,
-      kod_ozet: kod ? ozet(kod) : null,
-      kod_gecerlilik: kod ? new Date(simdi.getTime() + SINIR.kodGecerlilikDk * 60_000).toISOString() : null,
-      kod_gonderim: kod ? 1 : 0,
+      durum: kod ? 'onay_bekliyor' : 'dogrulama_bekliyor',
+      dogrulama_kodu: kod,
       eposta_token_ozet: token ? ozet(token) : null,
       kvkk_onay_at: simdi.toISOString(),
       kvkk_surum: KVKK_SURUM,
@@ -111,15 +113,13 @@ export async function POST(request: NextRequest) {
   if (error || !talep) return NextResponse.json({ error: error?.message || 'Kayıt açılamadı.' }, { status: 500 });
 
   const yanit: Record<string, unknown> = { talep };
-  if (kod) {
-    await smsGonder(numara.telefon, `Kovan Portal dogrulama kodunuz: ${kod}. ${SINIR.kodGecerlilikDk} dakika gecerlidir.`);
-    if (testModu()) yanit.test_kod = kod;
-  } else if (token) {
+  // Cep: kod ekranda gösterilir, kişi WhatsApp'tan gönderir. Sabit: e-posta gider.
+  if (token) {
     const e = await onayEpostasiGonder(siteKoku(request.url), kisi.email, firma.ad, numara.telefon, token);
     if (testModu()) yanit.test_baglanti = e.baglanti;
   }
   yanit.mesaj = kod
-    ? `${telefonGoster(numara.telefon)} numarasına doğrulama kodu gönderildi.`
+    ? `${telefonGoster(numara.telefon)} numarası kaydedildi. Doğrulama için kodu WhatsApp'tan gönderin.`
     : `${kisi.email} adresine onay bağlantısı gönderildi.`;
   return NextResponse.json(yanit);
 }
