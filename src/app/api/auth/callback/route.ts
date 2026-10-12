@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
+import { guvenliYol } from '@/lib/guvenliYol';
 
 function getCanonicalOrigin(requestOrigin: string): string {
   if (requestOrigin.includes('localhost')) return requestOrigin;
@@ -58,7 +59,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`/giris?error=token_failed&msg=${msg}`, origin));
   }
 
-  const response = NextResponse.redirect(new URL('/', origin));
+  const next = request.cookies.get('oauth_next')?.value;
+  const response = NextResponse.redirect(new URL(next && guvenliYol(next) ? next : '/', origin));
 
   const clearCookieBase = {
     maxAge: 0,
@@ -67,6 +69,7 @@ export async function GET(request: NextRequest) {
   };
   response.cookies.set('oauth_state', '', clearCookieBase);
   response.cookies.set('oauth_code_verifier', '', clearCookieBase);
+  response.cookies.set('oauth_next', '', clearCookieBase);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

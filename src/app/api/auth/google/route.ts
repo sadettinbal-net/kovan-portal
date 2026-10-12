@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { guvenliYol } from '@/lib/guvenliYol';
 
 function getCanonicalOrigin(requestOrigin: string): string {
   if (requestOrigin.includes('localhost')) return requestOrigin;
@@ -49,6 +50,10 @@ export async function GET(request: Request) {
 
   response.cookies.set('oauth_state', state, cookieBase);
   response.cookies.set('oauth_code_verifier', codeVerifier, cookieBase);
+
+  // Girişten sonra dönülecek sayfa (ör. firma detay sayfası). Sadece site içi yollar kabul edilir.
+  const next = requestUrl.searchParams.get('next');
+  if (next && guvenliYol(next)) response.cookies.set('oauth_next', next, cookieBase);
 
   return response;
 }

@@ -13,6 +13,7 @@ import FirmaEkleFormu from '@/components/FirmaEkleFormu';
 import FirmaSilPenceresi from '@/components/FirmaSilPenceresi';
 import { AdminYeniYorumlar, AdminSikayetler } from '@/components/AdminYorumSekmeleri';
 import AdminMesajlar from '@/components/AdminMesajlar';
+import AdminTelefonTalepleri from '@/components/AdminTelefonTalepleri';
 import { gunBaslangici, gunSonu, musteriFavorisiMi, ozelDurum, tarihKutusu, type OzelDurum } from '@/lib/ozelFirma';
 
 // Özel Firma (sponsorlu) durumunu yönetici paneli için kısa yazıya çevirir
@@ -1701,13 +1702,14 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
 
 // ─── Admin Panel ─────────────────────────────────────────────────────────────
 function AdminPanel() {
-  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri' | 'kategoriler' | 'firma-ekle' | 'yeni-yorumlar' | 'sikayetler' | 'reklam-mesajlari'>('bekleyen');
+  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri' | 'kategoriler' | 'firma-ekle' | 'yeni-yorumlar' | 'sikayetler' | 'reklam-mesajlari' | 'telefon-talepleri'>('bekleyen');
   const [bekleyenSayi, setBekleyenSayi] = useState(0);
   const [bekleyenIlanSayi, setBekleyenIlanSayi] = useState(0);
   const [bekleyenGuncellemeSayi, setBekleyenGuncellemeSayi] = useState(0);
   const [yeniYorumSayi, setYeniYorumSayi] = useState(0);
   const [bekleyenSikayetSayi, setBekleyenSikayetSayi] = useState(0);
   const [reklamMesajSayi, setReklamMesajSayi] = useState(0);
+  const [telefonTalepSayi, setTelefonTalepSayi] = useState(0);
   const [toplamFirmaSayisi, setToplamFirmaSayisi] = useState(0);
   const [firmalar, setFirmalar] = useState<Firma[]>([]);
   const [ara, setAra] = useState('');
@@ -1737,7 +1739,7 @@ function AdminPanel() {
     // Panel içi bildirim: görülmemiş yeni yorumlar ve bekleyen şikâyetler
     fetch('/api/bildirimler?kapsam=yonetici')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { setYeniYorumSayi(d.sayi); setBekleyenSikayetSayi(d.bekleyenSikayet ?? 0); setBekleyenIlanSayi(d.bekleyenIlan ?? 0); setReklamMesajSayi(d.okunmamisReklamMesaji ?? 0); } })
+      .then(d => { if (d) { setYeniYorumSayi(d.sayi); setBekleyenSikayetSayi(d.bekleyenSikayet ?? 0); setBekleyenIlanSayi(d.bekleyenIlan ?? 0); setReklamMesajSayi(d.okunmamisReklamMesaji ?? 0); setTelefonTalepSayi(d.bekleyenTelefonTalebi ?? 0); } })
       .catch(() => {});
 
     // Gerçek toplam firma sayısını çek
@@ -2109,6 +2111,13 @@ function AdminPanel() {
               <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{bekleyenSikayetSayi}</span>
             )}
           </button>
+          <button onClick={() => setAktifSekme('telefon-talepleri')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'telefon-talepleri' ? 'bg-green-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            📞 Telefon Talepleri
+            {telefonTalepSayi > 0 && (
+              <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{telefonTalepSayi}</span>
+            )}
+          </button>
           <button onClick={() => setAktifSekme('reklam-mesajlari')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'reklam-mesajlari' ? 'bg-[#e8a020] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             📨 Reklam Mesajları
@@ -2154,6 +2163,7 @@ function AdminPanel() {
       {aktifSekme === 'yeni-yorumlar' && <AdminYeniYorumlar onSayi={setYeniYorumSayi} />}
       {aktifSekme === 'sikayetler' && <AdminSikayetler onSayi={setBekleyenSikayetSayi} />}
       {aktifSekme === 'reklam-mesajlari' && <AdminMesajlar onSayi={setReklamMesajSayi} />}
+      {aktifSekme === 'telefon-talepleri' && <AdminTelefonTalepleri onSayi={setTelefonTalepSayi} />}
 
       {aktifSekme === 'kategoriler' && (
         <div className="max-w-7xl mx-auto p-6">

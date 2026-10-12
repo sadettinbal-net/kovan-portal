@@ -16,6 +16,7 @@ import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
 import { firmaSaglikUyarisi } from "@/lib/firmaKategorileri";
 import AcilUyari from "@/components/AcilUyari";
 import TemsiliEtiket from "@/components/TemsiliEtiket";
+import TelefonEkleKutusu from "@/components/TelefonEkleKutusu";
 
 export const dynamic = "force-dynamic";
 
@@ -201,6 +202,10 @@ export default async function FirmaDetay({ params }: PageProps) {
                 </a>
               </div>
             </div>
+          )}
+
+          {!firma.telefon && !firma.mobil_telefon && firma.onay_durumu === "onaylandi" && (
+            <TelefonEkleKutusu firmaId={firma.id} firmaAd={firma.ad} />
           )}
 
           {firma.web_sitesi && (
