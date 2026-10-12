@@ -15,15 +15,20 @@ type Sokak = { sokak_id: number; sokak_adi: string };
 
 const SELECT =
   'w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors bg-white disabled:bg-gray-50 disabled:text-gray-400';
+const KOMPAKT_SELECT =
+  'w-full border-2 border-transparent rounded-lg px-2 py-2 text-xs phone:text-sm text-gray-800 outline-none focus:border-[#e8a020] transition-colors bg-white disabled:bg-gray-100 disabled:text-gray-400';
 
 export default function KonumSecici({
   deger,
   onChange,
   zorunluIlIlce = false,
+  kompakt = false,
 }: {
   deger: Konum;
   onChange: (konum: Konum) => void;
   zorunluIlIlce?: boolean;
+  // Anasayfa arama kutusu: başlıksız, tek satırda dört kutu, sokak arama alanı yok
+  kompakt?: boolean;
 }) {
   const [iller, setIller] = useState<Il[]>([]);
   const [ilceler, setIlceler] = useState<Ilce[]>([]);
@@ -74,20 +79,29 @@ export default function KonumSecici({
   }, [deger.mahalleId, sokakArama]);
 
   const yildiz = zorunluIlIlce ? <span className="text-red-500"> *</span> : null;
+  const sinif = kompakt ? KOMPAKT_SELECT : SELECT;
+  const etiket = (yazi: string, yildizli = false) =>
+    kompakt ? null : (
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {yazi}
+        {yildizli && yildiz}
+      </label>
+    );
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div className={kompakt ? 'grid grid-cols-2 sm:grid-cols-4 gap-2' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">İl{yildiz}</label>
+        {etiket('İl', true)}
         <select
           value={deger.il}
+          aria-label="İl"
           onChange={(e) => {
             setSokakArama('');
             onChange({ ...BOS_KONUM, il: e.target.value });
           }}
-          className={SELECT}
+          className={sinif}
         >
-          <option value="">Seçin...</option>
+          <option value="">{kompakt ? 'İl (tümü)' : 'Seçin...'}</option>
           {iller.map((i) => (
             <option key={i.id} value={i.sehir_adi}>
               {i.sehir_adi}
@@ -97,17 +111,18 @@ export default function KonumSecici({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">İlçe{yildiz}</label>
+        {etiket('İlçe', true)}
         <select
           value={deger.ilce}
+          aria-label="İlçe"
           disabled={!deger.il}
           onChange={(e) => {
             setSokakArama('');
             onChange({ ...BOS_KONUM, il: deger.il, ilce: e.target.value });
           }}
-          className={SELECT}
+          className={sinif}
         >
-          <option value="">{deger.il ? 'Seçin...' : 'Önce il seçin'}</option>
+          <option value="">{kompakt ? (deger.il ? 'İlçe (tümü)' : 'İlçe') : deger.il ? 'Seçin...' : 'Önce il seçin'}</option>
           {ilceler.map((i) => (
             <option key={i.id} value={i.ilce_adi}>
               {i.ilce_adi}
@@ -117,17 +132,18 @@ export default function KonumSecici({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Mahalle</label>
+        {etiket('Mahalle')}
         <select
           value={deger.mahalleId}
+          aria-label="Mahalle"
           disabled={!deger.ilce}
           onChange={(e) => {
             setSokakArama('');
             onChange({ ...deger, mahalleId: e.target.value, sokakId: '' });
           }}
-          className={SELECT}
+          className={sinif}
         >
-          <option value="">{deger.ilce ? 'Tüm mahalleler' : 'Önce ilçe seçin'}</option>
+          <option value="">{kompakt ? (deger.ilce ? 'Mahalle (tümü)' : 'Mahalle') : deger.ilce ? 'Tüm mahalleler' : 'Önce ilçe seçin'}</option>
           {mahalleler.map((m) => (
             <option key={m.mahalle_id} value={m.mahalle_id}>
               {m.mahalle_adi}
@@ -137,8 +153,8 @@ export default function KonumSecici({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Sokak</label>
-        {deger.mahalleId && (
+        {etiket('Sokak')}
+        {deger.mahalleId && !kompakt && (
           <input
             type="search"
             value={sokakArama}
@@ -149,11 +165,16 @@ export default function KonumSecici({
         )}
         <select
           value={deger.sokakId}
+          aria-label="Sokak"
           disabled={!deger.mahalleId}
           onChange={(e) => onChange({ ...deger, sokakId: e.target.value })}
-          className={SELECT}
+          className={sinif}
         >
-          <option value="">{deger.mahalleId ? `Tüm sokaklar (${sokaklar.length})` : 'Önce mahalle seçin'}</option>
+          <option value="">
+            {kompakt
+              ? deger.mahalleId ? 'Sokak (tümü)' : 'Sokak'
+              : deger.mahalleId ? `Tüm sokaklar (${sokaklar.length})` : 'Önce mahalle seçin'}
+          </option>
           {sokaklar.map((s) => (
             <option key={s.sokak_id} value={s.sokak_id}>
               {s.sokak_adi}

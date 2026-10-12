@@ -19,6 +19,9 @@ export const dynamic = "force-dynamic";
 interface PageProps {
   searchParams: Promise<{
     il?: string;
+    ilce?: string;
+    mahalle?: string;
+    sokak?: string;
     site?: string;
     sanayi_sitesi?: string;
     firma_tipi?: string;
@@ -62,7 +65,9 @@ export default async function FirmalarPage(props: PageProps) {
   const searchParams = await props.searchParams;
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
   const t = translations[lang];
-  const { il, site, sanayi_sitesi, firma_tipi, kategori, ara } = searchParams;
+  const { il, ilce, mahalle, sokak, site, sanayi_sitesi, firma_tipi, kategori, ara } = searchParams;
+  const mahalleId = parseInt(mahalle || "") || null;
+  const sokakId = parseInt(sokak || "") || null;
   const rawLimit = parseInt(searchParams.limit || "") || DEFAULT_LIMIT;
   const limit = LIMIT_OPTIONS.includes(rawLimit) ? rawLimit : DEFAULT_LIMIT;
   const sayfa = Math.max(parseInt(searchParams.sayfa || "") || 1, 1);
@@ -78,6 +83,23 @@ export default async function FirmalarPage(props: PageProps) {
     .order("ad");
 
   if (il) query = query.eq("il_adi", il);
+  // Anasayfa aramasındaki konum seçimi
+  if (ilce) query = query.eq("ilce_adi", ilce);
+  if (mahalleId) query = query.eq("mahalle_id", mahalleId);
+  if (sokakId) query = query.eq("sokak_id", sokakId);
+
+  // Konum etiketi için mahalle ve sokak adları
+  const [mahalleSonuc, sokakSonuc] = await Promise.all([
+    mahalleId
+      ? supabase.from("mahalleler_yeni").select("mahalle_adi").eq("mahalle_id", mahalleId).limit(1).maybeSingle()
+      : Promise.resolve({ data: null }),
+    sokakId
+      ? supabase.from("sokaklar").select("sokak_adi").eq("sokak_id", sokakId).limit(1).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  const mahalleAdi = (mahalleSonuc.data as { mahalle_adi?: string } | null)?.mahalle_adi;
+  const sokakAdi = (sokakSonuc.data as { sokak_adi?: string } | null)?.sokak_adi;
+  const konumYazisi = ilce ? [sokakAdi, mahalleAdi, ilce, il].filter(Boolean).join(", ") : "";
 
   // Kategoriler firma_kategorileri tablosundan (süzgeç listesi ve kategori → kategori_id çevirisi)
   const kategoriListesi = await aktifKategoriler(supabase);
@@ -178,11 +200,11 @@ export default async function FirmalarPage(props: PageProps) {
   const normalSayfaFirmalar = siraliFirmalar.slice(gercekBaslangic, gercekBaslangic + limit);
   const sayfaFirmalar = [...sayfadakiSabitler, ...normalSayfaFirmalar];
 
-  const baslik = site || kategori || (ara ? t.resultsFor(ara) : il || t.allCompanies);
+  const baslik = site || kategori || (ara ? t.resultsFor(ara) : konumYazisi || il || t.allCompanies);
 
   // URL oluşturucu — mevcut filtreleri korur
   const url = (extra: Record<string, string | undefined>) =>
-    buildUrl({ il, site, firma_tipi, kategori, ara, limit: String(limit), ...extra });
+    buildUrl({ il, ilce, mahalle, sokak, site, firma_tipi, kategori, ara, limit: String(limit), ...extra });
 
   // Sayfa numarası listesi (max 7 sayfa göster)
   const sayfaNumaralari = () => {
@@ -252,8 +274,14 @@ export default async function FirmalarPage(props: PageProps) {
           </div>
 
           {/* Aktif filtreler */}
-          {(site || kategori || ara) && (
+          {(site || kategori || ara || konumYazisi) && (
             <div className="flex flex-wrap gap-2 mb-4">
+              {konumYazisi && (
+                <span className="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full flex items-center gap-1">
+                  📍 {konumYazisi}
+                  <Link href={url({ il: undefined, ilce: undefined, mahalle: undefined, sokak: undefined, sayfa: "1" })} className="ml-1 hover:text-red-500">✕</Link>
+                </span>
+              )}
               {site && (
                 <span className="bg-blue-100 text-[#1a3a6b] text-xs px-3 py-1 rounded-full flex items-center gap-1">
                   🏭 {site}

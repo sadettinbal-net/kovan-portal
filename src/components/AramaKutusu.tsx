@@ -7,6 +7,7 @@ import { useSpeechToText } from "@/hooks/useSpeechToText";
 import { supabase } from "@/lib/supabase";
 import { aramaKosulu } from "@/lib/aramaDeseni";
 import { useLanguage } from "@/contexts/LanguageContext";
+import KonumSecici, { BOS_KONUM, type Konum } from "@/components/KonumSecici";
 
 const MAX_SUGGESTIONS = 8;
 
@@ -18,14 +19,26 @@ export default function AramaKutusu({ count }: { count?: number | null }) {
   const [suggestions, setSuggestions] = useState<FirmaOneri[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
+  const [konum, setKonum] = useState<Konum>(BOS_KONUM);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
+  // Yazı ve seçilen konumla firma listesi adresi
+  const aramaAdresi = (yazi: string) => {
+    const p = new URLSearchParams();
+    if (yazi) p.set("ara", yazi);
+    if (konum.il) p.set("il", konum.il);
+    if (konum.ilce) p.set("ilce", konum.ilce);
+    if (konum.mahalleId) p.set("mahalle", konum.mahalleId);
+    if (konum.sokakId) p.set("sokak", konum.sokakId);
+    return `/firmalar?${p.toString()}`;
+  };
+
   const { listening, supported, start, stop } = useSpeechToText((text) => {
     setQuery(text);
     if (text.trim()) {
-      router.push(`/firmalar?ara=${encodeURIComponent(text.trim())}`);
+      router.push(aramaAdresi(text.trim()));
     }
   });
 
@@ -41,18 +54,23 @@ export default function AramaKutusu({ count }: { count?: number | null }) {
     }
 
     debounceRef.current = setTimeout(async () => {
-      const { data } = await supabase
+      let sorgu = supabase
         .from("firmalar")
         .select("id, ad, sanayi_sitesi, sektor")
         .or(aramaKosulu(q, ["ad", "sektor", "sanayi_sitesi"]))
-        .not("ad", "ilike", "(Firma%")
-        .limit(MAX_SUGGESTIONS);
+        .not("ad", "ilike", "(Firma%");
+      // Konum seçildiyse öneriler de o bölgeden gelir
+      if (konum.il) sorgu = sorgu.eq("il_adi", konum.il);
+      if (konum.ilce) sorgu = sorgu.eq("ilce_adi", konum.ilce);
+      if (konum.mahalleId) sorgu = sorgu.eq("mahalle_id", parseInt(konum.mahalleId));
+      if (konum.sokakId) sorgu = sorgu.eq("sokak_id", parseInt(konum.sokakId));
+      const { data } = await sorgu.limit(MAX_SUGGESTIONS);
       const results = data || [];
       setSuggestions(results);
       setOpen(results.length > 0);
       setActiveIdx(-1);
     }, 250);
-  }, [query]);
+  }, [query, konum]);
 
   // Dışarı tıklayınca kapat
   useEffect(() => {
@@ -68,8 +86,9 @@ export default function AramaKutusu({ count }: { count?: number | null }) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setOpen(false);
-    if (query.trim()) {
-      router.push(`/firmalar?ara=${encodeURIComponent(query.trim())}`);
+    // Yazı yazmadan yalnızca konum seçerek de aranabilir
+    if (query.trim() || konum.il) {
+      router.push(aramaAdresi(query.trim()));
     }
   };
 
@@ -175,6 +194,11 @@ export default function AramaKutusu({ count }: { count?: number | null }) {
             {t.searchBtn}
           </button>
         </form>
+
+        {/* Konuma göre arama: il, ilçe, mahalle, sokak */}
+        <div className="mt-2 text-left">
+          <KonumSecici deger={konum} onChange={setKonum} kompakt />
+        </div>
       </div>
     </div>
   );
