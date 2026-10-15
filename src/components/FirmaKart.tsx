@@ -82,13 +82,13 @@ export default async function FirmaKart({ firma }: { firma: FirmaKartData }) {
 
         <div className="space-y-0.5 mb-1 sm:space-y-1 sm:mb-2">
           <div className="flex items-start gap-0.5">
-            <span className="text-[#e8a020] text-[8px] phone:text-[10px] sm:text-xs flex-shrink-0">🏷️</span>
-            <span className="text-gray-600 text-[8px] phone:text-[10px] sm:text-xs line-clamp-1">{firma.sektor}</span>
+            <span className="text-[#e8a020] text-[9px] phone:text-[12px] sm:text-sm flex-shrink-0">🏷️</span>
+            <span className="text-[#b45309] font-semibold text-[9px] phone:text-[12px] sm:text-sm leading-tight line-clamp-1">{firma.sektor}</span>
           </div>
           {firma.sanayi_sitesi && (
             <div className="flex items-start gap-0.5">
-              <span className="text-[#1a3a6b] text-[8px] phone:text-[10px] sm:text-xs flex-shrink-0">🏭</span>
-              <span className="text-gray-600 text-[8px] phone:text-[10px] sm:text-xs line-clamp-1">{firma.sanayi_sitesi}</span>
+              <span className="text-[#1a3a6b] text-[9px] phone:text-[12px] sm:text-sm flex-shrink-0">🏭</span>
+              <span className="text-[#1a3a6b] font-semibold text-[9px] phone:text-[12px] sm:text-sm leading-tight line-clamp-1">{firma.sanayi_sitesi}</span>
             </div>
           )}
           {firma.yorum_sayisi != null && firma.yorum_sayisi > 0 && firma.ortalama_puan != null && (
