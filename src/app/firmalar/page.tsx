@@ -305,6 +305,20 @@ export default async function FirmalarPage(props: PageProps) {
 
           {acilUyari && <AcilUyari tur={acilUyari} className="mb-4" />}
 
+          {/* Eczane kategorisinde bugünün nöbetçi eczanelerine geçiş */}
+          {kategori && /^eczane/i.test(kategori.trim()) && (
+            <Link
+              href="/nobetci-eczaneler"
+              className="mb-4 flex items-center justify-between gap-3 bg-[#1a3a6b] hover:bg-[#244a85] text-white rounded-lg px-4 py-3 transition-colors"
+            >
+              <span className="flex items-center gap-2 font-semibold">
+                <span aria-hidden="true">🌙</span> Bugünün Nöbetçi Eczaneleri
+                <span className="hidden sm:inline font-normal text-sm opacity-80">— 81 il, her gün güncel</span>
+              </span>
+              <span aria-hidden="true" className="text-lg">→</span>
+            </Link>
+          )}
+
           {/* Firma grid */}
           {sayfaFirmalar.length > 0 ? (
             <>
