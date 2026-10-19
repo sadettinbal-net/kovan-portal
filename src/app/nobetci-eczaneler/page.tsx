@@ -72,6 +72,31 @@ function tarihSaat(iso: string) {
   }).format(new Date(iso));
 }
 
+// Resmi nöbetçi eczane sayfaları (yalnızca bağlantı verilir, içerik kopyalanmaz)
+const E_DEVLET_NOBETCI = "https://www.turkiye.gov.tr/saglik-titck-nobetci-eczane-sorgulama";
+const IL_ECZACI_ODASI: Record<string, { ad: string; url: string }> = {
+  istanbul: { ad: "İstanbul Eczacı Odası", url: "https://www.istanbuleczaciodasi.org.tr/nobetci-eczane/" },
+};
+
+function ResmiKaynaklar({ ilSlug, buyuk = false }: { ilSlug: string; buyuk?: boolean }) {
+  const oda = IL_ECZACI_ODASI[ilSlug];
+  const sinif = buyuk
+    ? "inline-flex items-center gap-2 bg-[#1a3a6b] hover:bg-[#244a85] text-white font-semibold px-4 py-2.5 rounded-lg"
+    : "inline-flex items-center gap-1 text-[#1a3a6b] underline hover:text-[#244a85]";
+  return (
+    <div className={buyuk ? "flex flex-col sm:flex-row flex-wrap gap-2" : "contents"}>
+      <a href={E_DEVLET_NOBETCI} target="_blank" rel="noopener noreferrer" className={sinif}>
+        e-Devlet Nöbetçi Eczane Sorgulama <span aria-hidden="true">↗</span>
+      </a>
+      {oda && (
+        <a href={oda.url} target="_blank" rel="noopener noreferrer" className={sinif}>
+          {oda.ad} Nöbetçi Eczaneler <span aria-hidden="true">↗</span>
+        </a>
+      )}
+    </div>
+  );
+}
+
 function yolTarifi(e: Eczane) {
   if (e.enlem && e.boylam) return `https://www.google.com/maps/dir/?api=1&destination=${e.enlem},${e.boylam}`;
   const q = [e.ad, e.adres, e.ilce, e.il].filter(Boolean).join(" ");
@@ -140,7 +165,8 @@ export default async function NobetciEczanelerPage(props: PageProps) {
         {sonGuncelleme && <p className="opacity-70 text-xs mt-1">Liste güncellendi: {sonGuncelleme}</p>}
       </div>
 
-      {/* İl seçimi */}
+      {/* İl seçimi (liste varken) */}
+      {iller.length > 0 && (
       <form method="get" action="/nobetci-eczaneler" className="bg-white border border-[#dde3ec] rounded-lg px-4 py-3 mb-4 flex flex-wrap items-center gap-2">
         <label htmlFor="il" className="text-sm font-medium text-[#1a3a6b]">İl:</label>
         <select
@@ -160,14 +186,16 @@ export default async function NobetciEczanelerPage(props: PageProps) {
           Göster
         </button>
       </form>
+      )}
 
       {eczaneler.length === 0 ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-5 text-sm text-yellow-900">
-          <p className="font-semibold mb-1">Nöbetçi eczane listesi şu an gösterilemiyor.</p>
-          <p>
-            Liste her sabah otomatik olarak yenilenir. Bu arada güncel bilgi için e-Devlet&apos;teki
-            &quot;Nöbetçi Eczane Sorgulama&quot; hizmetini ya da ilinizin eczacı odasının sitesini kullanabilirsiniz.
+        <div className="bg-white border border-[#dde3ec] border-l-4 border-l-red-600 rounded-lg px-4 py-5">
+          <p className="font-semibold text-[#1a3a6b] mb-1">Bugünün nöbetçi eczanelerini resmi kaynaktan görün</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Aşağıdaki bağlantılar resmi sayfaları yeni sekmede açar. İl ve ilçenizi seçerek bugünün ve yarının nöbetçi
+            eczanelerine ulaşabilirsiniz.
           </p>
+          <ResmiKaynaklar ilSlug={ilSlug} buyuk />
         </div>
       ) : (
         <>
@@ -233,8 +261,15 @@ export default async function NobetciEczanelerPage(props: PageProps) {
         </>
       )}
 
-      <p className="text-xs text-gray-500 mt-6">
-        Nöbetçi eczane bilgileri eczacı odalarının yayınladığı listelerden otomatik olarak alınır. Gitmeden önce telefonla
+      {eczaneler.length > 0 && (
+        <div className="mt-6 flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-gray-500">Resmi kaynaklar:</span>
+          <ResmiKaynaklar ilSlug={ilSlug} />
+        </div>
+      )}
+
+      <p className="text-xs text-gray-500 mt-4">
+        Nöbetçi eczane bilgileri resmi kaynakların yayınladığı listelerden alınır. Gitmeden önce telefonla
         teyit etmeniz önerilir. Acil durumda{" "}
         <a href="tel:112" className="underline font-semibold text-red-700">112</a>&apos;yi arayın.
       </p>
