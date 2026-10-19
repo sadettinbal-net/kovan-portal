@@ -191,10 +191,21 @@ export default async function NobetciEczanelerPage(props: PageProps) {
       {eczaneler.length === 0 ? (
         <div className="bg-white border border-[#dde3ec] border-l-4 border-l-red-600 rounded-lg px-4 py-5">
           <p className="font-semibold text-[#1a3a6b] mb-1">Bugünün nöbetçi eczanelerini resmi kaynaktan görün</p>
-          <p className="text-sm text-gray-600 mb-4">
-            Aşağıdaki bağlantılar resmi sayfaları yeni sekmede açar. İl ve ilçenizi seçerek bugünün ve yarının nöbetçi
-            eczanelerine ulaşabilirsiniz.
+          <p className="text-sm text-gray-600 mb-3">
+            Bağlantılar resmi sayfaları yeni sekmede açar. Liste orada birkaç seçimden sonra görünür:
           </p>
+          <ol className="text-sm text-gray-700 mb-4 list-decimal pl-5 space-y-1">
+            <li>
+              <b>e-Devlet:</b> İl ve ilçenizi seçin, &quot;Bugün nöbetçi olan eczaneler&quot;i işaretleyin ve
+              &quot;Sorgula&quot; düğmesine basın. Giriş yapmanız gerekmez.
+            </li>
+            {ilSlug === "istanbul" && (
+              <li>
+                <b>İstanbul Eczacı Odası:</b> Sağ taraftaki &quot;İstanbul&quot; sekmesine tıklayın ya da
+                &quot;İlçe Seçiniz&quot; kutusundan ilçenizi seçin; nöbetçi eczaneler harita ve liste olarak gelir.
+              </li>
+            )}
+          </ol>
           <ResmiKaynaklar ilSlug={ilSlug} buyuk />
         </div>
       ) : (
