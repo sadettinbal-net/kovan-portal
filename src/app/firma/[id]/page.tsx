@@ -130,10 +130,22 @@ export default async function FirmaDetay({ params }: PageProps) {
               <div className="font-semibold text-[#1a3a6b]">{firma.sektor}</div>
             </div>
             <div className="bg-blue-50 rounded-lg p-4">
-              <div className="text-xs text-gray-500 mb-1">{t.industrialZoneLabel}</div>
-              <div className="font-semibold text-[#1a3a6b]">{firma.sanayi_sitesi || "—"}</div>
-              {(firma.ilce_adi || firma.il_adi) && (
-                <div className="text-sm text-gray-600 mt-0.5">📍 {[firma.ilce_adi, firma.il_adi].filter(Boolean).join(" / ")}</div>
+              {/* Sanayi sitesinde olmayan firmalarda (kurumsal, sitesiz) başlık "Konum" olur */}
+              {firma.sanayi_sitesi ? (
+                <>
+                  <div className="text-xs text-gray-500 mb-1">{t.industrialZoneLabel}</div>
+                  <div className="font-semibold text-[#1a3a6b]">{firma.sanayi_sitesi}</div>
+                  {(firma.ilce_adi || firma.il_adi) && (
+                    <div className="text-sm text-gray-600 mt-0.5">📍 {[firma.ilce_adi, firma.il_adi].filter(Boolean).join(" / ")}</div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="text-xs text-gray-500 mb-1 uppercase">{t.locationTitle}</div>
+                  <div className="font-semibold text-[#1a3a6b]">
+                    📍 {[firma.ilce_adi, firma.il_adi].filter(Boolean).join(" / ") || "—"}
+                  </div>
+                </>
               )}
               {ortalamaPuan !== null && (
                 <div className="flex items-center gap-1.5 mt-2">
