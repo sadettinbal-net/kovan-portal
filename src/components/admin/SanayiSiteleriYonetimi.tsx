@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { istanbulYakasi } from '@/lib/istanbul';
 
@@ -32,6 +32,16 @@ export default function SanayiSiteleriYonetimi() {
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [iller, setIller] = useState<{ id: number; sehir_adi: string }[]>([]);
   const [ilceler, setIlceler] = useState<{ id: number; ilce_adi: string }[]>([]);
+  const [silinecekId, setSilinecekId] = useState<number | null>(null);
+  const [siliniyor, setSiliniyor] = useState(false);
+  const ustRef = useRef<HTMLDivElement>(null);
+
+  // Form açılınca ya da mesaj/hata çıkınca sayfanın üstüne kaydır (uzun listede aşağıdayken görünmüyordu)
+  const formAcik = form !== null;
+  const formId = form?.id;
+  useEffect(() => {
+    if (formAcik || hata || mesaj) ustRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [formAcik, formId, hata, mesaj]);
 
   async function yukle() {
     setYukleniyor(true);
@@ -111,22 +121,26 @@ export default function SanayiSiteleriYonetimi() {
     yukle();
   }
 
+  // Onay tarayıcı penceresi (confirm) yerine satırın içinde soruluyor; engellenen pencere silmeyi sessizce iptal ediyordu
   async function sil(s: Site) {
-    if (!confirm(`"${s.site_adi}" silinsin mi? Bu işlem geri alınamaz.`)) return;
     setHata('');
+    setMesaj('');
+    setSiliniyor(true);
     const res = await fetch('/api/admin/sanayi-siteleri', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: s.id }),
     });
-    const sonuc = await res.json();
+    const sonuc = await res.json().catch(() => ({}));
+    setSiliniyor(false);
+    setSilinecekId(null);
     if (!res.ok) return setHata(sonuc.error || 'Silinemedi.');
     setMesaj(`"${s.site_adi}" silindi.`);
     yukle();
   }
 
   return (
-    <div className="space-y-4">
+    <div ref={ustRef} className="space-y-4 scroll-mt-4">
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="search"
@@ -259,12 +273,31 @@ export default function SanayiSiteleriYonetimi() {
                   <td className="px-4 py-2 text-gray-600">{s.ust_site_id ? adIle.get(s.ust_site_id) : '—'}</td>
                   <td className="px-4 py-2 text-right">{s.firma_sayisi}</td>
                   <td className="px-4 py-2 text-right whitespace-nowrap">
-                    <button onClick={() => duzenle(s)} className="text-[#2554a0] hover:underline mr-3">
-                      Düzenle
-                    </button>
-                    <button onClick={() => sil(s)} className="text-red-600 hover:underline">
-                      Sil
-                    </button>
+                    {silinecekId === s.id ? (
+                      <>
+                        <span className="text-gray-700 mr-2">Silinsin mi?</span>
+                        <button
+                          type="button"
+                          onClick={() => sil(s)}
+                          disabled={siliniyor}
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1 rounded mr-2 disabled:opacity-50"
+                        >
+                          {siliniyor ? 'Siliniyor...' : 'Evet, sil'}
+                        </button>
+                        <button type="button" onClick={() => setSilinecekId(null)} className="text-gray-600 hover:underline">
+                          Vazgeç
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" onClick={() => duzenle(s)} className="text-[#2554a0] hover:underline mr-3">
+                          Düzenle
+                        </button>
+                        <button type="button" onClick={() => setSilinecekId(s.id)} className="text-red-600 hover:underline">
+                          Sil
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
