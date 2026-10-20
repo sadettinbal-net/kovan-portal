@@ -40,7 +40,11 @@ export default async function Sidebar({ il }: { il?: string }) {
       kategoriPerSite[ad][f.sektor] = (kategoriPerSite[ad][f.sektor] || 0) + 1;
     }
   }
-  const tumKategoriler = Array.from(new Set(firmalar.map((f) => f.sektor).filter(Boolean) as string[])).sort();
+  // "Sanayi Sitesi Yönetimi" her sitenin kategori listesinde en üstte durur
+  const YONETIM = "SANAYİ SİTESİ YÖNETİMİ";
+  const tumKategoriler = Array.from(new Set(firmalar.map((f) => f.sektor).filter(Boolean) as string[])).sort(
+    (a, b) => Number(b === YONETIM) - Number(a === YONETIM) || (a < b ? -1 : a > b ? 1 : 0)
+  );
 
   return (
     <SidebarClient

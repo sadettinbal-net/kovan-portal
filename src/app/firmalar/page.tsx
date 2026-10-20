@@ -150,7 +150,10 @@ export default async function FirmalarPage(props: PageProps) {
   // Sıralama: en az ${ONE_CIKMA_EN_AZ_YORUM} yorumu olup %75+ olumlu olanlar öne (olumlu oranına göre azalan), geri kalanlar alfabetik (DB sırası)
   const oneCikar = (f: FirmaWithStats) =>
     (f.yorum_sayisi ?? 0) >= ONE_CIKMA_EN_AZ_YORUM && f.olumlu_yuzde != null && f.olumlu_yuzde >= 75;
+  // Sanayi sitesi seçildiyse sitenin yönetimi listede hep en üstte
+  const yonetim = (f: FirmaWithStats) => !!site && f.sektor === "SANAYİ SİTESİ YÖNETİMİ";
   firmalarWithStats.sort((a, b) => {
+    if (yonetim(a) !== yonetim(b)) return yonetim(a) ? -1 : 1;
     const aOne = oneCikar(a);
     const bOne = oneCikar(b);
     if (aOne && !bOne) return -1;
@@ -189,8 +192,8 @@ export default async function FirmalarPage(props: PageProps) {
 
   // Öne çıkanlar (sıralamada zaten başta) her gün 1. sayfanın başında sabit durur.
   // Günlük rotasyon sadece geri kalanlara uygulanır: her gece yarısı sayfa blokları bir ileri kayar (1→2, 2→3, ..., son→1).
-  const oneCikanlar = normalFirmalar.filter(oneCikar);
-  const geriKalan = normalFirmalar.filter(f => !oneCikar(f));
+  const oneCikanlar = normalFirmalar.filter(f => yonetim(f) || oneCikar(f));
+  const geriKalan = normalFirmalar.filter(f => !yonetim(f) && !oneCikar(f));
   const kalanSayfa = Math.max(Math.ceil(geriKalan.length / limit), 1);
   const kaydirma = ((kalanSayfa - (gunSayisi % kalanSayfa)) % kalanSayfa) * limit;
   const siraliFirmalar = [...oneCikanlar, ...geriKalan.slice(kaydirma), ...geriKalan.slice(0, kaydirma)];
