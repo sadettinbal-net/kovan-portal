@@ -8,6 +8,7 @@ import { translations } from "@/lib/translations";
 import type { Lang } from "@/lib/translations";
 import { musteriFavorisiMi, sponsorluMu } from "@/lib/ozelFirma";
 import { getKategoriResim } from "@/lib/kategoriResim";
+import { ilkNumara } from "@/lib/whatsapp";
 import { firmaSaglikUyarisi } from "@/lib/firmaKategorileri";
 import AcilUyari from "@/components/AcilUyari";
 import TemsiliEtiket from "@/components/TemsiliEtiket";
@@ -144,7 +145,7 @@ export default async function FirmaKartPage({ params }: PageProps) {
             {firma.telefon && (
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <span>📞</span>
-                <a href={`tel:${firma.telefon}`} className="text-green-700 font-medium hover:underline">
+                <a href={`tel:${ilkNumara(firma.telefon)}`} className="text-green-700 font-medium hover:underline">
                   {firma.telefon}
                 </a>
               </div>

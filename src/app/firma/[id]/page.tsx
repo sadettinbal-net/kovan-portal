@@ -214,7 +214,7 @@ export default async function FirmaDetay({ params }: PageProps) {
               <span className="text-xl">📞</span>
               <div>
                 <div className="text-xs text-gray-500 mb-0.5">{t.phoneLabel}</div>
-                <a href={`tel:${firma.telefon}`} className="text-green-700 font-semibold hover:underline">
+                <a href={`tel:${ilkNumara(firma.telefon)}`} className="text-green-700 font-semibold hover:underline">
                   {firma.telefon}
                 </a>
               </div>
