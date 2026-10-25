@@ -1813,6 +1813,17 @@ function AdminPanel() {
     tumBenzersizleriGetir('sanayi_sitesi', setBenzersizSanayiSiteleri);
   }, []);
 
+  // Mesajlar ve Talepler > Kaldırma talebinden: firmayı Firmalar sekmesinde seçip düzenleme formunu açar
+  async function talepFirmasiniDuzenle(firmaId: number) {
+    const { data } = await supabase.from('firmalar').select('*').eq('id', firmaId).maybeSingle();
+    if (!data) { alert('Firma bulunamadı.'); return; }
+    setAktifSekme('firmalar');
+    setAra(data.ad);
+    firmaSeç(data as Firma);
+    duzenlemeBaslat(data as Firma);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function firmaSeç(firma: Firma) {
     setSeciliFirma(firma);
     setFotograf(null);
@@ -1823,33 +1834,34 @@ function AdminPanel() {
     setSilOnayiAcik(false);
   }
 
-  function duzenlemeBaslat() {
-    if (!seciliFirma) return;
+  // f verilmezse seçili firma düzenlenir (talepten gelince firma doğrudan verilir)
+  function duzenlemeBaslat(f: Firma | null = seciliFirma) {
+    if (!f) return;
     setDuzenleForm({
-      ad: seciliFirma.ad,
-      sahip: seciliFirma.sahip,
-      sektor: seciliFirma.sektor,
-      sanayi_sitesi: seciliFirma.sanayi_sitesi,
-      telefon: seciliFirma.telefon,
-      mobil_telefon: seciliFirma.mobil_telefon ?? '',
-      whatsapp: seciliFirma.whatsapp ?? '',
-      adres: seciliFirma.adres,
-      plus_code: seciliFirma.plus_code ?? '',
-      web_sitesi: seciliFirma.web_sitesi,
-      eposta: seciliFirma.eposta ?? '',
-      instagram: seciliFirma.instagram ?? '',
-      facebook: seciliFirma.facebook ?? '',
-      tiktok: seciliFirma.tiktok ?? '',
-      youtube: seciliFirma.youtube ?? '',
-      nsosyal: seciliFirma.nsosyal ?? '',
-      hizmetler: seciliFirma.hizmetler,
-      ozel_firma: seciliFirma.ozel_firma,
-      ozel_baslangic: seciliFirma.ozel_baslangic ?? null,
-      ozel_bitis: seciliFirma.ozel_bitis ?? null,
-      onay_durumu: seciliFirma.onay_durumu,
-      hedef_sayfa: seciliFirma.hedef_sayfa ?? null,
-      kullanici_email: seciliFirma.kullanici_email ?? '',
-      firma_tipi: seciliFirma.firma_tipi ?? null,
+      ad: f.ad,
+      sahip: f.sahip,
+      sektor: f.sektor,
+      sanayi_sitesi: f.sanayi_sitesi,
+      telefon: f.telefon,
+      mobil_telefon: f.mobil_telefon ?? '',
+      whatsapp: f.whatsapp ?? '',
+      adres: f.adres,
+      plus_code: f.plus_code ?? '',
+      web_sitesi: f.web_sitesi,
+      eposta: f.eposta ?? '',
+      instagram: f.instagram ?? '',
+      facebook: f.facebook ?? '',
+      tiktok: f.tiktok ?? '',
+      youtube: f.youtube ?? '',
+      nsosyal: f.nsosyal ?? '',
+      hizmetler: f.hizmetler,
+      ozel_firma: f.ozel_firma,
+      ozel_baslangic: f.ozel_baslangic ?? null,
+      ozel_bitis: f.ozel_bitis ?? null,
+      onay_durumu: f.onay_durumu,
+      hedef_sayfa: f.hedef_sayfa ?? null,
+      kullanici_email: f.kullanici_email ?? '',
+      firma_tipi: f.firma_tipi ?? null,
     });
     setDuzenlemeAcik(true);
     setDurum(null);
@@ -2163,7 +2175,7 @@ function AdminPanel() {
 
       {aktifSekme === 'yeni-yorumlar' && <AdminYeniYorumlar onSayi={setYeniYorumSayi} />}
       {aktifSekme === 'sikayetler' && <AdminSikayetler onSayi={setBekleyenSikayetSayi} />}
-      {aktifSekme === 'reklam-mesajlari' && <AdminMesajlar onSayi={setReklamMesajSayi} />}
+      {aktifSekme === 'reklam-mesajlari' && <AdminMesajlar onSayi={setReklamMesajSayi} onFirmaDuzenle={talepFirmasiniDuzenle} />}
       {aktifSekme === 'telefon-talepleri' && <AdminTelefonTalepleri onSayi={setTelefonTalepSayi} />}
 
       {aktifSekme === 'kategoriler' && (
@@ -2244,7 +2256,7 @@ function AdminPanel() {
                 <div className="flex gap-2 flex-shrink-0">
                   {!duzenlemeAcik ? (
                     <>
-                      <button onClick={duzenlemeBaslat}
+                      <button onClick={() => duzenlemeBaslat()}
                         className="px-3 py-1.5 bg-[#1a3a6b] hover:bg-[#2554a0] text-white text-xs font-semibold rounded-lg transition-colors">
                         ✏️ Düzenle
                       </button>

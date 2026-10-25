@@ -11,7 +11,7 @@ type Mesaj = { id: number; ad_soyad: string; telefon: string | null; eposta: str
 type Suzgec = 'reklam' | 'genel' | 'kaldirma' | 'tumu';
 type FirmaOzet = Record<number, { ad: string; onay_durumu: string }>;
 
-export default function AdminMesajlar({ onSayi }: { onSayi: (n: number) => void }) {
+export default function AdminMesajlar({ onSayi, onFirmaDuzenle }: { onSayi: (n: number) => void; onFirmaDuzenle?: (firmaId: number) => void }) {
   const [suzgec, setSuzgec] = useState<Suzgec>('reklam');
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [firmalar, setFirmalar] = useState<FirmaOzet>({});
@@ -98,6 +98,9 @@ export default function AdminMesajlar({ onSayi }: { onSayi: (n: number) => void 
                   <a href={`/firma/${m.firma_id}`} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#1a3a6b] hover:underline">
                     🏢 {firmalar[m.firma_id]?.ad || `Firma #${m.firma_id}`} ↗
                   </a>
+                  {firmalar[m.firma_id] && onFirmaDuzenle && (
+                    <button onClick={() => onFirmaDuzenle(m.firma_id!)} className="px-2.5 py-1 rounded bg-blue-50 hover:bg-blue-100 text-[#1a3a6b] font-semibold">✏️ Firmayı düzenle</button>
+                  )}
                   {!firmalar[m.firma_id] ? (
                     <span className="text-gray-400">(kayıt bulunamadı)</span>
                   ) : firmalar[m.firma_id].onay_durumu === 'pasif' ? (
