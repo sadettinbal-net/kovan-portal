@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FIRMA_TIPI, TIP_ADI, kategoriGruplari, type FirmaKategorisi, type KategoriTipi } from "@/lib/firmaKategorileri";
 
-// Firmalar sayfası: kategori süzgeci. Liste firma_kategorileri tablosundan gelir (firması olmayan kategoriler de görünür).
+// Firmalar sayfası: kategori süzgeci. Liste firma_kategorileri tablosundan gelir (yalnızca seçili konumda firması olanlar).
 // Seçim adresi ?kategori=<ad>&firma_tipi=<tip> olarak değiştirir; diğer süzgeçler (il, site, arama) korunur.
 export default function KategoriSuzgeci({ kategoriler }: { kategoriler: FirmaKategorisi[] }) {
   const router = useRouter();

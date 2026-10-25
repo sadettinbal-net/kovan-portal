@@ -122,6 +122,9 @@ export default async function FirmalarPage(props: PageProps) {
     const siteAdlari = await siteVeAltSiteAdlari(site);
     listeParam.siteler = siteAdlari;
   }
+  // Süzgeç listesinde yalnızca seçili konumda (il, ilçe, mahalle, sokak, site, firma tipi) firması olan kategoriler görünür.
+  // Kategori süzgeci eklenmeden önce başlatılır ki diğer kategoriler de seçilebilsin; firma listesiyle aynı anda çalışır.
+  const doluKategoriSozu = supabase.rpc("firma_dolu_kategoriler", { p: { ...listeParam } });
   // Kategori: ana kategori seçildiyse alt kategorilerindeki firmalar da gelir. Tabloda olmayan bir ad gelirse eski sektör yazısıyla aranır.
   let kategoriIdleri: number[] = [];
   if (kategori) {
@@ -131,6 +134,16 @@ export default async function FirmalarPage(props: PageProps) {
     if (idler.length) listeParam.kategori_idler = idler;
     else listeParam.sektor = kategori;
   }
+  // Boş kategorileri süzgeçten çıkar (ana kategori, altlarından biri doluysa kalır; seçili kategori hep kalır)
+  const doluKategoriler = await doluKategoriSozu.then(({ data, error }) => (error ? null : new Set(((data || []) as number[]).map(Number))));
+  const suzgecKategorileri = doluKategoriler
+    ? kategoriListesi.filter(
+        (k) =>
+          doluKategoriler.has(k.id) ||
+          kategoriIdleri.includes(k.id) ||
+          kategoriListesi.some((a) => a.ust_kategori_id === k.id && doluKategoriler.has(a.id))
+      )
+    : kategoriListesi;
   // Sağlık kategorisi listeleniyorsa firma listesinin üstünde 112 uyarısı
   const acilUyari = saglikUyarisi(kategoriListesi, kategoriIdleri);
 
@@ -277,7 +290,7 @@ export default async function FirmalarPage(props: PageProps) {
             </div>
             <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
               <Suspense fallback={null}>
-                <KategoriSuzgeci kategoriler={kategoriListesi} />
+                <KategoriSuzgeci kategoriler={suzgecKategorileri} />
               </Suspense>
               <span className="text-gray-500 text-xs">{t.perPage}</span>
               <div className="flex gap-1">
