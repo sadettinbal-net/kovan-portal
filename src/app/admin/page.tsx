@@ -1767,35 +1767,25 @@ function AdminPanel() {
     return () => { supabase.removeChannel(channel); clearInterval(bildirimZamanlayici); };
   }, []);
 
+  // Firma listesi: 120 bin+ firmanın hepsini tarayıcıya indirmek dakikalar sürüyor ve yarıda kalıyordu.
+  // Artık arama veritabanında yapılır (admin_firma_ara: ad, kategori, sahip, site, telefon, il/ilçe veya firma numarası);
+  // arama kutusu boşken son eklenen 100 firma görünür.
   useEffect(() => {
-    async function getir() {
+    let iptal = false;
+    const q = ara.trim();
+    const zamanlayici = setTimeout(async () => {
       setYukleniyor(true);
-      const tumFirmalar: Firma[] = [];
-      const CHUNK = 1000;
-      let from = 0;
-      while (true) {
-        const { data } = await supabase.from('firmalar').select('*').order('ad').range(from, from + CHUNK - 1);
-        if (!data || data.length === 0) break;
-        tumFirmalar.push(...data);
-        if (data.length < CHUNK) break;
-        from += CHUNK;
-      }
-      setFirmalar(tumFirmalar);
+      const { data } = q
+        ? await supabase.rpc('admin_firma_ara', { q, sinir: 300 })
+        : await supabase.from('firmalar').select('*').order('id', { ascending: false }).limit(100);
+      if (iptal) return;
+      setFirmalar((data || []) as Firma[]);
       setYukleniyor(false);
-    }
-    getir();
-  }, []);
+    }, q ? 350 : 0);
+    return () => { iptal = true; clearTimeout(zamanlayici); };
+  }, [ara]);
 
-  const filtrelenmiş = firmalar.filter(f => {
-    const q = aramaIcin(ara);
-    return (
-      aramaIcin(f.ad).includes(q) ||
-      aramaIcin(f.sektor).includes(q) ||
-      aramaIcin(f.sahip).includes(q) ||
-      aramaIcin(f.sanayi_sitesi).includes(q) ||
-      aramaIcin(f.telefon).includes(q)
-    );
-  });
+  const filtrelenmiş = firmalar;
 
   const [benzersizSektorler, setBenzersizSektorler] = useState<string[]>([]);
   const [benzersizSanayiSiteleri, setBenzersizSanayiSiteleri] = useState<string[]>([]);
@@ -2213,14 +2203,18 @@ function AdminPanel() {
       {aktifSekme === 'firmalar' && (
       <div className="max-w-7xl mx-auto p-6 flex gap-6">
         <div className="w-80 flex-shrink-0">
-          <input type="text" placeholder="Firma ara..." value={ara} onChange={e => setAra(e.target.value)}
+          <input type="text" placeholder="Firma adı, kategori, telefon, il veya firma no..." value={ara} onChange={e => setAra(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-[#1a3a6b]" />
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden max-h-[calc(100vh-220px)] overflow-y-auto">
             {yukleniyor ? (
               <div className="p-4 text-center text-gray-400 text-sm">Yükleniyor...</div>
             ) : filtrelenmiş.length === 0 ? (
               <div className="p-4 text-center text-gray-400 text-sm">Sonuç yok</div>
-            ) : filtrelenmiş.map(firma => (
+            ) : [
+              <div key="bilgi" className="px-4 py-2 text-[11px] text-gray-400 bg-gray-50 border-b border-gray-100">
+                {ara.trim() ? `${filtrelenmiş.length}${filtrelenmiş.length >= 300 ? '+' : ''} sonuç${filtrelenmiş.length >= 300 ? ' (aramayı daraltın)' : ''}` : 'Son eklenen 100 firma — aramak için yazın'}
+              </div>,
+              ...filtrelenmiş.map(firma => (
               <button key={firma.id} onClick={() => firmaSeç(firma)}
                 className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-blue-50 transition-colors flex items-center gap-2 ${seciliFirma?.id === firma.id ? 'bg-blue-50 border-l-4 border-l-[#1a3a6b]' : ''}`}>
                 <div className="flex-1 min-w-0">
@@ -2233,7 +2227,7 @@ function AdminPanel() {
                 )}
                 {firma.fotograf_url && <span className="text-green-500 text-xs flex-shrink-0">📷</span>}
               </button>
-            ))}
+            ))]}
           </div>
         </div>
 
