@@ -522,12 +522,13 @@ type Reklam = {
   created_at: string;
 };
 
-function ReklamYonetimi() {
+// varsayilanBaslik: reklam başvurusu mesajından gelince başlık alanı gönderenin adıyla dolu gelir
+function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string } = {}) {
   const [reklamlar, setReklamlar] = useState<Reklam[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [mesaj, setMesaj] = useState<{ tip: 'basari' | 'hata'; metin: string } | null>(null);
 
-  const [baslik, setBaslik] = useState('');
+  const [baslik, setBaslik] = useState(varsayilanBaslik);
   const [linkUrl, setLinkUrl] = useState('');
   const [konum, setKonum] = useState<'video' | 'sidebar' | 'popup' | 'anasayfa_ust'>('video');
   const [kategori, setKategori] = useState('');
@@ -1710,6 +1711,8 @@ function AdminPanel() {
   const [yeniYorumSayi, setYeniYorumSayi] = useState(0);
   const [bekleyenSikayetSayi, setBekleyenSikayetSayi] = useState(0);
   const [reklamMesajSayi, setReklamMesajSayi] = useState(0);
+  // Reklam başvurusundan "Reklam ekle" ile gelinirse Reklamlar sekmesinde başlık bu adla dolu açılır
+  const [reklamOnBaslik, setReklamOnBaslik] = useState('');
   const [telefonTalepSayi, setTelefonTalepSayi] = useState(0);
   const [toplamFirmaSayisi, setToplamFirmaSayisi] = useState(0);
   const [firmalar, setFirmalar] = useState<Firma[]>([]);
@@ -2180,7 +2183,7 @@ function AdminPanel() {
 
       {aktifSekme === 'yeni-yorumlar' && <AdminYeniYorumlar onSayi={setYeniYorumSayi} />}
       {aktifSekme === 'sikayetler' && <AdminSikayetler onSayi={setBekleyenSikayetSayi} />}
-      {aktifSekme === 'reklam-mesajlari' && <AdminMesajlar onSayi={setReklamMesajSayi} onFirmaDuzenle={talepFirmasiniDuzenle} />}
+      {aktifSekme === 'reklam-mesajlari' && <AdminMesajlar onSayi={setReklamMesajSayi} onFirmaDuzenle={talepFirmasiniDuzenle} onReklamEkle={(gonderen) => { setReklamOnBaslik(gonderen); setAktifSekme('reklamlar'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />}
       {aktifSekme === 'telefon-talepleri' && <AdminTelefonTalepleri onSayi={setTelefonTalepSayi} />}
 
       {aktifSekme === 'kategoriler' && (
@@ -2656,7 +2659,7 @@ function AdminPanel() {
 
       {aktifSekme === 'site-kullanimi' && <SiteKullanimiYonetimi />}
 
-      {aktifSekme === 'reklamlar' && <ReklamYonetimi />}
+      {aktifSekme === 'reklamlar' && <ReklamYonetimi key={reklamOnBaslik} varsayilanBaslik={reklamOnBaslik} />}
     </div>
   );
 }

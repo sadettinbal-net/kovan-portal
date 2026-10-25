@@ -11,7 +11,7 @@ type Mesaj = { id: number; ad_soyad: string; telefon: string | null; eposta: str
 type Suzgec = 'reklam' | 'genel' | 'kaldirma' | 'tumu';
 type FirmaOzet = Record<number, { ad: string; onay_durumu: string }>;
 
-export default function AdminMesajlar({ onSayi, onFirmaDuzenle }: { onSayi: (n: number) => void; onFirmaDuzenle?: (firmaId: number) => void }) {
+export default function AdminMesajlar({ onSayi, onFirmaDuzenle, onReklamEkle }: { onSayi: (n: number) => void; onFirmaDuzenle?: (firmaId: number) => void; onReklamEkle?: (gonderen: string) => void }) {
   const [suzgec, setSuzgec] = useState<Suzgec>('reklam');
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [firmalar, setFirmalar] = useState<FirmaOzet>({});
@@ -53,7 +53,7 @@ export default function AdminMesajlar({ onSayi, onFirmaDuzenle }: { onSayi: (n: 
   }
 
   const dugme = (s: Suzgec, etiket: string, sayi?: number) => (
-    <button onClick={() => { setSuzgec(s); setYukleniyor(true); }}
+    <button onClick={() => { setYukleniyor(true); if (s === suzgec) yukle(s); else setSuzgec(s); }}
       className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 ${suzgec === s ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
       {etiket}
       {!!sayi && <span className="bg-red-500 text-white px-1.5 rounded-full">{sayi}</span>}
@@ -118,6 +118,11 @@ export default function AdminMesajlar({ onSayi, onFirmaDuzenle }: { onSayi: (n: 
                 <button onClick={() => islem('PATCH', { id: m.id, okundu: !m.okundu })} className="px-2.5 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-700">
                   {m.okundu ? 'Okunmadı yap' : '✓ Okundu'}
                 </button>
+                {m.konu === 'reklam' && onReklamEkle && (
+                  <button onClick={() => onReklamEkle(m.ad_soyad)} className="px-2.5 py-1 rounded bg-[#fff1d6] hover:bg-[#ffe4ad] text-[#a8680c] font-semibold">
+                    📢 Reklam ekle
+                  </button>
+                )}
                 {silId === m.id ? (
                   <>
                     <span className="text-gray-600 self-center">Silinsin mi?</span>
