@@ -1738,10 +1738,15 @@ function AdminPanel() {
     supabase.from('firmalar').select('*', { count: 'exact', head: true }).not('bekleyen_degisiklikler', 'is', null)
       .then(({ count }) => setBekleyenGuncellemeSayi(count || 0));
     // Panel içi bildirim: görülmemiş yeni yorumlar ve bekleyen şikâyetler
-    fetch('/api/bildirimler?kapsam=yonetici')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) { setYeniYorumSayi(d.sayi); setBekleyenSikayetSayi(d.bekleyenSikayet ?? 0); setBekleyenIlanSayi(d.bekleyenIlan ?? 0); setReklamMesajSayi(d.okunmamisReklamMesaji ?? 0); setTelefonTalepSayi(d.bekleyenTelefonTalebi ?? 0); } })
-      .catch(() => {});
+    // Sekmelerdeki sayılar; panel açıkken her dakika yenilenir (yeni mesaj/talep sekmeye girmeden görünsün)
+    function bildirimleriYukle() {
+      fetch('/api/bildirimler?kapsam=yonetici')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) { setYeniYorumSayi(d.sayi); setBekleyenSikayetSayi(d.bekleyenSikayet ?? 0); setBekleyenIlanSayi(d.bekleyenIlan ?? 0); setReklamMesajSayi(d.okunmamisReklamMesaji ?? 0); setTelefonTalepSayi(d.bekleyenTelefonTalebi ?? 0); } })
+        .catch(() => {});
+    }
+    bildirimleriYukle();
+    const bildirimZamanlayici = setInterval(bildirimleriYukle, 60000);
 
     // Gerçek toplam firma sayısını çek
     function sayiYukle() {
@@ -1756,7 +1761,7 @@ function AdminPanel() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'firmalar' }, sayiYukle)
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(channel); clearInterval(bildirimZamanlayici); };
   }, []);
 
   useEffect(() => {

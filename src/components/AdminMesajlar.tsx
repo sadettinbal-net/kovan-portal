@@ -27,7 +27,7 @@ export default function AdminMesajlar({ onSayi, onFirmaDuzenle }: { onSayi: (n: 
       setMesajlar(data.mesajlar);
       setFirmalar(data.firmalar || {});
       setOkunmamis(data.okunmamis);
-      onSayi(data.okunmamis.reklam + (data.okunmamis.kaldirma || 0));
+      onSayi(data.okunmamis.reklam + (data.okunmamis.kaldirma || 0) + (data.okunmamis.genel || 0));
     } else {
       setHata(data.error || 'Mesajlar yüklenemedi.');
     }

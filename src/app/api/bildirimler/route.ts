@@ -33,12 +33,12 @@ export async function GET(request: NextRequest) {
     const [s, i, m, tt] = await Promise.all([
       supabase.from('yorum_sikayetleri').select('id', { count: 'exact', head: true }).eq('durum', 'bekliyor'),
       supabase.from('ilanlar').select('id', { count: 'exact', head: true }).eq('onay_durumu', 'beklemede'),
-      supabase.from('iletisim_mesajlari').select('id', { count: 'exact', head: true }).eq('konu', 'reklam').eq('okundu', false),
+      supabase.from('iletisim_mesajlari').select('id', { count: 'exact', head: true }).eq('okundu', false),
       supabase.from('telefon_talepleri').select('id', { count: 'exact', head: true }).eq('durum', 'onay_bekliyor'),
     ]);
     bekleyenSikayet = s.count ?? 0;
     bekleyenIlan = i.count ?? 0;
-    okunmamisReklamMesaji = m.count ?? 0;
+    okunmamisReklamMesaji = m.count ?? 0; // tüm okunmamış mesajlar: reklam + kaldırma/düzeltme + genel
     bekleyenTelefonTalebi = tt.count ?? 0;
   }
   return NextResponse.json({ ...sonuc, bekleyenSikayet, bekleyenIlan, okunmamisReklamMesaji, bekleyenTelefonTalebi });
