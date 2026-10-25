@@ -474,7 +474,8 @@ function SiteKullanimiYonetimi() {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h2 className="text-lg font-bold text-[#1a3a6b] mb-1">Site Kullanımı</h2>
-      <p className="text-sm text-gray-500 mb-4">Sitedeki &quot;Site Kullanımı&quot; butonuna tıklandığında ziyaretçilere gösterilecek içeriği buradan yazın.</p>
+      <p className="text-sm text-gray-500 mb-1">Sitedeki &quot;Site Kullanımı&quot; butonuna tıklandığında ziyaretçilere gösterilecek içeriği buradan yazın.</p>
+      <p className="text-xs text-gray-400 mb-4">Biçimlendirme: satır başına <code>## </code> yazarsanız başlık, <code>- </code> yazarsanız madde işaretli satır olur. Boş satır paragrafları ayırır.</p>
       {mesaj && (
         <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${mesaj.tip === 'basari' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
           {mesaj.metin}
@@ -489,7 +490,7 @@ function SiteKullanimiYonetimi() {
           <textarea
             value={icerik}
             onChange={e => setIcerik(e.target.value)}
-            rows={16}
+            rows={24}
             placeholder="Site kullanım rehberini buraya yazın..."
             className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1a3a6b] resize-y"
           />

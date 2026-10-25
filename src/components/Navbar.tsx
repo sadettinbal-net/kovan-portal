@@ -447,7 +447,7 @@ export default function Navbar() {
       {/* Site Kullanımı Modal */}
       {siteKullanimiModal && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSiteKullanimiModal(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative max-h-[85vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => setSiteKullanimiModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold leading-none">×</button>
             <h2 className="text-lg font-bold text-[#1a3a6b] mb-4">Site Kullanımı</h2>
             {siteKullanimiYukleniyor ? (
@@ -455,8 +455,8 @@ export default function Navbar() {
                 <div className="w-6 h-6 border-2 border-[#1a3a6b] border-t-transparent rounded-full animate-spin" />
               </div>
             ) : siteKullanimiIcerik ? (
-              <div className="overflow-y-auto text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {siteKullanimiIcerik}
+              <div className="overflow-y-auto text-sm text-gray-700 leading-relaxed pr-1">
+                <SiteKullanimiMetni metin={siteKullanimiIcerik} />
               </div>
             ) : (
               <p className="text-sm text-gray-400 text-center py-10">Henüz içerik eklenmemiş.</p>
@@ -550,5 +550,26 @@ function MicIcon({ size = "md" }: { size?: "sm" | "md" }) {
       <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4z" />
       <path d="M6.25 10a.75.75 0 0 1 .75.75 5 5 0 0 0 10 0 .75.75 0 0 1 1.5 0 6.5 6.5 0 0 1-5.75 6.45V19.5h2.5a.75.75 0 0 1 0 1.5h-6.5a.75.75 0 0 1 0-1.5h2.5v-2.305A6.5 6.5 0 0 1 5.5 10.75.75.75 0 0 1 6.25 10z" />
     </svg>
+  );
+}
+
+// Site Kullanımı metnini basit biçimlendirmeyle gösterir (yönetim panelinden düz metin olarak yazılır):
+//   "## Başlık"  → başlık,   "- madde" → madde işaretli satır,   boş satır → paragraf arası.
+function SiteKullanimiMetni({ metin }: { metin: string }) {
+  return (
+    <div className="space-y-1.5">
+      {metin.split(/\r?\n/).map((satir, i) => {
+        const s = satir.trim();
+        if (!s) return <div key={i} className="h-1.5" />;
+        if (s.startsWith('## ')) return <h3 key={i} className="font-bold text-[#1a3a6b] text-[15px] pt-3 first:pt-0">{s.slice(3)}</h3>;
+        if (s.startsWith('- ')) return (
+          <p key={i} className="flex gap-2 pl-1">
+            <span className="text-[#e8a020] font-bold flex-shrink-0">•</span>
+            <span>{s.slice(2)}</span>
+          </p>
+        );
+        return <p key={i}>{s}</p>;
+      })}
+    </div>
   );
 }

@@ -113,14 +113,16 @@ export default async function FirmaKart({ firma }: { firma: FirmaKartData }) {
         >
           {t.detailsBtn}
         </VideoReklamLink>
-        {/* Kamuya açık kaynaklardan derlenen kayıtlar için kaldırma/düzeltme talebi (küçük ekranda yer kaplamasın diye sm ve üstü).
+        {/* Kamuya açık kaynaklardan derlenen kayıtlar için kaldırma/düzeltme talebi (belirgin, turuncu çerçeveli; telefonda kısa metin).
             kullanici_email sorguda seçilmediyse (undefined) gösterilmez */}
         {firma.kullanici_email === null && (
           <Link
             href={`/iletisim?konu=kaldirma&firma=${firma.id}&ad=${encodeURIComponent(firma.ad)}`}
-            className="hidden sm:block mt-1 text-center text-[10px] text-gray-400 hover:text-[#1a3a6b] hover:underline"
+            className="block mt-1 text-center font-semibold text-[7px] phone:text-[9px] sm:text-[11px] leading-tight text-[#b45309] bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded py-0.5 sm:py-1 px-1 transition-colors"
           >
-            İşletme sizin mi? Kaldırma / düzeltme talebi
+            {/* Telefonda kart küçük olduğu için kısa metin */}
+            <span className="sm:hidden">İşletme sizin mi?</span>
+            <span className="hidden sm:inline">İşletme sizin mi? Kaldırma / düzeltme talebi</span>
           </Link>
         )}
       </div>
