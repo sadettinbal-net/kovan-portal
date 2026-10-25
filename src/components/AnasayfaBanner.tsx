@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
+import { useCerezOnay } from "@/lib/cerezOnay";
 
 // Ana sayfa üst şerit reklam alanı (arama kutusunun altı, ilk ekranda).
 // Sıra: 1) Reklam Yönetimi'nde bu alan için yayında olan kendi reklamımız
 //       2) Google AdSense   3) AdSense dolmazsa / engellenirse "Reklam Ver" yer tutucusu
-// Yükseklik sabit: sayfa yüklenirken içerik zıplamaz.
+// Kendi reklamımız resmin oranına göre tam görünür (yükseklik resme göre ayarlanır, kırpılmaz);
+// Google reklamı ve yer tutucu sabit yükseklikte kalır.
 
 const ADSENSE_CLIENT = "ca-pub-8884760724680185";
 // GEÇİCİ: sağ menüdeki AdSense birimi. Yayına girince bu alan için yeni birim numarası verilecek (NOTLAR.md).
@@ -76,6 +78,8 @@ function GoogleReklam() {
 
 export default function AnasayfaBanner() {
   const { reklam, yuklendi } = useOzelReklam("anasayfa_ust");
+  // Google reklamı yalnızca reklam çerezlerine onay verildiyse; yoksa doğrudan "Reklam Ver" yer tutucusu
+  const cerezOnay = useCerezOnay();
 
   let icerik: React.ReactNode;
   if (!yuklendi) {
@@ -83,12 +87,12 @@ export default function AnasayfaBanner() {
   } else if (reklam) {
     const gorsel = (
       // eslint-disable-next-line @next/next/no-img-element
-      <img src={reklam.gorsel_url} alt={reklam.baslik || "Reklam"} className="w-full h-full object-cover" />
+      <img src={reklam.gorsel_url} alt={reklam.baslik || "Reklam"} className="block w-full h-auto" />
     );
     icerik = (
-      <div className={`${KUTU} bg-gray-100`}>
+      <div className="relative w-full rounded-lg overflow-hidden bg-gray-100">
         {reklam.link_url ? (
-          <a href={reklam.link_url} target="_blank" rel="noopener sponsored" onClick={() => reklamTikla(reklam.id)} className="block w-full h-full">
+          <a href={reklam.link_url} target="_blank" rel="noopener sponsored" onClick={() => reklamTikla(reklam.id)} className="block w-full">
             {gorsel}
           </a>
         ) : (
@@ -99,8 +103,10 @@ export default function AnasayfaBanner() {
         </span>
       </div>
     );
-  } else {
+  } else if (cerezOnay === "kabul") {
     icerik = <GoogleReklam />;
+  } else {
+    icerik = <YerTutucu />;
   }
 
   return (
