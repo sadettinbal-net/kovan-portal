@@ -114,6 +114,13 @@ export default async function Footer({ lang = "tr" }: { lang?: Lang }) {
         <p className="text-gray-400 text-sm">{t.footerAddToHome}</p>
       </div>
 
+      {/* Yasal bağlantılar */}
+      <div className="border-t border-white/10 py-3 px-4 flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-gray-300">
+        <Link href="/kvkk-aydinlatma" className="hover:text-white transition-colors">KVKK Aydınlatma Metni</Link>
+        <Link href="/gizlilik-politikasi" className="hover:text-white transition-colors">Gizlilik ve Çerez Politikası</Link>
+        <Link href="/iletisim" className="hover:text-white transition-colors">Kayıt kaldırma / düzeltme talebi</Link>
+      </div>
+
       {/* Bottom bar */}
       <div className="bg-[#0f2548] py-3 px-4 text-center text-xs text-gray-400">
         {t.footerCopyright.split("Melbarrel").map((parca, i) => (

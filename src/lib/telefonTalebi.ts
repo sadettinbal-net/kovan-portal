@@ -8,7 +8,7 @@ import { SITE_URL } from '@/lib/site';
 // Sabit hat: Google hesabının e-postasına onay bağlantısı gider.
 // Doğrulanan talep yönetici onayına düşer; onaylanınca numara firma kartında görünür.
 
-export const KVKK_SURUM = '2026-10-13';
+export const KVKK_SURUM = '2026-10-25';
 
 export const SINIR = {
   epostaGunluk: 5, // bir hesap 24 saatte en fazla bu kadar talep açar

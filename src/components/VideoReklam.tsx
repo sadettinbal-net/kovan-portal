@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
+import { useCerezOnay } from "@/lib/cerezOnay";
 
 // ─── ADSENSE BİLGİLERİ (içerik içi / in-article) ───────────────────────────
 const ADSENSE_CLIENT = "ca-pub-8884760724680185"; // ← Yayıncı ID'niz
@@ -22,18 +23,25 @@ export default function VideoReklam({
   // Yöneticinin tanımladığı özel reklam (varsa Google yerine bu gösterilir)
   const { reklam, yuklendi } = useOzelReklam(konum, kategori);
   const pushed = useRef(false);
+  const insRef = useRef<HTMLModElement>(null);
+  // Google reklamı yalnızca reklam çerezlerine onay verildiyse gösterilir (KVKK)
+  const cerezOnay = useCerezOnay();
 
   useEffect(() => {
-    // Sadece özel reklam YOKKEN ve veri yüklendiğinde Google reklamını tetikle
-    if (!yuklendi || reklam) return;
+    // Sadece özel reklam YOKKEN, veri yüklendiğinde ve çerez onayı varsa Google reklamını tetikle
+    if (!yuklendi || reklam || cerezOnay !== "kabul") return;
     if (pushed.current) return;
+    // Bu reklam alanı zaten doldurulmuşsa tekrar isteme (aksi halde AdSense
+    // "All 'ins' elements ... already have ads" hatası verir; ör. geliştirme modunda çift çalışan effect)
+    const ins = insRef.current;
+    if (!ins || ins.getAttribute("data-adsbygoogle-status") || ins.childElementCount > 0) return;
     pushed.current = true;
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch {
-      // AdSense scripti henüz yüklenmedi
+      // AdSense scripti henüz yüklenmedi veya alan doldurulamadı
     }
-  }, [yuklendi, reklam]);
+  }, [yuklendi, reklam, cerezOnay]);
 
   // Veri gelene kadar boş (yanıp sönmeyi önler)
   if (!yuklendi) return null;
@@ -83,10 +91,13 @@ export default function VideoReklam({
     );
   }
 
+  if (cerezOnay !== "kabul") return null;
+
   return (
     <div className="my-6 icerik-reklami">
       <p className="text-[10px] text-gray-400 text-center mb-1 tracking-wide uppercase">Reklam</p>
       <ins
+        ref={insRef}
         className="adsbygoogle"
         style={{ display: "block", textAlign: "center" }}
         data-ad-layout="in-article"

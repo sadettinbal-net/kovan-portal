@@ -9,8 +9,11 @@ function kacis(metin: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { ad, telefon, email, mesaj, konu: konuHam } = await request.json();
-    const konu = konuHam === 'reklam' ? 'reklam' : 'genel';
+    const { ad, telefon, email, mesaj, konu: konuHam, firma_id: firmaIdHam } = await request.json();
+    // konu: reklam (Reklam Ver), kaldirma (firma kaydı kaldırma/düzeltme talebi), genel (diğer)
+    const konu = konuHam === 'reklam' ? 'reklam' : konuHam === 'kaldirma' ? 'kaldirma' : 'genel';
+    const firmaId = konu === 'kaldirma' && Number.isInteger(Number(firmaIdHam)) && Number(firmaIdHam) > 0 ? Number(firmaIdHam) : null;
+    const baslik = konu === 'reklam' ? '📢 Reklam Başvurusu' : konu === 'kaldirma' ? '🛑 Kayıt Kaldırma/Düzeltme Talebi' : 'İletişim Formu Mesajı';
 
     if (typeof ad !== 'string' || !ad.trim() || typeof mesaj !== 'string' || !mesaj.trim()) {
       return NextResponse.json({ error: 'Ad ve mesaj zorunludur.' }, { status: 400 });
@@ -31,6 +34,7 @@ export async function POST(request: NextRequest) {
       eposta: typeof email === 'string' ? email.trim().slice(0, 200) || null : null,
       mesaj: mesaj.trim(),
       konu,
+      firma_id: firmaId,
     });
     if (error) {
       console.error('Mesaj kaydedilemedi:', error);
@@ -42,7 +46,8 @@ export async function POST(request: NextRequest) {
     if (resendKey) {
       const icerik = `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
-          <h2 style="color:#1a3a6b">${konu === 'reklam' ? '📢 Reklam Başvurusu' : 'İletişim Formu Mesajı'}</h2>
+          <h2 style="color:#1a3a6b">${baslik}</h2>
+          ${firmaId ? `<p>Firma kaydı: #${firmaId}</p>` : ''}
           <table style="border-collapse:collapse;width:100%;margin-top:16px">
             <tr style="background:#f5f7fa">
               <td style="padding:10px 14px;font-weight:bold;width:120px">Ad Soyad</td>
@@ -65,7 +70,7 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             from: 'onboarding@resend.dev',
             to: alici,
-            subject: `Kovan Portal - ${konu === 'reklam' ? '📢 Reklam Başvurusu' : 'Yeni Mesaj'}: ${ad.trim().slice(0, 80).replace(/[\r\n]+/g, ' ')}`,
+            subject: `Kovan Portal - ${konu === 'genel' ? 'Yeni Mesaj' : baslik}:${ad.trim().slice(0, 80).replace(/[\r\n]+/g, ' ')}`,
             html: icerik,
           }),
         }).catch((e) => console.error(`${alici} adresine mail gönderilemedi:`, e));

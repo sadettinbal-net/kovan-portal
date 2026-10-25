@@ -170,6 +170,23 @@ export default async function FirmaDetay({ params }: PageProps) {
             </div>
           )}
 
+          {/* Sahibi tarafından eklenmemiş (kamuya açık kaynaklardan derlenmiş) kayıtlarda KVKK bilgilendirmesi ve kaldırma/düzeltme talebi */}
+          {!firma.kullanici_email && (
+            <div className="mb-5 p-3 rounded-xl border border-amber-200 bg-amber-50 text-xs text-gray-700 flex flex-col sm:flex-row sm:items-center gap-2">
+              <p className="flex-1 leading-relaxed">
+                ℹ️ Bu kayıt kamuya açık resmi kaynaklardan derlenmiştir. İşletmenin sahibi veya yetkilisiyseniz bilgilerin
+                düzeltilmesini ya da kaydın yayından kaldırılmasını talep edebilirsiniz.{" "}
+                <Link href="/kvkk-aydinlatma#kamuya-acik-kaynaklar" className="underline text-[#1a3a6b]">Ayrıntılı bilgi</Link>
+              </p>
+              <Link
+                href={`/iletisim?konu=kaldirma&firma=${firma.id}&ad=${encodeURIComponent(firma.ad)}`}
+                className="flex-shrink-0 text-center bg-white border border-amber-300 hover:bg-amber-100 text-[#1a3a6b] font-semibold px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Kaldırma / düzeltme talebi
+              </Link>
+            </div>
+          )}
+
           {firma.sahip && (
             <div className="flex items-center gap-3 mb-3 p-3 bg-gray-50 rounded-lg">
               <span className="text-xl">👤</span>

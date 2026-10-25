@@ -30,13 +30,13 @@ export default async function Home() {
   // gösterilir; böylece ücret ödeyen her firma ana sayfada sırayla yer alır.
   const { data: tumSponsorlar } = await aktifSponsorlar(supabase
     .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis")
+    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
     .eq("onay_durumu", "onaylandi"));
   const ozelFirmalar = [...(tumSponsorlar || [])].sort(() => Math.random() - 0.5).slice(0, 6);
 
   const { data: sonFirmalar } = await supabase
     .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis")
+    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi")
     .order("id", { ascending: false })

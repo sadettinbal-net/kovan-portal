@@ -2120,7 +2120,7 @@ function AdminPanel() {
           </button>
           <button onClick={() => setAktifSekme('reklam-mesajlari')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'reklam-mesajlari' ? 'bg-[#e8a020] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-            📨 Reklam Mesajları
+            📨 Mesajlar ve Talepler
             {reklamMesajSayi > 0 && (
               <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">{reklamMesajSayi}</span>
             )}

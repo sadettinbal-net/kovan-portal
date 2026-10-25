@@ -32,7 +32,7 @@ export default async function KonumPage(props: PageProps) {
     const bolgeSorgusu = () => {
       let sorgu = supabase
         .from("firmalar")
-        .select(`id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ${OZEL_ALANLAR}`, { count: "exact" })
+        .select(`id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, kullanici_email, ${OZEL_ALANLAR}`, { count: "exact" })
         .eq("onay_durumu", "onaylandi")
         .eq("il_adi", il);
       if (ilce) sorgu = sorgu.eq("ilce_adi", ilce);

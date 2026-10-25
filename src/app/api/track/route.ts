@@ -9,22 +9,21 @@ function getAdmin() {
   );
 }
 
-async function getBolge(ip: string | null): Promise<string | null> {
-  if (!ip) return null;
-  const temiz = ip.startsWith('::ffff:') ? ip.slice(7) : ip;
-  if (temiz === '::1' || temiz.startsWith('127.') || temiz.startsWith('192.168.') || temiz.startsWith('10.')) return null;
-  try {
-    const res = await fetch(`http://ip-api.com/json/${temiz}?fields=status,city,regionName,country`, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return null;
-    const geo = await res.json();
-    if (geo.status !== 'success') return null;
-    const sehir = geo.city || geo.regionName || null;
-    const ulke = geo.country || null;
-    if (sehir && ulke) return `${sehir}, ${ulke}`;
-    return sehir || ulke || null;
-  } catch {
-    return null;
+// Yaklaşık konum (şehir, ülke): barındırma sağlayıcısının (Vercel) isteğe eklediği coğrafi başlıklardan okunur.
+// IP adresi üçüncü bir konum servisine gönderilmez. Yerelde (localhost) bu başlıklar olmadığı için bölge boş kalır.
+function getBolge(request: NextRequest): string | null {
+  const coz = (v: string | null) => {
+    if (!v) return null;
+    try { return decodeURIComponent(v); } catch { return v; }
+  };
+  const sehir = coz(request.headers.get('x-vercel-ip-city'));
+  const ulkeKodu = request.headers.get('x-vercel-ip-country');
+  let ulke: string | null = null;
+  if (ulkeKodu) {
+    try { ulke = new Intl.DisplayNames(['tr'], { type: 'region' }).of(ulkeKodu) || ulkeKodu; } catch { ulke = ulkeKodu; }
   }
+  if (sehir && ulke) return `${sehir}, ${ulke}`;
+  return sehir || ulke || null;
 }
 
 export async function POST(request: NextRequest) {
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
       || request.headers.get('x-real-ip')
       || null;
-    const bolge = await getBolge(ip);
+    const bolge = getBolge(request);
 
     const geçerliCihaz = ['Mobil', 'Tablet', 'Laptop', 'Masaüstü'];
     const supabase = getAdmin();

@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Script from "next/script";
 import { cookies } from "next/headers";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CookieBanner from "@/components/CookieBanner";
+import AdSenseYukle from "@/components/AdSenseYukle";
 import ZiyaretTakip from "@/components/ZiyaretTakip";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnlineProvider } from "@/contexts/OnlineContext";
@@ -48,14 +48,8 @@ export default async function RootLayout({
   return (
     <html lang={lang}>
       <body className="min-h-screen flex flex-col bg-[#f4f6f9]" suppressHydrationWarning>
-        {!ADSENSE_CLIENT.includes("XXXX") && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`}
-            crossOrigin="anonymous"
-            strategy="lazyOnload"
-          />
-        )}
+        {/* AdSense yalnızca çerez bandında "Kabul Et" seçilirse yüklenir */}
+        <AdSenseYukle client={ADSENSE_CLIENT} />
         <LanguageProvider initial={lang}>
           <OnlineProvider>
           <ZiyaretTakip />

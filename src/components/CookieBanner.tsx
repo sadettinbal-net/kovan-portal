@@ -3,21 +3,23 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { cerezOnayiOku, cerezOnayiYaz, TERCIH_AC_OLAYI, type CerezOnay } from "@/lib/cerezOnay";
 
-const CONSENT_KEY = "cerez-onay";
-
+// KVKK: reklam çerezleri yalnızca açık onayla kullanılır. "Kabul Et" ve "Reddet" eşit görünürlükte sunulur;
+// seçim yapılmadan reklam (AdSense) betiği yüklenmez. Tercih, Gizlilik sayfasındaki düğmeyle yeniden açılabilir.
 export default function CookieBanner() {
   const { t } = useLanguage();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(CONSENT_KEY)) {
-      setVisible(true);
-    }
+    if (!cerezOnayiOku()) setVisible(true);
+    const ac = () => setVisible(true);
+    window.addEventListener(TERCIH_AC_OLAYI, ac);
+    return () => window.removeEventListener(TERCIH_AC_OLAYI, ac);
   }, []);
 
-  const accept = () => {
-    localStorage.setItem(CONSENT_KEY, "1");
+  const sec = (d: CerezOnay) => {
+    cerezOnayiYaz(d);
     setVisible(false);
   };
 
@@ -35,12 +37,20 @@ export default function CookieBanner() {
             {t.cookiePolicyLink}
           </Link>{t.cookieEnd}
         </p>
-        <button
-          onClick={accept}
-          className="flex-shrink-0 bg-[#e8a020] hover:bg-[#c8851a] text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
-        >
-          {t.acceptBtn}
-        </button>
+        <div className="flex gap-2 flex-shrink-0 w-full sm:w-auto">
+          <button
+            onClick={() => sec("red")}
+            className="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 border border-white/40 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+          >
+            {t.rejectBtn}
+          </button>
+          <button
+            onClick={() => sec("kabul")}
+            className="flex-1 sm:flex-none bg-[#e8a020] hover:bg-[#c8851a] text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-colors whitespace-nowrap"
+          >
+            {t.acceptBtn}
+          </button>
+        </div>
       </div>
     </div>
   );

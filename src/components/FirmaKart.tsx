@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import VideoReklamLink from "./VideoReklamLink";
 import { cookies } from "next/headers";
 import { translations } from "@/lib/translations";
@@ -23,6 +24,7 @@ export interface FirmaKartData {
   olumlu_yuzde?: number | null;
   yorum_sayisi?: number;
   ortalama_puan?: number | null;
+  kullanici_email?: string | null;
 }
 
 function firmaBasHarfleri(ad: string): string {
@@ -111,6 +113,16 @@ export default async function FirmaKart({ firma }: { firma: FirmaKartData }) {
         >
           {t.detailsBtn}
         </VideoReklamLink>
+        {/* Kamuya açık kaynaklardan derlenen kayıtlar için kaldırma/düzeltme talebi (küçük ekranda yer kaplamasın diye sm ve üstü).
+            kullanici_email sorguda seçilmediyse (undefined) gösterilmez */}
+        {firma.kullanici_email === null && (
+          <Link
+            href={`/iletisim?konu=kaldirma&firma=${firma.id}&ad=${encodeURIComponent(firma.ad)}`}
+            className="hidden sm:block mt-1 text-center text-[10px] text-gray-400 hover:text-[#1a3a6b] hover:underline"
+          >
+            İşletme sizin mi? Kaldırma / düzeltme talebi
+          </Link>
+        )}
       </div>
     </div>
   );

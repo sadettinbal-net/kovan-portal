@@ -5,10 +5,16 @@ import { use, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { SITE_EPOSTA, SITE_KONUM, SITE_TELEFON } from "@/lib/site";
 
-// Reklam Ver sayfasından ?konu=reklam ile gelinirse mesaj "reklam" olarak kaydedilir (yönetici: Reklam Mesajları)
-export default function IletisimPage({ searchParams }: { searchParams: Promise<{ konu?: string }> }) {
+// Reklam Ver sayfasından ?konu=reklam ile gelinirse mesaj "reklam" olarak kaydedilir (yönetici: Mesajlar ve Talepler)
+// Firma sayfası/kartından ?konu=kaldirma&firma=ID&ad=FirmaAdı ile gelinirse kayıt kaldırma/düzeltme talebi olarak kaydedilir
+export default function IletisimPage({ searchParams }: { searchParams: Promise<{ konu?: string; firma?: string; ad?: string }> }) {
   const { t } = useLanguage();
-  const reklam = use(searchParams).konu === 'reklam';
+  const sp = use(searchParams);
+  const reklam = sp.konu === 'reklam';
+  const firmaId = Number(sp.firma);
+  const kaldirma = sp.konu === 'kaldirma' && Number.isInteger(firmaId) && firmaId > 0;
+  const firmaAdi = (sp.ad || '').slice(0, 200);
+  const [talepTuru, setTalepTuru] = useState<'kaldir' | 'duzelt'>('kaldir');
   const [form, setForm] = useState({ ad: '', telefon: '', email: '', mesaj: '' });
   const [durum, setDurum] = useState<'bos' | 'gonderiliyor' | 'basarili' | 'hata'>('bos');
 
@@ -18,13 +24,19 @@ export default function IletisimPage({ searchParams }: { searchParams: Promise<{
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.ad.trim() || !form.mesaj.trim()) return;
+    if (!form.ad.trim()) return;
+    if (!kaldirma && !form.mesaj.trim()) return;
+    if (kaldirma && !form.telefon.trim() && !form.email.trim()) return;
+    // Kaldırma talebinde mesajın başına talep türü ve firma bilgisi eklenir (açıklama isteğe bağlı)
+    const mesaj = kaldirma
+      ? `[${talepTuru === 'kaldir' ? 'Yayından kaldırma talebi' : 'Bilgi düzeltme talebi'}] Firma: ${firmaAdi || '-'} (#${firmaId})\n\n${form.mesaj.trim() || '(Açıklama yazılmadı)'}`
+      : form.mesaj;
     setDurum('gonderiliyor');
     try {
       const res = await fetch('/api/mesaj-gonder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, konu: reklam ? 'reklam' : 'genel' }),
+        body: JSON.stringify({ ...form, mesaj, konu: reklam ? 'reklam' : kaldirma ? 'kaldirma' : 'genel', firma_id: kaldirma ? firmaId : undefined }),
       });
       if (res.ok) {
         setDurum('basarili');
@@ -115,6 +127,29 @@ export default function IletisimPage({ searchParams }: { searchParams: Promise<{
               📢 <strong>Reklam başvurusu</strong> — Hangi reklam alanıyla ilgilendiğinizi mesajınıza yazabilirsiniz.
             </p>
           )}
+          {kaldirma && durum !== 'basarili' && (
+            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-3 py-3 text-sm text-[#1a3a6b] space-y-2">
+              <p>
+                🛑 <strong>Kayıt kaldırma / düzeltme talebi</strong>
+                {firmaAdi && <> — <strong>{firmaAdi}</strong></>}
+              </p>
+              <p className="text-xs text-gray-600">
+                Bu kayıt kamuya açık resmi kaynaklardan derlenmiştir. İşletmenin sahibi veya yetkilisiyseniz kaydın yayından
+                kaldırılmasını ya da bilgilerin düzeltilmesini talep edebilirsiniz. Talebiniz en geç 30 gün içinde sonuçlandırılır.
+              </p>
+              <div className="flex flex-wrap gap-4 pt-1">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="talepTuru" checked={talepTuru === 'kaldir'} onChange={() => setTalepTuru('kaldir')} />
+                  Yayından kaldırılsın
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="talepTuru" checked={talepTuru === 'duzelt'} onChange={() => setTalepTuru('duzelt')} />
+                  Bilgiler düzeltilsin
+                </label>
+              </div>
+              <p className="text-xs text-gray-600">Size dönüş yapabilmemiz için telefon veya e-posta adresinizden en az birini yazın.</p>
+            </div>
+          )}
 
           {durum === 'basarili' ? (
             <div className="bg-green-50 border border-green-200 rounded-lg p-5 text-center">
@@ -134,6 +169,9 @@ export default function IletisimPage({ searchParams }: { searchParams: Promise<{
                 <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
                   {t.messageFailed}
                 </div>
+              )}
+              {kaldirma && !form.telefon.trim() && !form.email.trim() && (form.ad.trim() !== '') && (
+                <p className="text-xs text-amber-700">Telefon veya e-posta alanlarından en az birini doldurun.</p>
               )}
               <div>
                 <label className="block text-sm text-gray-600 mb-1">{t.fullNameLabel} <span className="text-red-500">*</span></label>
@@ -170,14 +208,17 @@ export default function IletisimPage({ searchParams }: { searchParams: Promise<{
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">{t.messageLabel} <span className="text-red-500">*</span></label>
+                <label className="block text-sm text-gray-600 mb-1">
+                  {kaldirma ? (talepTuru === 'duzelt' ? 'Hangi bilgi nasıl düzeltilsin?' : 'Açıklama (isteğe bağlı)') : t.messageLabel}
+                  {!kaldirma && <span className="text-red-500"> *</span>}
+                </label>
                 <textarea
                   rows={4}
                   name="mesaj"
                   value={form.mesaj}
                   onChange={handleChange}
-                  placeholder={t.messagePlaceholder}
-                  required
+                  placeholder={kaldirma ? (talepTuru === 'duzelt' ? 'Örn: Telefon numaramız 0216 ... olarak değişti.' : 'Örn: İşletmenin sahibiyim, kaydın yayından kaldırılmasını istiyorum.') : t.messagePlaceholder}
+                  required={!kaldirma}
                   className="w-full border border-[#dde3ec] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#1a3a6b] transition-colors resize-none"
                 />
               </div>

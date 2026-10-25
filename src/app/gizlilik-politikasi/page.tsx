@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import CerezTercihDugmesi from "@/components/CerezTercihDugmesi";
 
 export const metadata: Metadata = {
   title: "Gizlilik Politikası ve Çerez Politikası | Kovan Portal",
@@ -9,7 +11,7 @@ export default function GizlilikPolitikasiPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold text-[#1a3a6b] mb-2">Gizlilik & Çerez Politikası</h1>
-      <p className="text-sm text-gray-500 mb-8">Son güncelleme: Nisan 2025</p>
+      <p className="text-sm text-gray-500 mb-8">Son güncelleme: Ekim 2026</p>
 
       <section className="mb-8">
         <h2 className="text-lg font-semibold text-[#1a3a6b] mb-3">1. Çerez (Cookie) Nedir?</h2>
@@ -45,6 +47,21 @@ export default function GizlilikPolitikasiPage() {
                 <td className="px-4 py-2 text-gray-600">Zorunlu</td>
                 <td className="px-4 py-2 text-gray-600">Güvenli OAuth PKCE akışı doğrulaması</td>
               </tr>
+              <tr className="bg-gray-50">
+                <td className="px-4 py-2 font-mono text-xs">lang</td>
+                <td className="px-4 py-2 text-gray-600">Tercih</td>
+                <td className="px-4 py-2 text-gray-600">Dil tercihinizin hatırlanması</td>
+              </tr>
+              <tr className="bg-white">
+                <td className="px-4 py-2 font-mono text-xs">oturum_id, ziyaret_sayfa_*</td>
+                <td className="px-4 py-2 text-gray-600">Oturum depolaması</td>
+                <td className="px-4 py-2 text-gray-600">Ziyaret istatistiklerinde aynı sayfanın tekrar sayılmaması (sekme kapanınca silinir)</td>
+              </tr>
+              <tr className="bg-gray-50">
+                <td className="px-4 py-2 font-mono text-xs">Google AdSense çerezleri</td>
+                <td className="px-4 py-2 text-gray-600">Reklam (üçüncü taraf)</td>
+                <td className="px-4 py-2 text-gray-600">Reklam gösterimi ve ölçümü — yalnızca çerez bandında &quot;Kabul Et&quot; seçerseniz kullanılır</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -61,7 +78,9 @@ export default function GizlilikPolitikasiPage() {
           <li>Yasal yükümlülüklerin yerine getirilmesi</li>
         </ul>
         <p className="text-sm text-gray-700 leading-relaxed mt-3">
-          amacıyla, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında işlenmektedir. Verileriniz üçüncü şahıslarla paylaşılmaz ve satılmaz.
+          amacıyla, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında işlenmektedir. Verileriniz satılmaz. Hangi verilerin hangi
+          hizmet sağlayıcılara aktarıldığı dahil ayrıntılı bilgi için{" "}
+          <Link href="/kvkk-aydinlatma" className="text-[#1a3a6b] underline font-medium">KVKK Aydınlatma Metni</Link>&apos;ni inceleyebilirsiniz.
         </p>
       </section>
 
@@ -77,7 +96,11 @@ export default function GizlilikPolitikasiPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-[#1a3a6b] mb-3">5. Çerezleri Devre Dışı Bırakma</h2>
+        <h2 className="text-lg font-semibold text-[#1a3a6b] mb-3">5. Çerez Tercihleriniz</h2>
+        <p className="text-sm text-gray-700 leading-relaxed mb-3">
+          Reklam çerezlerine verdiğiniz onayı dilediğiniz zaman geri alabilir veya değiştirebilirsiniz.
+        </p>
+        <div className="mb-3"><CerezTercihDugmesi /></div>
         <p className="text-sm text-gray-700 leading-relaxed">
           Tarayıcı ayarlarınızdan çerezleri devre dışı bırakabilirsiniz. Ancak zorunlu çerezleri kapatmanız durumunda Google ile giriş gibi bazı özellikler çalışmayabilir.
         </p>

@@ -11,24 +11,33 @@ async function yonetici() {
   return yoneticiMi(user?.email);
 }
 
-// ?konu=reklam | genel | tumu (varsayılan: reklam)
+// ?konu=reklam | genel | kaldirma | tumu (varsayılan: reklam)
+// kaldirma: firma kartlarındaki "kaldırma/düzeltme talebi" bağlantısından gelenler (firma_id ile)
 export async function GET(request: NextRequest) {
   if (!(await yonetici())) return NextResponse.json({ error: 'Yetkisiz erişim.' }, { status: 403 });
   const konu = request.nextUrl.searchParams.get('konu') || 'reklam';
 
   const supabase = servisIstemcisi();
   let sorgu = supabase.from('iletisim_mesajlari')
-    .select('id, ad_soyad, telefon, eposta, mesaj, okundu, konu, created_at')
+    .select('id, ad_soyad, telefon, eposta, mesaj, okundu, konu, firma_id, created_at')
     .order('created_at', { ascending: false })
     .limit(500);
-  if (konu === 'reklam' || konu === 'genel') sorgu = sorgu.eq('konu', konu);
+  if (konu === 'reklam' || konu === 'genel' || konu === 'kaldirma') sorgu = sorgu.eq('konu', konu);
   const { data, error } = await sorgu;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // Talep edilen firmaların adı ve yayın durumu (panelde gösterilir)
+  const firmaIdleri = [...new Set((data || []).map(m => m.firma_id).filter(Boolean))];
+  const firmalar: Record<number, { ad: string; onay_durumu: string }> = {};
+  if (firmaIdleri.length) {
+    const { data: f } = await supabase.from('firmalar').select('id, ad, onay_durumu').in('id', firmaIdleri);
+    for (const x of f || []) firmalar[x.id] = { ad: x.ad, onay_durumu: x.onay_durumu };
+  }
+
   const okunmamis = async (k: string) =>
     (await supabase.from('iletisim_mesajlari').select('id', { count: 'exact', head: true }).eq('konu', k).eq('okundu', false)).count ?? 0;
-  const [reklam, genel] = await Promise.all([okunmamis('reklam'), okunmamis('genel')]);
-  return NextResponse.json({ mesajlar: data || [], okunmamis: { reklam, genel } });
+  const [reklam, genel, kaldirma] = await Promise.all([okunmamis('reklam'), okunmamis('genel'), okunmamis('kaldirma')]);
+  return NextResponse.json({ mesajlar: data || [], firmalar, okunmamis: { reklam, genel, kaldirma } });
 }
 
 // Okundu / okunmadı işareti
