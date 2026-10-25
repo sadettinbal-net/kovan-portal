@@ -5,7 +5,8 @@ import { FIRMA_TIPI, TIP_ADI, kategoriGruplari, type FirmaKategorisi, type Kateg
 
 // Firmalar sayfası: kategori süzgeci. Liste firma_kategorileri tablosundan gelir (yalnızca seçili konumda firması olanlar).
 // Seçim adresi ?kategori=<ad>&firma_tipi=<tip> olarak değiştirir; diğer süzgeçler (il, site, arama) korunur.
-export default function KategoriSuzgeci({ kategoriler }: { kategoriler: FirmaKategorisi[] }) {
+export default function KategoriSuzgeci({ kategoriler, sayilar }: { kategoriler: FirmaKategorisi[]; sayilar?: Record<number, number> }) {
+  const adet = (id: number) => (sayilar && sayilar[id] != null ? ` (${sayilar[id].toLocaleString("tr-TR")})` : "");
   const router = useRouter();
   const searchParams = useSearchParams();
   const kategori = searchParams.get("kategori") || "";
@@ -44,11 +45,13 @@ export default function KategoriSuzgeci({ kategoriler }: { kategoriler: FirmaKat
           {kategoriGruplari(kategoriler, tip).flatMap(({ ana, altlar }) => [
             <option key={ana.id} value={`${FIRMA_TIPI[tip]}|${ana.ad}`}>
               {ana.ad}
+              {adet(ana.id)}
             </option>,
             ...altlar.map((a) => (
               <option key={a.id} value={`${FIRMA_TIPI[tip]}|${a.ad}`}>
                 {"   └ "}
                 {a.ad}
+                {adet(a.id)}
               </option>
             )),
           ])}

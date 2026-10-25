@@ -124,7 +124,7 @@ export default async function FirmalarPage(props: PageProps) {
   }
   // Süzgeç listesinde yalnızca seçili konumda (il, ilçe, mahalle, sokak, site, firma tipi) firması olan kategoriler görünür.
   // Kategori süzgeci eklenmeden önce başlatılır ki diğer kategoriler de seçilebilsin; firma listesiyle aynı anda çalışır.
-  const doluKategoriSozu = supabase.rpc("firma_dolu_kategoriler", { p: { ...listeParam } });
+  const doluKategoriSozu = supabase.rpc("firma_kategori_sayilari", { p: { ...listeParam } });
   // Kategori: ana kategori seçildiyse alt kategorilerindeki firmalar da gelir. Tabloda olmayan bir ad gelirse eski sektör yazısıyla aranır.
   let kategoriIdleri: number[] = [];
   if (kategori) {
@@ -135,15 +135,22 @@ export default async function FirmalarPage(props: PageProps) {
     else listeParam.sektor = kategori;
   }
   // Boş kategorileri süzgeçten çıkar (ana kategori, altlarından biri doluysa kalır; seçili kategori hep kalır)
-  const doluKategoriler = await doluKategoriSozu.then(({ data, error }) => (error ? null : new Set(((data || []) as number[]).map(Number))));
-  const suzgecKategorileri = doluKategoriler
-    ? kategoriListesi.filter(
-        (k) =>
-          doluKategoriler.has(k.id) ||
-          kategoriIdleri.includes(k.id) ||
-          kategoriListesi.some((a) => a.ust_kategori_id === k.id && doluKategoriler.has(a.id))
-      )
+  // Kategori numarası → firma sayısı; ana kategorinin sayısı kendisi + alt kategorileri
+  const kategoriSayilari = await doluKategoriSozu.then(({ data, error }) => {
+    if (error || !data) return null;
+    const m = new Map<number, number>();
+    for (const [id, adet] of Object.entries(data as Record<string, number>)) m.set(Number(id), Number(adet));
+    return m;
+  });
+  const kategoriAdedi = (k: { id: number }) =>
+    (kategoriSayilari?.get(k.id) ?? 0) +
+    kategoriListesi.filter((a) => a.ust_kategori_id === k.id).reduce((t, a) => t + (kategoriSayilari?.get(a.id) ?? 0), 0);
+  const suzgecKategorileri = kategoriSayilari
+    ? kategoriListesi.filter((k) => kategoriAdedi(k) > 0 || kategoriIdleri.includes(k.id))
     : kategoriListesi;
+  const suzgecSayilari: Record<number, number> | undefined = kategoriSayilari
+    ? Object.fromEntries(suzgecKategorileri.map((k) => [k.id, kategoriAdedi(k)]))
+    : undefined;
   // Sağlık kategorisi listeleniyorsa firma listesinin üstünde 112 uyarısı
   const acilUyari = saglikUyarisi(kategoriListesi, kategoriIdleri);
 
@@ -290,7 +297,7 @@ export default async function FirmalarPage(props: PageProps) {
             </div>
             <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
               <Suspense fallback={null}>
-                <KategoriSuzgeci kategoriler={suzgecKategorileri} />
+                <KategoriSuzgeci kategoriler={suzgecKategorileri} sayilar={suzgecSayilari} />
               </Suspense>
               <span className="text-gray-500 text-xs">{t.perPage}</span>
               <div className="flex gap-1">
