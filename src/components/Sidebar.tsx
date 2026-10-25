@@ -16,7 +16,7 @@ export default async function Sidebar({ il }: { il?: string }) {
   for (const f of tumFirmalar) {
     if (!f.il_adi) continue;
     const x = ilSayilari.get(f.il_adi) || { siteCount: 0, firmCount: 0 };
-    x.firmCount++;
+    x.firmCount += f.adet;
     ilSayilari.set(f.il_adi, x);
   }
   const iller = Array.from(ilSayilari, ([name, sayilar]) => ({ name, ...sayilar })).sort((a, b) =>
@@ -37,7 +37,7 @@ export default async function Sidebar({ il }: { il?: string }) {
     for (const ad of [site, ustAdi.get(site)]) {
       if (!ad) continue;
       kategoriPerSite[ad] = kategoriPerSite[ad] || {};
-      kategoriPerSite[ad][f.sektor] = (kategoriPerSite[ad][f.sektor] || 0) + 1;
+      kategoriPerSite[ad][f.sektor] = (kategoriPerSite[ad][f.sektor] || 0) + f.adet;
     }
   }
   // "Sanayi Sitesi Yönetimi" her sitenin kategori listesinde en üstte durur
@@ -66,7 +66,7 @@ export default async function Sidebar({ il }: { il?: string }) {
       )}
       kategoriSayilariPerSite={kategoriPerSite}
       tumKategoriler={tumKategoriler}
-      siteFirmaSayisi={firmalar.filter((f) => f.sanayi_sitesi).length}
+      siteFirmaSayisi={firmalar.reduce((t, f) => t + (f.sanayi_sitesi ? f.adet : 0), 0)}
     />
   );
 }

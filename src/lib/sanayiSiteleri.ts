@@ -14,28 +14,35 @@ export type SiteOzeti = {
   firmCount: number; // sadece bu sitede kayıtlı firmalar
   toplamFirma: number; // alt siteler dahil
 };
-export type FirmaOzeti = { sanayi_sitesi: string | null; sektor: string | null; il_adi: string | null };
+// adet: bu (site, sektör, il) üçlüsündeki onaylı firma sayısı (veritabanında gruplanmış satır)
+export type FirmaOzeti = { sanayi_sitesi: string | null; sektor: string | null; il_adi: string | null; adet: number };
 
 // Listede gösterilecek satır: grup başlığı (ör. Anadolu Yakası) ya da site (alt siteler girintili)
 export type SiteSatiri = { tip: "baslik"; ad: string } | { tip: "site"; site: SiteOzeti; girintili: boolean };
 
-export async function onayliFirmaOzetleri() {
-  const tumData: FirmaOzeti[] = [];
-  const CHUNK = 1000;
-  let from = 0;
-  while (true) {
-    const { data, error } = await supabase
-      .from("firmalar")
-      .select("sanayi_sitesi, sektor, il_adi")
-      .not("ad", "ilike", "(Firma%")
-      .eq("onay_durumu", "onaylandi")
-      .range(from, from + CHUNK - 1);
-    if (error || !data || data.length === 0) break;
-    tumData.push(...data);
-    if (data.length < CHUNK) break;
-    from += CHUNK;
-  }
-  return tumData;
+// Onaylı firmaların (site, sektör, il) bazında sayıları. Eskiden bütün firmalar (230 bin+) 1000'erli paketlerle
+// indirilip burada sayılıyordu; sayfalar 30 sn - 2 dk sürüyordu. Artık veritabanındaki firma_ozetleri()
+// fonksiyonu gruplayıp ~3 bin satır döndürüyor. Aynı sayfa içinde birkaç kez istendiği için 60 sn önbellekte tutulur.
+let ozetOnbellek: { zaman: number; veri: Promise<FirmaOzeti[]> } | null = null;
+
+export function onayliFirmaOzetleri(): Promise<FirmaOzeti[]> {
+  if (ozetOnbellek && Date.now() - ozetOnbellek.zaman < 60_000) return ozetOnbellek.veri;
+  const veri = (async () => {
+    const tumData: FirmaOzeti[] = [];
+    const CHUNK = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase.rpc("firma_ozetleri").range(from, from + CHUNK - 1);
+      if (error || !data || data.length === 0) break;
+      tumData.push(...(data as FirmaOzeti[]).map((r) => ({ ...r, adet: Number(r.adet) || 0 })));
+      if (data.length < CHUNK) break;
+      from += CHUNK;
+    }
+    return tumData;
+  })();
+  ozetOnbellek = { zaman: Date.now(), veri };
+  veri.then((d) => { if (!d.length) ozetOnbellek = null; }); // hata/boş sonuç önbellekte kalmasın
+  return veri;
 }
 
 // "İSTANBUL" → "İstanbul" (iller tablosundaki yazımla)
@@ -62,7 +69,7 @@ export async function sanayiSiteleriOzeti(firmalar: FirmaOzeti[]) {
   const firmaIli = new Map<string, string>();
   for (const f of firmalar) {
     if (!f.sanayi_sitesi) continue;
-    firmaSayisi.set(f.sanayi_sitesi, (firmaSayisi.get(f.sanayi_sitesi) || 0) + 1);
+    firmaSayisi.set(f.sanayi_sitesi, (firmaSayisi.get(f.sanayi_sitesi) || 0) + f.adet);
     if (f.il_adi && !firmaIli.has(f.sanayi_sitesi)) firmaIli.set(f.sanayi_sitesi, f.il_adi);
   }
 

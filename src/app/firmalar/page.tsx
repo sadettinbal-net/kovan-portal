@@ -75,18 +75,26 @@ export default async function FirmalarPage(props: PageProps) {
   // Türkiye saatine göre (UTC+3) günlük rotasyon — her gece 00:00'da sayfalar bir ileri kayar
   const gunSayisi = Math.floor((Date.now() + 3 * 60 * 60 * 1000) / (1000 * 60 * 60 * 24));
 
-  let query = supabase
-    .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, hedef_sayfa, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
-    .not("ad", "ilike", "(Firma%")
-    .eq("onay_durumu", "onaylandi")
-    .order("ad");
+  // Firma listesi iki aşamada çekilir (230 bin+ kayıtta sayfa dakikalarca sürüyordu):
+  //  1) Süzgece uyan TÜM firmaların yalnızca sıralama/sabitleme/arama için gereken birkaç alanı, paralel paketlerle,
+  //  2) Ekranda gösterilecek sayfanın firmalarının tam bilgisi (en fazla limit + sabitlenenler kadar).
+  // Süzgeçler her sorguya aynı şekilde uygulanır; Supabase sorgu nesnesi tekrar kullanılamadığı için her seferinde yeniden kurulur.
+  type Suzgec = (q: ReturnType<typeof tabanSorgu>) => ReturnType<typeof tabanSorgu>;
+  const suzgecler: Suzgec[] = [];
+  function tabanSorgu(alanlar: string, sayim = false) {
+    return supabase
+      .from("firmalar")
+      .select(alanlar, sayim ? { count: "exact", head: true } : undefined)
+      .not("ad", "ilike", "(Firma%")
+      .eq("onay_durumu", "onaylandi");
+  }
+  const sorgu = (alanlar: string, sayim = false) => suzgecler.reduce((q, f) => f(q), tabanSorgu(alanlar, sayim));
 
-  if (il) query = query.eq("il_adi", il);
+  if (il) suzgecler.push(q => q.eq("il_adi", il));
   // Anasayfa aramasındaki konum seçimi
-  if (ilce) query = query.eq("ilce_adi", ilce);
-  if (mahalleId) query = query.eq("mahalle_id", mahalleId);
-  if (sokakId) query = query.eq("sokak_id", sokakId);
+  if (ilce) suzgecler.push(q => q.eq("ilce_adi", ilce));
+  if (mahalleId) suzgecler.push(q => q.eq("mahalle_id", mahalleId));
+  if (sokakId) suzgecler.push(q => q.eq("sokak_id", sokakId));
 
   // Konum etiketi için mahalle ve sokak adları
   const [mahalleSonuc, sokakSonuc] = await Promise.all([
@@ -106,41 +114,58 @@ export default async function FirmalarPage(props: PageProps) {
 
   // Firma tipi filtresi (yeni sistem)
   if (firma_tipi === "siteli") {
-    query = query.eq("firma_tipi", "siteli");
+    suzgecler.push(q => q.eq("firma_tipi", "siteli"));
   } else if (firma_tipi === "sitesiz") {
     // Sanayi sitesi dışı firmalar
-    query = query.or("firma_tipi.eq.sitesiz,and(firma_tipi.is.null,or(sanayi_sitesi.is.null,sanayi_sitesi.eq.))");
+    suzgecler.push(q => q.or("firma_tipi.eq.sitesiz,and(firma_tipi.is.null,or(sanayi_sitesi.is.null,sanayi_sitesi.eq.))"));
   } else if (firma_tipi === "kurumsal") {
     // Kurumsal firmalar
-    query = query.eq("firma_tipi", "kurumsal");
+    suzgecler.push(q => q.eq("firma_tipi", "kurumsal"));
   } else if (sanayi_sitesi === "yok") {
     // Eski sistem uyumluluğu
-    query = query.or("sanayi_sitesi.is.null,sanayi_sitesi.eq.");
+    suzgecler.push(q => q.or("sanayi_sitesi.is.null,sanayi_sitesi.eq."));
   }
 
   // Üst site seçildiyse içindeki sitelerin firmaları da gelir
-  if (site) query = query.in("sanayi_sitesi", await siteVeAltSiteAdlari(site));
+  if (site) {
+    const siteAdlari = await siteVeAltSiteAdlari(site);
+    suzgecler.push(q => q.in("sanayi_sitesi", siteAdlari));
+  }
   // Kategori: ana kategori seçildiyse alt kategorilerindeki firmalar da gelir. Tabloda olmayan bir ad gelirse eski sektör yazısıyla aranır.
   let kategoriIdleri: number[] = [];
   if (kategori) {
     const tip = firma_tipi && firma_tipi in KATEGORI_TIPI ? KATEGORI_TIPI[firma_tipi as FirmaTipi] : undefined;
     kategoriIdleri = adinKategoriIdleri(kategoriListesi, kategori, tip);
-    query = kategoriIdleri.length ? query.in("kategori_id", kategoriIdleri) : query.eq("sektor", kategori);
+    const idler = kategoriIdleri;
+    suzgecler.push(q => (idler.length ? q.in("kategori_id", idler) : q.eq("sektor", kategori)));
   }
   // Sağlık kategorisi listeleniyorsa firma listesinin üstünde 112 uyarısı
   const acilUyari = saglikUyarisi(kategoriListesi, kategoriIdleri);
 
+  // 1. aşama: hafif alanlar (arama varsa aranan alanlar da), paralel paketler hâlinde
+  const HAFIF_ALANLAR = ara
+    ? "id, ad, sahip, sektor, sanayi_sitesi, hizmetler, hedef_sayfa, yorum_sayisi, olumlu_yuzde"
+    : "id, ad, sektor, hedef_sayfa, yorum_sayisi, olumlu_yuzde";
+  const TAM_ALANLAR = "id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, hedef_sayfa, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email";
   const tumFirmalarArr: import("@/lib/supabase").Firma[] = [];
   {
     const CHUNK = 1000;
-    let from = 0;
-    while (true) {
-      const { data } = await query.range(from, from + CHUNK - 1);
-      if (!data || data.length === 0) break;
-      tumFirmalarArr.push(...(data as import("@/lib/supabase").Firma[]));
-      if (data.length < CHUNK) break;
-      from += CHUNK;
+    const ESZAMANLI = 16;
+    const { count } = await sorgu("id", true);
+    const paketler: number[] = [];
+    for (let from = 0; from < (count ?? 0); from += CHUNK) paketler.push(from);
+    for (let i = 0; i < paketler.length; i += ESZAMANLI) {
+      const sonuclar = await Promise.all(
+        paketler.slice(i, i + ESZAMANLI).map((from) =>
+          // id sırasıyla okunur (birincil anahtar indeksi, hızlı); ad sırası aşağıda burada verilir
+          sorgu(HAFIF_ALANLAR).order("id").range(from, from + CHUNK - 1)
+        )
+      );
+      for (const { data } of sonuclar) if (data) tumFirmalarArr.push(...(data as unknown as import("@/lib/supabase").Firma[]));
     }
+    // Veritabanının (en_US) ad sırasına denk alfabetik sıra; eşit adlarda id
+    const harfSirasi = new Intl.Collator("en-US");
+    tumFirmalarArr.sort((a, b) => harfSirasi.compare(a.ad || "", b.ad || "") || a.id - b.id);
   }
 
   // Puan özetleri (yorum sayısı, ortalama, olumlu oranı) veritabanında hesaplanıp firma kaydında tutuluyor.
@@ -201,7 +226,15 @@ export default async function FirmalarPage(props: PageProps) {
 
   const sayfadakiSabitler = sabitFirmalar.filter(f => Math.min(hedefSayfa(f)!, toplamSayfa) === gecerliSayfa);
   const normalSayfaFirmalar = siraliFirmalar.slice(gercekBaslangic, gercekBaslangic + limit);
-  const sayfaFirmalar = [...sayfadakiSabitler, ...normalSayfaFirmalar];
+  const sayfaFirmaOzetleri = [...sayfadakiSabitler, ...normalSayfaFirmalar];
+
+  // 2. aşama: yalnızca bu sayfada gösterilecek firmaların tam bilgisi (sıra korunur)
+  const sayfaIdleri = sayfaFirmaOzetleri.map((f) => f.id);
+  const { data: tamKayitlar } = sayfaIdleri.length
+    ? await supabase.from("firmalar").select(TAM_ALANLAR).in("id", sayfaIdleri)
+    : { data: [] };
+  const tamHarita = new Map(((tamKayitlar || []) as unknown as FirmaWithStats[]).map((f) => [f.id, f]));
+  const sayfaFirmalar = sayfaIdleri.map((id) => tamHarita.get(id)).filter((f): f is FirmaWithStats => !!f);
 
   const baslik = site || kategori || (ara ? t.resultsFor(ara) : konumYazisi || il || t.allCompanies);
 
