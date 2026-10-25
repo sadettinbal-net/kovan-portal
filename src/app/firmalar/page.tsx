@@ -124,7 +124,7 @@ export default async function FirmalarPage(props: PageProps) {
   }
   // Süzgeç listesinde yalnızca seçili konumda (il, ilçe, mahalle, sokak, site, firma tipi) firması olan kategoriler görünür.
   // Kategori süzgeci eklenmeden önce başlatılır ki diğer kategoriler de seçilebilsin; firma listesiyle aynı anda çalışır.
-  const doluKategoriSozu = supabase.rpc("firma_kategori_sayilari", { p: { ...listeParam } });
+  const doluKategoriSozu = supabase.rpc("firma_kategori_adetleri", { p: { ...listeParam } });
   // Kategori: ana kategori seçildiyse alt kategorilerindeki firmalar da gelir. Tabloda olmayan bir ad gelirse eski sektör yazısıyla aranır.
   let kategoriIdleri: number[] = [];
   if (kategori) {

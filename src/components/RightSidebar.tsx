@@ -106,6 +106,22 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
 
   return (
     <aside className="w-full md:w-72 flex-shrink-0">
+      {/* Reklam Ver kutusu: her sayfada sağ menünün en üstünde */}
+      <Link
+        href="/reklam-ver"
+        className="group block mb-3 rounded-lg overflow-hidden border-2 border-[#e8a020] bg-gradient-to-br from-[#fff8ec] to-[#ffe9bf] hover:shadow-md transition-shadow"
+      >
+        <div className="px-3 py-2.5 flex items-center gap-3">
+          <span className="text-2xl leading-none">📢</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-[#1a3a6b] text-sm leading-tight">İşletmenizi öne çıkarın</p>
+            <p className="text-[11px] text-gray-600 leading-snug mt-0.5">Reklamınızla binlerce ziyaretçiye ulaşın.</p>
+          </div>
+        </div>
+        <div className="bg-[#e8a020] group-hover:bg-[#c8851a] text-white text-xs font-semibold text-center py-1.5 transition-colors">
+          Reklam Ver →
+        </div>
+      </Link>
       {/* Dış çerçevede overflow-hidden yok: arama sonuç kutusu menünün dışına taşabilsin (yoksa kesiliyordu) */}
       <div className="bg-white rounded-lg border border-[#dde3ec]">
         {/* Sekme Başlıkları */}

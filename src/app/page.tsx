@@ -70,21 +70,21 @@ export default async function Home() {
                   {t.seeAll}
                 </Link>
               </div>
-              {ozelFirmalar.length > 0 ? (
-                <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4">
+              {ozelFirmalar.length > 0 && (
+                <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4 mb-3">
                   {ozelFirmalar.map((firma) => (
                     <FirmaKart key={firma.id} firma={firma} />
                   ))}
                 </div>
-              ) : (
-                <Link href="/reklam-ver" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border-2 border-dashed border-[#e8a020] bg-[#fff8ec] hover:bg-[#fff1d6] px-5 py-5 transition-colors">
-                  <div>
-                    <p className="font-bold text-[#1a3a6b]">{t.promoteTitle}</p>
-                    <p className="text-sm text-gray-600">{t.promoteDesc}</p>
-                  </div>
-                  <span className="bg-[#e8a020] text-white text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap">{t.promoteBtn} →</span>
-                </Link>
               )}
+              {/* Reklam ver şeridi: özel firma olsa da olmasa da hep görünür */}
+              <Link href="/reklam-ver" className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-lg border-2 border-dashed border-[#e8a020] bg-[#fff8ec] hover:bg-[#fff1d6] px-5 py-4 transition-colors">
+                <div>
+                  <p className="font-bold text-[#1a3a6b]">{t.promoteTitle}</p>
+                  <p className="text-sm text-gray-600">{t.promoteDesc}</p>
+                </div>
+                <span className="bg-[#e8a020] text-white text-sm font-semibold px-4 py-2 rounded-lg whitespace-nowrap">{t.promoteBtn} →</span>
+              </Link>
             </section>
 
             <section>
