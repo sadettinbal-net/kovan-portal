@@ -139,7 +139,7 @@ export default async function Home() {
           </div>
 
           <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-            <RightSidebarWrapper ekReklamSayisi={2} />
+            <RightSidebarWrapper ekReklamSayisi={3} />
           </Suspense>
         </div>
       </div>

@@ -545,8 +545,11 @@ type Reklam = {
 };
 
 // Birden çok paneli olan alanlar ve panel sayıları (sayfalardaki panel sayısıyla aynı olmalı)
-const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 2, detay_sol: 2, detay_sag: 2 };
-const PANEL_ADLARI = ['Fark etmez', 'Üstteki panel', 'Alttaki panel'];
+const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 3, detay_sol: 2, detay_sag: 2 };
+// Panel adları panel sayısına göre: 2 panelde üst/alt, 3 panelde üst/orta/alt
+const panelAdi = (no: number, sayi: number) =>
+  no === 0 ? 'Fark etmez' : no === 1 ? 'Üstteki panel' : no === sayi ? 'Alttaki panel' : 'Ortadaki panel';
+const panelSimge = (no: number, sayi: number) => (no === 0 ? '' : no === 1 ? '⬆️ ' : no === sayi ? '⬇️ ' : '↔️ ');
 
 // Reklamın sayfada nerede çıkacağını gösteren küçük şema (seçilen yer turuncu yanar)
 function ReklamYeriSemasi({ konum, panel }: { konum: ReklamKonumu; panel: number }) {
@@ -606,6 +609,7 @@ function ReklamYeriSemasi({ konum, panel }: { konum: ReklamKonumu; panel: number
               {menu}
               <div className={`h-7 ${yan(panelAktif('anasayfa_sag', 1))}`} />
               <div className={`h-7 ${yan(panelAktif('anasayfa_sag', 2))}`} />
+              <div className={`h-7 ${yan(panelAktif('anasayfa_sag', 3))}`} />
             </div>
           </div>
         </>
@@ -823,7 +827,7 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
               <option value="sidebar">Sol menü reklam kutusu (ana sayfa ve firmalar sayfası)</option>
               <option value="anasayfa_ust">Ana sayfa üst şerit (arama kutusunun altı)</option>
               <option value="anasayfa_sol">Ana sayfa – sol menü panelleri (2 panel)</option>
-              <option value="anasayfa_sag">Ana sayfa – sağ menü panelleri (2 panel)</option>
+              <option value="anasayfa_sag">Ana sayfa – sağ menü panelleri (3 panel)</option>
               <option value="detay_sol">Detay sayfası – sol (2 panel)</option>
               <option value="detay_sag">Detay sayfası – sağ (2 panel)</option>
             </select>
@@ -845,14 +849,14 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
                 <>
                   <p className="text-xs text-gray-600 mb-2">Bu alanda alt alta {panelSayisi} panel var. Reklam hangi panelde çıksın?</p>
                   <div className="flex flex-wrap gap-2">
-                    {[1, 2, 0].map(no => (
+                    {[...Array.from({ length: panelSayisi }, (_, i) => i + 1), 0].map(no => (
                       <button
                         key={no}
                         type="button"
                         onClick={() => setPanel(no)}
                         className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${panel === no ? 'bg-[#e8a020] border-[#e8a020] text-white' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100'}`}
                       >
-                        {no === 1 ? '⬆️ ' : no === 2 ? '⬇️ ' : ''}{PANEL_ADLARI[no]}
+                        {panelSimge(no, panelSayisi)}{panelAdi(no, panelSayisi)}
                       </button>
                     ))}
                   </div>
@@ -987,7 +991,7 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{KONUM_ADLARI[r.konum] || r.konum}</span>
-                  {(PANEL_SAYISI[r.konum] || 0) > 1 && !!r.panel && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-[#c8851a]">{r.panel === 1 ? '⬆️ Üst panel' : '⬇️ Alt panel'}</span>}
+                  {(PANEL_SAYISI[r.konum] || 0) > 1 && !!r.panel && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-[#c8851a]">{panelSimge(r.panel, PANEL_SAYISI[r.konum] || 0)}{panelAdi(r.panel, PANEL_SAYISI[r.konum] || 0)}</span>}
                   {r.kategori && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">🏷️ {r.kategori}</span>}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${r.aktif ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>{r.aktif ? 'Aktif' : 'Pasif'}</span>
                   <span className="text-xs text-gray-400">👆 {r.tiklanma} tıklanma</span>
