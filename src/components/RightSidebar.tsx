@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import ReklamPanelleri from "@/components/ReklamPanelleri";
+import SabitReklamAlani from "@/components/SabitReklamAlani";
 
 type KategoriSayisi = {
   ana: string;
@@ -16,9 +18,10 @@ interface Props {
   toplamSanayiDisi?: number;
   kurumsalKategoriler?: KategoriSayisi[];
   toplamKurumsal?: number;
+  ekReklamSayisi?: number; // menünün altındaki ek reklam paneli sayısı
 }
 
-export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0 }: Props) {
+export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0, ekReklamSayisi = 0 }: Props) {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -316,6 +319,13 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
           </ul>
         )}
       </div>
+
+      {/* Ek reklam panelleri (Reklam Yönetimi → "Ana sayfa – sağ menü"); reklam yoksa "Reklam Ver" görünür */}
+      {ekReklamSayisi > 0 && (
+        <SabitReklamAlani className="mt-3">
+          <ReklamPanelleri konum="anasayfa_sag" adet={ekReklamSayisi} />
+        </SabitReklamAlani>
+      )}
     </aside>
   );
 }

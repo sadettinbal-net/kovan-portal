@@ -24,20 +24,22 @@ function adminClient() {
   );
 }
 
+const KONUMLAR = ['video', 'sidebar', 'popup', 'anasayfa_ust', 'anasayfa_sol', 'anasayfa_sag', 'detay_sol', 'detay_sag'];
+
 // Public: bir alandaki (konum) yayında olan özel reklamları döndürür.
 // "Yayında" = aktif + (başlangıç tarihi geçmiş/boş) + (bitiş tarihi gelmemiş/boş)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const konum = searchParams.get('konum');
   const kategori = (searchParams.get('kategori') || '').trim();
-  if (konum !== 'video' && konum !== 'sidebar' && konum !== 'popup' && konum !== 'anasayfa_ust') {
+  if (!konum || !KONUMLAR.includes(konum)) {
     return jsonNoStore({ reklamlar: [] });
   }
 
   const supabase = adminClient();
   const { data, error } = await supabase
     .from('reklamlar')
-    .select('id, baslik, gorsel_url, link_url, kategori, baslangic_tarihi, bitis_tarihi')
+    .select('id, baslik, gorsel_url, link_url, kategori, baslangic_tarihi, bitis_tarihi, yazi, yazi_konum, yazi_renk, yazi_boyut, yazi_yon, yazi_x, yazi_y, yazi_aci, yazi_yay, panel')
     .eq('konum', konum)
     .eq('aktif', true);
 
@@ -65,6 +67,16 @@ export async function GET(request: NextRequest) {
     baslik: r.baslik,
     gorsel_url: r.gorsel_url,
     link_url: r.link_url,
+    yazi: r.yazi,
+    yazi_konum: r.yazi_konum,
+    yazi_renk: r.yazi_renk,
+    yazi_boyut: r.yazi_boyut,
+    yazi_yon: r.yazi_yon,
+    yazi_x: r.yazi_x,
+    yazi_y: r.yazi_y,
+    yazi_aci: r.yazi_aci,
+    yazi_yay: r.yazi_yay,
+    panel: r.panel,
   }));
 
   return jsonNoStore({ reklamlar: sonuc });

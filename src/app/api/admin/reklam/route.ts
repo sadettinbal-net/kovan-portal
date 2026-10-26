@@ -18,7 +18,7 @@ async function yetkiliMi() {
   return !!user && ADMIN_EMAILS.includes(user.email!);
 }
 
-const ALANLAR = ['baslik', 'gorsel_url', 'link_url', 'konum', 'kategori', 'aktif', 'baslangic_tarihi', 'bitis_tarihi', 'siralama'] as const;
+const ALANLAR = ['baslik', 'gorsel_url', 'link_url', 'konum', 'kategori', 'aktif', 'baslangic_tarihi', 'bitis_tarihi', 'siralama', 'yazi', 'yazi_konum', 'yazi_renk', 'yazi_boyut', 'yazi_yon', 'yazi_x', 'yazi_y', 'yazi_aci', 'yazi_yay', 'panel'] as const;
 
 export async function GET() {
   if (!(await yetkiliMi())) return NextResponse.json({ error: 'Yetkisiz.' }, { status: 403 });
@@ -50,6 +50,16 @@ export async function POST(request: NextRequest) {
     baslangic_tarihi: b.baslangic_tarihi || null,
     bitis_tarihi: b.bitis_tarihi || null,
     siralama: b.siralama ?? 0,
+    yazi: b.yazi || '',
+    yazi_konum: b.yazi_konum || 'alt',
+    yazi_renk: b.yazi_renk || 'beyaz',
+    yazi_boyut: b.yazi_boyut || 'orta',
+    yazi_yon: b.yazi_yon || 'yatay',
+    yazi_x: b.yazi_x ?? 50,
+    yazi_y: b.yazi_y ?? 50,
+    yazi_aci: b.yazi_aci ?? 0,
+    yazi_yay: b.yazi_yay ?? 0,
+    panel: b.panel ?? 0,
   }).select().single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ reklam: data });
@@ -61,7 +71,7 @@ export async function PUT(request: NextRequest) {
   if (!b.id) return NextResponse.json({ error: 'id zorunlu.' }, { status: 400 });
   const guncelle: Record<string, unknown> = {};
   for (const k of ALANLAR) {
-    if (k in b) guncelle[k] = (k === 'baslangic_tarihi' || k === 'bitis_tarihi') ? (b[k] || null) : b[k];
+    if (k in b) guncelle[k] = (k === 'baslangic_tarihi' || k === 'bitis_tarihi' || k === 'kategori') ? (b[k] || null) : b[k];
   }
   const supabase = adminClient();
   const { error } = await supabase.from('reklamlar').update(guncelle).eq('id', b.id);

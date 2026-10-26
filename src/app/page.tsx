@@ -52,7 +52,7 @@ export default async function Home() {
         <AnasayfaBanner />
         <div className="flex flex-col md:flex-row gap-4">
           <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-            <Sidebar />
+            <Sidebar ekReklamSayisi={2} />
           </Suspense>
 
           <div className="flex-1 min-w-0">
@@ -139,7 +139,7 @@ export default async function Home() {
           </div>
 
           <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-            <RightSidebarWrapper />
+            <RightSidebarWrapper ekReklamSayisi={2} />
           </Suspense>
         </div>
       </div>

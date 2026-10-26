@@ -6,6 +6,9 @@ import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
 import { ILAN_KATEGORILERI } from "@/lib/ilanKategorileri";
+import ReklamPanelleri from "@/components/ReklamPanelleri";
+import ReklamGorseli from "@/components/ReklamGorseli";
+import SabitReklamAlani from "@/components/SabitReklamAlani";
 
 
 // baslik: grup başlığı satırı (ör. Anadolu Yakası); girintili: bir üst sitenin içindeki site
@@ -28,9 +31,10 @@ interface Props {
   kategoriSayilariPerSite: Record<string, KategoriSayisi>;
   tumKategoriler: string[];
   siteFirmaSayisi: number; // sadece bir sanayi sitesinde kayıtlı firmalar
+  ekReklamSayisi?: number; // mevcut reklamın altındaki ek reklam paneli sayısı
 }
 
-export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, siteFirmaSayisi }: Props) {
+export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, siteFirmaSayisi, ekReklamSayisi = 0 }: Props) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -260,6 +264,8 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
         </ul>
       </div>
 
+      {/* Reklamlar kaydırırken ekranda sabit kalır */}
+      <SabitReklamAlani>
       {/* Reklam Alanı (özel reklam varsa Google yerine o gösterilir) */}
       <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
         <div className="bg-gray-100 text-gray-500 px-3 py-1.5 font-semibold text-xs text-center border-b border-[#dde3ec]">
@@ -274,20 +280,10 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
                 rel="noopener sponsored"
                 onClick={() => reklamTikla(sbReklam.id)}
               >
-                <img
-                  src={sbReklam.gorsel_url}
-                  alt={sbReklam.baslik || "Reklam"}
-                  className="w-full h-auto rounded"
-                  loading="lazy"
-                />
+                <ReklamGorseli reklam={sbReklam} className="rounded overflow-hidden" />
               </a>
             ) : (
-              <img
-                src={sbReklam.gorsel_url}
-                alt={sbReklam.baslik || "Reklam"}
-                className="w-full h-auto rounded"
-                loading="lazy"
-              />
+              <ReklamGorseli reklam={sbReklam} className="rounded overflow-hidden" />
             )
           ) : sbYuklendi ? (
             <ins
@@ -301,6 +297,10 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
           ) : null}
         </div>
       </div>
+
+      {/* Ek reklam panelleri (Reklam Yönetimi → "Ana sayfa – sol menü"); reklam yoksa "Reklam Ver" görünür */}
+      {ekReklamSayisi > 0 && <ReklamPanelleri konum="anasayfa_sol" adet={ekReklamSayisi} />}
+      </SabitReklamAlani>
     </aside>
   );
 }

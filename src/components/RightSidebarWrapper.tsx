@@ -48,7 +48,8 @@ function grupla(kategoriler: FirmaKategorisi[], tip: KategoriTipi, sayi: Map<num
     .filter((k) => k.toplam > 0);
 }
 
-export default async function RightSidebarWrapper() {
+// ekReklamSayisi: menünün altına eklenecek ek reklam paneli sayısı (şimdilik sadece ana sayfa)
+export default async function RightSidebarWrapper({ ekReklamSayisi = 0 }: { ekReklamSayisi?: number }) {
   const [kategoriler, sayilar, toplamSanayiDisi, toplamKurumsal] = await Promise.all([
     aktifKategoriler(supabase),
     kategoriSayilari(),
@@ -62,6 +63,7 @@ export default async function RightSidebarWrapper() {
       toplamSanayiDisi={toplamSanayiDisi}
       kurumsalKategoriler={grupla(kategoriler, "kurumsal", sayilar.kurumsal)}
       toplamKurumsal={toplamKurumsal}
+      ekReklamSayisi={ekReklamSayisi}
     />
   );
 }

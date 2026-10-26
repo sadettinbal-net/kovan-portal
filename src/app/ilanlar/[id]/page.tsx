@@ -1,4 +1,5 @@
 "use client";
+import YanReklamCercevesi from "@/components/YanReklamCercevesi";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -63,6 +64,7 @@ export default function IlanDetayPage() {
   const fotograflar = ilan.fotograflar || [];
 
   return (
+    <YanReklamCercevesi>
     <div className="max-w-4xl mx-auto px-4 py-6">
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-4">
@@ -237,5 +239,6 @@ export default function IlanDetayPage() {
         </Link>
       </div>
     </div>
+    </YanReklamCercevesi>
   );
 }

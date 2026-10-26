@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
+import type { ReklamYazisi } from "@/components/ReklamGorseli";
 
 export type SlotReklam = {
   id: number;
   baslik: string;
   gorsel_url: string;
   link_url: string;
-};
+} & ReklamYazisi;
 
 // Bir reklam alanı (konum) için aktif özel reklamı getirir.
 // Birden fazla aktif reklam varsa her yüklemede rastgele biri seçilir (rotation).

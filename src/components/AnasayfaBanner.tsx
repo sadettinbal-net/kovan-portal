@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
 import { useCerezOnay } from "@/lib/cerezOnay";
+import ReklamGorseli from "@/components/ReklamGorseli";
 
 // Ana sayfa üst şerit reklam alanı (arama kutusunun altı, ilk ekranda).
 // Sıra: 1) Reklam Yönetimi'nde bu alan için yayında olan kendi reklamımız
@@ -85,10 +86,7 @@ export default function AnasayfaBanner() {
   if (!yuklendi) {
     icerik = <div className={`${KUTU} bg-gray-100 animate-pulse`} />;
   } else if (reklam) {
-    const gorsel = (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={reklam.gorsel_url} alt={reklam.baslik || "Reklam"} className="block w-full h-auto" />
-    );
+    const gorsel = <ReklamGorseli reklam={reklam} />;
     icerik = (
       <div className="relative w-full rounded-lg overflow-hidden bg-gray-100">
         {reklam.link_url ? (

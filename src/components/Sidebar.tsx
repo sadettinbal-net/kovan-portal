@@ -1,7 +1,8 @@
 import SidebarClient from "@/components/SidebarClient";
 import { onayliFirmaOzetleri, sanayiSiteleriOzeti, siteSatirlari } from "@/lib/sanayiSiteleri";
 
-export default async function Sidebar({ il }: { il?: string }) {
+// ekReklamSayisi: mevcut reklam alanının altına eklenecek ek reklam paneli sayısı (şimdilik sadece ana sayfa)
+export default async function Sidebar({ il, ekReklamSayisi = 0 }: { il?: string; ekReklamSayisi?: number }) {
   const tumFirmalar = await onayliFirmaOzetleri();
   const tumSiteler = await sanayiSiteleriOzeti(tumFirmalar);
 
@@ -66,6 +67,7 @@ export default async function Sidebar({ il }: { il?: string }) {
       )}
       kategoriSayilariPerSite={kategoriPerSite}
       tumKategoriler={tumKategoriler}
+      ekReklamSayisi={ekReklamSayisi}
       siteFirmaSayisi={firmalar.reduce((t, f) => t + (f.sanayi_sitesi ? f.adet : 0), 0)}
     />
   );

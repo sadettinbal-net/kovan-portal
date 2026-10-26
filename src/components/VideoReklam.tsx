@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useOzelReklam, reklamTikla } from "@/lib/useOzelReklam";
 import { useCerezOnay } from "@/lib/cerezOnay";
+import ReklamGorseli from "@/components/ReklamGorseli";
 
 // ─── ADSENSE BİLGİLERİ (içerik içi / in-article) ───────────────────────────
 const ADSENSE_CLIENT = "ca-pub-8884760724680185"; // ← Yayıncı ID'niz
@@ -48,14 +49,7 @@ export default function VideoReklam({
 
   // ─── Yöneticinin özel reklamı ───────────────────────────────────────────
   if (reklam) {
-    const gorsel = (
-      <img
-        src={reklam.gorsel_url}
-        alt={reklam.baslik || "Reklam"}
-        className="w-full h-auto rounded-lg"
-        loading="lazy"
-      />
-    );
+    const gorsel = <ReklamGorseli reklam={reklam} className="rounded-lg overflow-hidden" />;
     return (
       <div className="my-6 icerik-reklami">
         <p className="text-[10px] text-gray-400 text-center mb-1 tracking-wide uppercase">Reklam</p>

@@ -25,6 +25,7 @@ function ozelDurumYazisi(d: OzelDurum, bitis?: string | null): string {
   return '';
 }
 import SosyalIkon from '@/components/SosyalIkon';
+import ReklamGorseli, { YAZI_KONUMLARI, YAZI_RENKLERI, YAZI_BOYUTLARI, YAZI_YONLERI } from '@/components/ReklamGorseli';
 
 import { ADMIN_EMAILS } from '@/lib/admin';
 import { aktifKategoriler } from '@/lib/firmaKategorileri';
@@ -507,12 +508,23 @@ function SiteKullanimiYonetimi() {
 }
 
 // ─── Reklam Yönetimi ─────────────────────────────────────────────────────────
+type ReklamKonumu = 'video' | 'sidebar' | 'popup' | 'anasayfa_ust' | 'anasayfa_sol' | 'anasayfa_sag' | 'detay_sol' | 'detay_sag';
+const KONUM_ADLARI: Record<ReklamKonumu, string> = {
+  video: 'Sayfa-içi video',
+  popup: 'Popup',
+  sidebar: 'Sol menü reklam kutusu',
+  anasayfa_ust: 'Ana sayfa üst şerit',
+  anasayfa_sol: 'Ana sayfa – sol menü panelleri',
+  anasayfa_sag: 'Ana sayfa – sağ menü panelleri',
+  detay_sol: 'Detay sayfası – sol',
+  detay_sag: 'Detay sayfası – sağ',
+};
 type Reklam = {
   id: number;
   baslik: string;
   gorsel_url: string;
   link_url: string;
-  konum: 'video' | 'sidebar' | 'popup' | 'anasayfa_ust';
+  konum: ReklamKonumu;
   kategori: string | null;
   aktif: boolean;
   baslangic_tarihi: string | null;
@@ -520,7 +532,87 @@ type Reklam = {
   siralama: number;
   tiklanma: number;
   created_at: string;
+  yazi: string | null;
+  yazi_konum: string | null;
+  yazi_renk: string | null;
+  yazi_boyut: string | null;
+  yazi_yon: string | null;
+  yazi_x: number | null;
+  yazi_y: number | null;
+  yazi_aci: number | null;
+  yazi_yay: number | null;
+  panel: number | null;
 };
+
+// Birden çok paneli olan alanlar ve panel sayıları (sayfalardaki panel sayısıyla aynı olmalı)
+const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 2, detay_sol: 2, detay_sag: 2 };
+const PANEL_ADLARI = ['Fark etmez', 'Üstteki panel', 'Alttaki panel'];
+
+// Reklamın sayfada nerede çıkacağını gösteren küçük şema (seçilen yer turuncu yanar)
+function ReklamYeriSemasi({ konum, panel }: { konum: ReklamKonumu; panel: number }) {
+  const yan = (aktif: boolean) => `rounded-sm border ${aktif ? 'bg-[#e8a020] border-[#c8851a] animate-pulse' : 'bg-white border-gray-300'}`;
+  const panelAktif = (alan: ReklamKonumu, no: number) => konum === alan && (panel === 0 || panel === no);
+  const menu = <div className="h-10 rounded-sm bg-[#1a3a6b]/15 border border-[#1a3a6b]/20" />;
+  const icerik = (
+    <div className="flex-1 space-y-1">
+      {[0, 1, 2].map(i => (
+        <div key={i} className="grid grid-cols-3 gap-1">{[0, 1, 2].map(j => <div key={j} className="h-5 rounded-sm bg-gray-200" />)}</div>
+      ))}
+      <div className={`h-4 ${yan(konum === 'video')}`} title="Sayfa-içi video" />
+    </div>
+  );
+  const detay = konum === 'detay_sol' || konum === 'detay_sag' || konum === 'popup';
+  return (
+    <div className="relative w-56 shrink-0 rounded-lg border border-gray-300 bg-gray-50 p-1.5 text-[9px] text-gray-500">
+      <div className="h-3 rounded-sm bg-[#1a3a6b] mb-1" />
+      {detay ? (
+        <>
+          <p className="mb-1 text-center">Detay sayfası</p>
+          <div className="flex gap-1">
+            <div className="w-10 space-y-1">
+              <div className={`h-10 ${yan(panelAktif('detay_sol', 1))}`} />
+              <div className={`h-10 ${yan(panelAktif('detay_sol', 2))}`} />
+            </div>
+            <div className="flex-1 space-y-1">
+              <div className="h-12 rounded-sm bg-gray-200" />
+              <div className="h-3 rounded-sm bg-gray-200" />
+              <div className="h-3 rounded-sm bg-gray-200" />
+              <div className={`h-4 ${yan(konum === 'video')}`} />
+            </div>
+            <div className="w-10 space-y-1">
+              <div className={`h-10 ${yan(panelAktif('detay_sag', 1))}`} />
+              <div className={`h-10 ${yan(panelAktif('detay_sag', 2))}`} />
+            </div>
+          </div>
+          {konum === 'popup' && (
+            <div className="absolute inset-0 rounded-lg bg-black/40 flex items-center justify-center">
+              <div className="w-24 h-14 rounded bg-[#e8a020] border border-[#c8851a] animate-pulse" />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <p className="mb-1 text-center">Ana sayfa</p>
+          <div className={`h-4 mb-1 ${yan(konum === 'anasayfa_ust')}`} />
+          <div className="flex gap-1">
+            <div className="w-10 space-y-1">
+              {menu}
+              <div className={`h-7 ${yan(konum === 'sidebar')}`} />
+              <div className={`h-7 ${yan(panelAktif('anasayfa_sol', 1))}`} />
+              <div className={`h-7 ${yan(panelAktif('anasayfa_sol', 2))}`} />
+            </div>
+            {icerik}
+            <div className="w-10 space-y-1">
+              {menu}
+              <div className={`h-7 ${yan(panelAktif('anasayfa_sag', 1))}`} />
+              <div className={`h-7 ${yan(panelAktif('anasayfa_sag', 2))}`} />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 // varsayilanBaslik: reklam başvurusu mesajından gelince başlık alanı gönderenin adıyla dolu gelir
 function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string } = {}) {
@@ -530,7 +622,10 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
 
   const [baslik, setBaslik] = useState(varsayilanBaslik);
   const [linkUrl, setLinkUrl] = useState('');
-  const [konum, setKonum] = useState<'video' | 'sidebar' | 'popup' | 'anasayfa_ust'>('video');
+  const [konum, setKonum] = useState<ReklamKonumu>('video');
+  // Birden çok paneli olan alanda hangi panel: 0 fark etmez, 1 üstteki, 2 alttaki
+  const [panel, setPanel] = useState(0);
+  const panelSayisi = PANEL_SAYISI[konum] || 0;
   const [kategori, setKategori] = useState('');
   const [kategoriler, setKategoriler] = useState<string[]>([]);
   const [baslangic, setBaslangic] = useState('');
@@ -538,6 +633,66 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
   const [dosya, setDosya] = useState<File | null>(null);
   const [onizleme, setOnizleme] = useState('');
   const [kaydediliyor, setKaydediliyor] = useState(false);
+  // Resmin üstüne / yanına yazı
+  const [yazi, setYazi] = useState('');
+  const [yaziKonum, setYaziKonum] = useState('alt');
+  const [yaziRenk, setYaziRenk] = useState('beyaz');
+  const [yaziBoyut, setYaziBoyut] = useState('orta');
+  const [yaziYon, setYaziYon] = useState('yatay');
+  // Serbest yerleşim: yazı bandının ortasının resim üzerindeki yeri (yüzde)
+  const [yaziX, setYaziX] = useState(50);
+  const [yaziY, setYaziY] = useState(50);
+  const [yaziAci, setYaziAci] = useState(0); // döndürme açısı (derece)
+  const [yaziYay, setYaziYay] = useState(0); // yay eğriliği (0 düz)
+  const onizlemeRef = useRef<HTMLDivElement>(null);
+  const surukleniyor = useRef(false);
+
+  // Önizlemede resmin herhangi bir yerine basınca yazı oraya gelir; basılı tutup sürükleyince takip eder
+  function yaziyiTasi(e: React.PointerEvent) {
+    const kutu = onizlemeRef.current?.getBoundingClientRect();
+    if (!kutu || !kutu.width || !kutu.height) return;
+    const x = Math.round(Math.min(100, Math.max(0, ((e.clientX - kutu.left) / kutu.width) * 100)));
+    const y = Math.round(Math.min(100, Math.max(0, ((e.clientY - kutu.top) / kutu.height) * 100)));
+    setYaziX(x);
+    setYaziY(y);
+    setYaziKonum('serbest');
+  }
+  // Güncellenen reklam (boşsa form yeni reklam ekler)
+  const [duzenlenen, setDuzenlenen] = useState<Reklam | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  function formuTemizle() {
+    setBaslik(''); setLinkUrl(''); setKategori(''); setBaslangic(''); setBitis(''); setDosya(null); setOnizleme('');
+    setYazi(''); setYaziKonum('alt'); setYaziRenk('beyaz'); setYaziBoyut('orta');
+    setYaziYon('yatay'); setYaziX(50); setYaziY(50); setYaziAci(0); setYaziYay(0);
+    setPanel(0);
+    setDuzenlenen(null);
+  }
+
+  // "Güncelle"ye basınca reklamın bilgileri forma dolar; resim değiştirilmezse eskisi kalır
+  function duzenle(r: Reklam) {
+    setDuzenlenen(r);
+    setBaslik(r.baslik || '');
+    setLinkUrl(r.link_url || '');
+    setKonum(r.konum);
+    setPanel(r.panel ?? 0);
+    setKategori(r.kategori || '');
+    setBaslangic(r.baslangic_tarihi ? r.baslangic_tarihi.slice(0, 10) : '');
+    setBitis(r.bitis_tarihi ? r.bitis_tarihi.slice(0, 10) : '');
+    setDosya(null);
+    setOnizleme(r.gorsel_url);
+    setYazi(r.yazi || '');
+    setYaziKonum(r.yazi_konum || 'alt');
+    setYaziRenk(r.yazi_renk || 'beyaz');
+    setYaziBoyut(r.yazi_boyut || 'orta');
+    setYaziYon(r.yazi_yon || 'yatay');
+    setYaziX(r.yazi_x ?? 50);
+    setYaziY(r.yazi_y ?? 50);
+    setYaziAci(r.yazi_aci ?? 0);
+    setYaziYay(r.yazi_yay ?? 0);
+    setMesaj(null);
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   function yukle() {
     setYukleniyor(true);
@@ -575,36 +730,51 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
   }
 
   async function ekle() {
-    if (!dosya) { setMesaj({ tip: 'hata', metin: 'Lütfen bir görsel seçin.' }); return; }
+    // Güncellemede yeni resim seçilmezse eski resim kalır; yeni reklamda resim zorunlu
+    if (!dosya && !duzenlenen) { setMesaj({ tip: 'hata', metin: 'Lütfen bir görsel seçin.' }); return; }
     setKaydediliyor(true);
     setMesaj(null);
     try {
-      const fd = new FormData();
-      fd.append('file', dosya);
-      const up = await fetch('/api/admin/reklam/foto', { method: 'POST', body: fd });
-      const upData = await up.json();
-      if (!up.ok) { setMesaj({ tip: 'hata', metin: upData.error || 'Görsel yüklenemedi.' }); setKaydediliyor(false); return; }
+      let gorselUrl = duzenlenen?.gorsel_url || '';
+      if (dosya) {
+        const fd = new FormData();
+        fd.append('file', dosya);
+        const up = await fetch('/api/admin/reklam/foto', { method: 'POST', body: fd });
+        const upData = await up.json();
+        if (!up.ok) { setMesaj({ tip: 'hata', metin: upData.error || 'Görsel yüklenemedi.' }); setKaydediliyor(false); return; }
+        gorselUrl = upData.url;
+      }
 
+      const bilgiler = {
+        baslik,
+        link_url: linkUrl,
+        konum,
+        kategori: kategori || null,
+        gorsel_url: gorselUrl,
+        baslangic_tarihi: baslangic || null,
+        bitis_tarihi: bitis || null,
+        yazi,
+        yazi_konum: yaziKonum,
+        yazi_renk: yaziRenk,
+        yazi_boyut: yaziBoyut,
+        yazi_yon: yaziYon,
+        yazi_x: yaziX,
+        yazi_y: yaziY,
+        yazi_aci: yaziAci,
+        yazi_yay: yaziYay,
+        panel: (PANEL_SAYISI[konum] || 0) > 1 ? panel : 0,
+      };
       const res = await fetch('/api/admin/reklam', {
-        method: 'POST',
+        method: duzenlenen ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          baslik,
-          link_url: linkUrl,
-          konum,
-          kategori: kategori || null,
-          gorsel_url: upData.url,
-          aktif: true,
-          baslangic_tarihi: baslangic || null,
-          bitis_tarihi: bitis || null,
-        }),
+        body: JSON.stringify(duzenlenen ? { id: duzenlenen.id, ...bilgiler } : { ...bilgiler, aktif: true }),
       });
       const data = await res.json();
       if (!res.ok) {
         setMesaj({ tip: 'hata', metin: data.error || 'Kaydedilemedi.' });
       } else {
-        setMesaj({ tip: 'basari', metin: 'Reklam eklendi.' });
-        setBaslik(''); setLinkUrl(''); setKategori(''); setBaslangic(''); setBitis(''); setDosya(null); setOnizleme('');
+        setMesaj({ tip: 'basari', metin: duzenlenen ? 'Reklam güncellendi.' : 'Reklam eklendi.' });
+        formuTemizle();
         yukle();
       }
     } catch {
@@ -642,16 +812,20 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
         </div>
       )}
 
-      <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6">
-        <h3 className="font-semibold text-gray-800 mb-3 text-sm">Yeni Reklam Ekle</h3>
+      <div ref={formRef} className={`bg-white border rounded-xl p-4 mb-6 scroll-mt-24 ${duzenlenen ? 'border-[#e8a020] ring-2 ring-[#e8a020]/30' : 'border-gray-200'}`}>
+        <h3 className="font-semibold text-gray-800 mb-3 text-sm">{duzenlenen ? `Reklamı Güncelle: ${duzenlenen.baslik || '(başlıksız)'}` : 'Yeni Reklam Ekle'}</h3>
         <div className="grid sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-gray-600 mb-1">Reklam Alanı</label>
-            <select value={konum} onChange={e => setKonum(e.target.value as 'video' | 'sidebar' | 'popup' | 'anasayfa_ust')} className={inputCls}>
+            <select value={konum} onChange={e => { const k = e.target.value as ReklamKonumu; setKonum(k); if (panel > (PANEL_SAYISI[k] || 0)) setPanel(0); }} className={inputCls}>
               <option value="video">Sayfa-içi video (sayfa gövdesi)</option>
               <option value="popup">Popup (detay sayfası açılınca)</option>
-              <option value="sidebar">Kenar çubuğu (sağ menü)</option>
+              <option value="sidebar">Sol menü reklam kutusu (ana sayfa ve firmalar sayfası)</option>
               <option value="anasayfa_ust">Ana sayfa üst şerit (arama kutusunun altı)</option>
+              <option value="anasayfa_sol">Ana sayfa – sol menü panelleri (2 panel)</option>
+              <option value="anasayfa_sag">Ana sayfa – sağ menü panelleri (2 panel)</option>
+              <option value="detay_sol">Detay sayfası – sol (2 panel)</option>
+              <option value="detay_sag">Detay sayfası – sağ (2 panel)</option>
             </select>
           </div>
           <div>
@@ -661,6 +835,34 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
               {kategoriler.map(k => <option key={k} value={k}>{k}</option>)}
             </select>
             <p className="text-[11px] text-gray-400 mt-1">Bir kategori seçerseniz reklam yalnızca o kategorideki firmaların sayfa/popup&apos;unda görünür.</p>
+          </div>
+          {/* Reklamın nerede çıkacağı: şema + (birden çok panel varsa) panel seçimi */}
+          <div className="sm:col-span-2 flex flex-col sm:flex-row gap-4 items-start bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <ReklamYeriSemasi konum={konum} panel={panelSayisi > 1 ? panel : 0} />
+            <div className="flex-1 text-sm">
+              <p className="font-semibold text-gray-700 mb-1">Reklamınız sayfada <span className="text-[#c8851a]">turuncu</span> yerde çıkar.</p>
+              {panelSayisi > 1 ? (
+                <>
+                  <p className="text-xs text-gray-600 mb-2">Bu alanda alt alta {panelSayisi} panel var. Reklam hangi panelde çıksın?</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 2, 0].map(no => (
+                      <button
+                        key={no}
+                        type="button"
+                        onClick={() => setPanel(no)}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${panel === no ? 'bg-[#e8a020] border-[#e8a020] text-white' : 'bg-white border-gray-300 text-gray-600 hover:bg-gray-100'}`}
+                      >
+                        {no === 1 ? '⬆️ ' : no === 2 ? '⬇️ ' : ''}{PANEL_ADLARI[no]}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-2">&quot;Fark etmez&quot; seçilirse reklam boş olan panele konur. Aynı panele birden çok reklam koyarsanız her açılışta sırayla biri gösterilir.</p>
+                </>
+              ) : (
+                <p className="text-xs text-gray-500">Bu alanda tek reklam yeri var.</p>
+              )}
+              <p className="text-[11px] text-gray-400 mt-2">Bu alanda sizin reklamınız yoksa Google reklamı (ziyaretçi çerezleri kabul ettiyse), o da yoksa &quot;Reklam Ver&quot; yazısı görünür.</p>
+            </div>
           </div>
           <div>
             <label className="block text-xs text-gray-600 mb-1">Başlık (opsiyonel)</label>
@@ -679,15 +881,96 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
             <input type="date" value={bitis} onChange={e => setBitis(e.target.value)} className={inputCls} />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-xs text-gray-600 mb-1">Görsel / Banner *</label>
+            <label className="block text-xs text-gray-600 mb-1">{duzenlenen ? 'Görsel / Banner (değiştirmek için yeni resim seçin)' : 'Görsel / Banner *'}</label>
             <input type="file" accept="image/gif,image/jpeg,image/png,image/webp" onChange={dosyaSec} className="text-sm" />
-            {onizleme && <img src={onizleme} alt="önizleme" className="mt-2 max-h-32 rounded border border-gray-200" />}
-            <p className="text-[11px] text-gray-400 mt-1">İpucu: Video alanı için geniş (örn. 970×250), kenar çubuğu için dikdörtgen (örn. 300×250) görsel kullanın.</p>
+            <p className="text-[11px] text-gray-400 mt-1">İpucu: Video alanı için geniş (örn. 970×250), kenar çubuğu ve sağ/sol paneller için dikdörtgen (örn. 300×250) görsel kullanın. Aynı alana 2 reklam koyarsanız iki panelde ayrı ayrı görünür.</p>
           </div>
+          {/* Resmin üstüne / yanına yazı */}
+          <div className="sm:col-span-2 border-t border-gray-100 pt-3">
+            <label className="block text-xs text-gray-600 mb-1">Resim üzerindeki yazı (opsiyonel)</label>
+            <textarea value={yazi} onChange={e => setYazi(e.target.value)} rows={2} placeholder="Örn. %20 İndirim! Hemen arayın: 0532 ..." className={inputCls} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">Yazının yeri</label>
+            <select value={yaziKonum} onChange={e => setYaziKonum(e.target.value)} className={inputCls}>
+              {YAZI_KONUMLARI.map(k => <option key={k.deger} value={k.deger}>{k.ad}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">Yazının yönü</label>
+            <select value={yaziYon} onChange={e => setYaziYon(e.target.value)} className={inputCls}>
+              {YAZI_YONLERI.map(k => <option key={k.deger} value={k.deger}>{k.ad}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Yazı rengi</label>
+              <select value={yaziRenk} onChange={e => setYaziRenk(e.target.value)} className={inputCls}>
+                {YAZI_RENKLERI.map(k => <option key={k.deger} value={k.deger}>{k.ad}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Yazı boyutu</label>
+              <select value={yaziBoyut} onChange={e => setYaziBoyut(e.target.value)} className={inputCls}>
+                {YAZI_BOYUTLARI.map(k => <option key={k.deger} value={k.deger}>{k.ad}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">
+              Açı: <b>{yaziAci}°</b>
+              {yaziAci !== 0 && <button type="button" onClick={() => setYaziAci(0)} className="ml-2 text-[#1a3a6b] underline">sıfırla</button>}
+            </label>
+            <input type="range" min={-180} max={180} step={1} value={yaziAci} onChange={e => setYaziAci(Number(e.target.value))} className="w-full accent-[#e8a020]" />
+            <p className="text-[11px] text-gray-400">Yazıyı sağa ya da sola döndürür (ayrı şerit seçiliyken çalışmaz).</p>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-600 mb-1">
+              Yay: <b>{yaziYay === 0 ? 'düz' : yaziYay > 0 ? `yukarı kavis ${yaziYay}` : `aşağı kavis ${-yaziYay}`}</b>
+              {yaziYay !== 0 && <button type="button" onClick={() => setYaziYay(0)} className="ml-2 text-[#1a3a6b] underline">sıfırla</button>}
+            </label>
+            <input type="range" min={-100} max={100} step={1} value={yaziYay} onChange={e => setYaziYay(Number(e.target.value))} className="w-full accent-[#e8a020]" />
+            <p className="text-[11px] text-gray-400">Sağa çekince yazı kemer gibi yukarı (∩), sola çekince aşağı (∪) kavis alır. Yaylı yazı tek satır olur.</p>
+          </div>
+          {onizleme && (
+            <div className="sm:col-span-2">
+              <p className="text-xs text-gray-600 mb-1">Önizleme (sitede böyle görünür)</p>
+              {yazi.trim() && (
+                <p className="text-[11px] text-[#c8851a] mb-1">👆 Yazıyı istediğiniz yere taşımak için resmin üstünde o noktaya tıklayın ya da yazıyı tutup sürükleyin.</p>
+              )}
+              <div className="max-w-sm border border-gray-200 rounded-lg overflow-hidden">
+                <div
+                  ref={onizlemeRef}
+                  className={yazi.trim() ? 'cursor-crosshair touch-none' : ''}
+                  onPointerDown={e => {
+                    if (!yazi.trim() || yaziKonum === 'ust_serit' || yaziKonum === 'alt_serit') return;
+                    surukleniyor.current = true;
+                    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+                    yaziyiTasi(e);
+                  }}
+                  onPointerMove={e => { if (surukleniyor.current) yaziyiTasi(e); }}
+                  onPointerUp={() => { surukleniyor.current = false; }}
+                  onPointerCancel={() => { surukleniyor.current = false; }}
+                >
+                  <ReklamGorseli
+                    suruklenebilir={yaziKonum === 'serbest'}
+                    reklam={{ gorsel_url: onizleme, baslik, yazi, yazi_konum: yaziKonum, yazi_renk: yaziRenk, yazi_boyut: yaziBoyut, yazi_yon: yaziYon, yazi_x: yaziX, yazi_y: yaziY, yazi_aci: yaziAci, yazi_yay: yaziYay }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-        <button onClick={ekle} disabled={kaydediliyor} className="mt-4 bg-[#1a3a6b] hover:bg-[#2554a0] disabled:bg-gray-400 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors">
-          {kaydediliyor ? 'Ekleniyor...' : 'Reklam Ekle'}
-        </button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button onClick={ekle} disabled={kaydediliyor} className="bg-[#1a3a6b] hover:bg-[#2554a0] disabled:bg-gray-400 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors">
+            {kaydediliyor ? 'Kaydediliyor...' : duzenlenen ? 'Değişiklikleri Kaydet' : 'Reklam Ekle'}
+          </button>
+          {duzenlenen && (
+            <button onClick={() => { formuTemizle(); setMesaj(null); }} disabled={kaydediliyor} className="border border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-2.5 rounded-xl font-semibold text-sm transition-colors">
+              Vazgeç
+            </button>
+          )}
+        </div>
       </div>
 
       {yukleniyor ? (
@@ -703,12 +986,14 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
               <img src={r.gorsel_url} alt={r.baslik} className="w-24 h-16 object-cover rounded border border-gray-200 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{r.konum === 'video' ? 'Sayfa-içi video' : r.konum === 'popup' ? 'Popup' : r.konum === 'anasayfa_ust' ? 'Ana sayfa üst şerit' : 'Kenar çubuğu'}</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{KONUM_ADLARI[r.konum] || r.konum}</span>
+                  {(PANEL_SAYISI[r.konum] || 0) > 1 && !!r.panel && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-[#c8851a]">{r.panel === 1 ? '⬆️ Üst panel' : '⬇️ Alt panel'}</span>}
                   {r.kategori && <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">🏷️ {r.kategori}</span>}
                   <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${r.aktif ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>{r.aktif ? 'Aktif' : 'Pasif'}</span>
                   <span className="text-xs text-gray-400">👆 {r.tiklanma} tıklanma</span>
                 </div>
                 <p className="text-sm font-medium text-gray-800 truncate mt-0.5">{r.baslik || '(başlıksız)'}</p>
+                {r.yazi && <p className="text-xs text-gray-500 truncate">✍️ {r.yazi}</p>}
                 {r.link_url && <a href={r.link_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 truncate block">{r.link_url}</a>}
                 {(r.baslangic_tarihi || r.bitis_tarihi) && (
                   <p className="text-[11px] text-gray-400 mt-0.5">
@@ -717,6 +1002,9 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
                 )}
               </div>
               <div className="flex flex-col gap-1.5 flex-shrink-0">
+                <button onClick={() => duzenle(r)} className="text-xs px-3 py-1.5 rounded-lg bg-[#fff8eb] text-[#c8851a] border border-[#e8a020]/60 hover:bg-[#ffefcc] font-semibold">
+                  ✏️ Güncelle
+                </button>
                 <button onClick={() => aktifDegistir(r)} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold">
                   {r.aktif ? 'Pasifleştir' : 'Aktifleştir'}
                 </button>

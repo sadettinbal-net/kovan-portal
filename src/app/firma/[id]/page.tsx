@@ -1,4 +1,5 @@
 import Link from "next/link";
+import YanReklamCercevesi from "@/components/YanReklamCercevesi";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
@@ -78,6 +79,7 @@ export default async function FirmaDetay({ params }: PageProps) {
   ];
 
   return (
+    <YanReklamCercevesi kategori={firma.sektor || undefined}>
     <div className="max-w-4xl mx-auto px-4 py-6">
       <nav className="text-sm text-gray-500 mb-4">
         <Link href="/" className="hover:text-[#1a3a6b]">{t.breadHome}</Link>
@@ -489,5 +491,6 @@ export default async function FirmaDetay({ params }: PageProps) {
         </section>
       )}
     </div>
+    </YanReklamCercevesi>
   );
 }
