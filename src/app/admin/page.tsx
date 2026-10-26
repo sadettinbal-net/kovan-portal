@@ -621,7 +621,20 @@ function ReklamYeriSemasi({ konum, panel }: { konum: ReklamKonumu; panel: number
 }
 
 // varsayilanBaslik: reklam başvurusu mesajından gelince başlık alanı gönderenin adıyla dolu gelir
-function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string } = {}) {
+// onFirmaDuzenle: Özel Firmalar kısayolundan bir firmaya tıklanınca Firma Yönetimi'nde o firmanın düzenleme formu açılır
+function ReklamYonetimi({ varsayilanBaslik = '', onFirmaYonetimi, onFirmaDuzenle }: { varsayilanBaslik?: string; onFirmaYonetimi?: () => void; onFirmaDuzenle?: (id: number) => void } = {}) {
+  // Ana sayfadaki "Özel Firmalar" bölümü resimli reklam değil; sponsorlu firmalar Firma Yönetimi'nden ayarlanır.
+  // Burada kısa bir liste ve kısayol gösterilir.
+  const [ozelFirmalar, setOzelFirmalar] = useState<{ id: number; ad: string; ozel_firma: boolean; ozel_baslangic: string | null; ozel_bitis: string | null }[]>([]);
+  useEffect(() => {
+    supabase
+      .from('firmalar')
+      .select('id, ad, ozel_firma, ozel_baslangic, ozel_bitis')
+      .eq('ozel_firma', true)
+      .order('ozel_bitis', { ascending: true })
+      .then(({ data }) => setOzelFirmalar(data || []));
+  }, []);
+
   const [reklamlar, setReklamlar] = useState<Reklam[]>([]);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [mesaj, setMesaj] = useState<{ tip: 'basari' | 'hata'; metin: string } | null>(null);
@@ -810,6 +823,45 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h2 className="text-lg font-bold text-[#1a3a6b] mb-1">Reklam Yönetimi</h2>
+      {/* Özel Firmalar kısayolu */}
+      <div className="mb-4 rounded-xl border border-[#e8a020]/50 bg-[#fff8ec] p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-semibold text-[#1a3a6b] text-sm">💎 Ana sayfadaki &quot;Özel Firmalar&quot; bölümü</p>
+            <p className="text-xs text-gray-600 mt-1">
+              Bu bölüme resimli reklam yüklenmez; sitedeki kayıtlı bir firma sponsorlu yapılır.
+              <b> Firma Yönetimi → firmayı açın → ✏️ Düzenle → 💎 Özel Firma</b> kutusunda başlangıç ve bitiş tarihini seçip kaydedin.
+              Aynı anda 6 firma görünür, fazlaysa her açılışta karışık 6 tanesi gösterilir.
+            </p>
+          </div>
+          {onFirmaYonetimi && (
+            <button type="button" onClick={onFirmaYonetimi} className="shrink-0 bg-[#e8a020] hover:bg-[#c8851a] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+              Özel firmaları yönet →
+            </button>
+          )}
+        </div>
+        {ozelFirmalar.length > 0 ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ozelFirmalar.map(f => {
+              const d = ozelDurum(f);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => onFirmaDuzenle?.(f.id)}
+                  title="Bu firmanın düzenleme formunu aç"
+                  className={`text-[11px] px-2.5 py-1 rounded-full border text-left hover:shadow-sm transition-shadow ${d.durum === 'aktif' ? 'bg-white border-[#e8a020] text-[#1a3a6b]' : 'bg-gray-50 border-gray-200 text-gray-500'}`}
+                >
+                  <b>{f.ad}</b> · {d.durum === 'aktif' ? `${d.kalanGun} gün kaldı` : d.durum === 'baslamadi' ? 'henüz başlamadı' : d.durum === 'doldu' ? 'süresi doldu' : 'tarihsiz'}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-2 text-[11px] text-gray-500">Şu an özel firma yok.</p>
+        )}
+      </div>
+
       <p className="text-sm text-gray-500 mb-4">Kendi reklamlarınızı yükleyin. Bir alanda aktif özel reklam varsa, o alanda Google reklamı yerine sizinki gösterilir. Aynı alana birden fazla aktif reklam koyarsanız sırayla (dönüşümlü) gösterilir.</p>
 
       {mesaj && (
@@ -2947,7 +2999,7 @@ function AdminPanel() {
 
       {aktifSekme === 'site-kullanimi' && <SiteKullanimiYonetimi />}
 
-      {aktifSekme === 'reklamlar' && <ReklamYonetimi key={reklamOnBaslik} varsayilanBaslik={reklamOnBaslik} />}
+      {aktifSekme === 'reklamlar' && <ReklamYonetimi key={reklamOnBaslik} varsayilanBaslik={reklamOnBaslik} onFirmaYonetimi={() => { setAktifSekme('firmalar'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} onFirmaDuzenle={talepFirmasiniDuzenle} />}
     </div>
   );
 }
