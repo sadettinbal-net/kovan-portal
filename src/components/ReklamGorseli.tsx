@@ -162,7 +162,7 @@ export default function ReklamGorseli({
 
   const gorsel = (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={reklam.gorsel_url} alt={reklam.baslik || "Reklam"} className={`block ${imgClassName}`} loading="lazy" draggable={false} />
+    <img src={reklam.gorsel_url} alt={reklam.baslik || "Reklam"} className={`block ${imgClassName}`} loading="lazy" draggable={false} data-reklam-resmi="" />
   );
 
   if (!yaziKutusu) return <div className={className}>{gorsel}</div>;

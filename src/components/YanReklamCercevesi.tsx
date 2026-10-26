@@ -1,4 +1,5 @@
 import ReklamPanelleri, { type YanReklamKonumu } from "@/components/ReklamPanelleri";
+import SabitReklamAlani from "@/components/SabitReklamAlani";
 
 // Detay sayfalarında içeriğin sağına ve soluna reklam panelleri koyar (her tarafta "adet" kadar).
 // Reklamlar Reklam Yönetimi'nden "Detay sayfası – sol / sağ" alanlarına eklenir.
@@ -6,16 +7,16 @@ import ReklamPanelleri, { type YanReklamKonumu } from "@/components/ReklamPanell
 function ReklamSutunu({ konum, adet, kategori }: { konum: YanReklamKonumu; adet: number; kategori?: string }) {
   return (
     <div className="hidden lg:block w-56 xl:w-72 shrink-0 pt-12">
-      {/* top-[88px]: üstteki sabit menünün (72px) altında durur, menünün arkasına girmez */}
-      <div className="sticky top-[88px] space-y-3">
+      {/* Üstteki sabit menünün altında durur; ekrana sığmazsa reklam resimleri küçültülür */}
+      <SabitReklamAlani>
         <ReklamPanelleri konum={konum} adet={adet} kategori={kategori} />
-      </div>
+      </SabitReklamAlani>
     </div>
   );
 }
 
 // kategori: firma detayında firmanın sektörü; o kategoriye özel reklam varsa o, yoksa genel reklamlar gösterilir
-export default function YanReklamCercevesi({ children, adet = 2, kategori }: { children: React.ReactNode; adet?: number; kategori?: string }) {
+export default function YanReklamCercevesi({ children, adet = 3, kategori }: { children: React.ReactNode; adet?: number; kategori?: string }) {
   return (
     <div className="max-w-[1600px] mx-auto lg:px-4 flex justify-center gap-2">
       <ReklamSutunu konum="detay_sol" adet={adet} kategori={kategori} />

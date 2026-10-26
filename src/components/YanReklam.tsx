@@ -86,10 +86,10 @@ export default function YanReklam({ reklam, bekleniyor = false }: { reklam?: Slo
   if (reklam) {
     icerik = reklam.link_url ? (
       <a href={reklam.link_url} target="_blank" rel="noopener sponsored" onClick={() => reklamTikla(reklam.id)}>
-        <ReklamGorseli reklam={reklam} className="rounded overflow-hidden" />
+        <ReklamGorseli reklam={reklam} className="rounded overflow-hidden" imgClassName="w-full h-auto max-h-[var(--reklam-img-max,none)] object-contain" />
       </a>
     ) : (
-      <ReklamGorseli reklam={reklam} className="rounded overflow-hidden" />
+      <ReklamGorseli reklam={reklam} className="rounded overflow-hidden" imgClassName="w-full h-auto max-h-[var(--reklam-img-max,none)] object-contain" />
     );
   } else if (bekleniyor) {
     icerik = <div className="w-full h-[160px] rounded bg-gray-50" />;

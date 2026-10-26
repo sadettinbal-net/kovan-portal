@@ -280,10 +280,10 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
                 rel="noopener sponsored"
                 onClick={() => reklamTikla(sbReklam.id)}
               >
-                <ReklamGorseli reklam={sbReklam} className="rounded overflow-hidden" />
+                <ReklamGorseli reklam={sbReklam} className="rounded overflow-hidden" imgClassName="w-full h-auto max-h-[var(--reklam-img-max,none)] object-contain" />
               </a>
             ) : (
-              <ReklamGorseli reklam={sbReklam} className="rounded overflow-hidden" />
+              <ReklamGorseli reklam={sbReklam} className="rounded overflow-hidden" imgClassName="w-full h-auto max-h-[var(--reklam-img-max,none)] object-contain" />
             )
           ) : sbYuklendi ? (
             <ins

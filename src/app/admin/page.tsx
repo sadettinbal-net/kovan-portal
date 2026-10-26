@@ -545,7 +545,7 @@ type Reklam = {
 };
 
 // Birden çok paneli olan alanlar ve panel sayıları (sayfalardaki panel sayısıyla aynı olmalı)
-const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 3, detay_sol: 2, detay_sag: 2 };
+const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 3, detay_sol: 3, detay_sag: 3 };
 // Panel adları panel sayısına göre: 2 panelde üst/alt, 3 panelde üst/orta/alt
 const panelAdi = (no: number, sayi: number) =>
   no === 0 ? 'Fark etmez' : no === 1 ? 'Üstteki panel' : no === sayi ? 'Alttaki panel' : 'Ortadaki panel';
@@ -573,8 +573,9 @@ function ReklamYeriSemasi({ konum, panel }: { konum: ReklamKonumu; panel: number
           <p className="mb-1 text-center">Detay sayfası</p>
           <div className="flex gap-1">
             <div className="w-10 space-y-1">
-              <div className={`h-10 ${yan(panelAktif('detay_sol', 1))}`} />
-              <div className={`h-10 ${yan(panelAktif('detay_sol', 2))}`} />
+              <div className={`h-7 ${yan(panelAktif('detay_sol', 1))}`} />
+              <div className={`h-7 ${yan(panelAktif('detay_sol', 2))}`} />
+              <div className={`h-7 ${yan(panelAktif('detay_sol', 3))}`} />
             </div>
             <div className="flex-1 space-y-1">
               <div className="h-12 rounded-sm bg-gray-200" />
@@ -583,8 +584,9 @@ function ReklamYeriSemasi({ konum, panel }: { konum: ReklamKonumu; panel: number
               <div className={`h-4 ${yan(konum === 'video')}`} />
             </div>
             <div className="w-10 space-y-1">
-              <div className={`h-10 ${yan(panelAktif('detay_sag', 1))}`} />
-              <div className={`h-10 ${yan(panelAktif('detay_sag', 2))}`} />
+              <div className={`h-7 ${yan(panelAktif('detay_sag', 1))}`} />
+              <div className={`h-7 ${yan(panelAktif('detay_sag', 2))}`} />
+              <div className={`h-7 ${yan(panelAktif('detay_sag', 3))}`} />
             </div>
           </div>
           {konum === 'popup' && (
@@ -828,8 +830,8 @@ function ReklamYonetimi({ varsayilanBaslik = '' }: { varsayilanBaslik?: string }
               <option value="anasayfa_ust">Ana sayfa üst şerit (arama kutusunun altı)</option>
               <option value="anasayfa_sol">Ana sayfa – sol menü panelleri (2 panel)</option>
               <option value="anasayfa_sag">Ana sayfa – sağ menü panelleri (3 panel)</option>
-              <option value="detay_sol">Detay sayfası – sol (2 panel)</option>
-              <option value="detay_sag">Detay sayfası – sağ (2 panel)</option>
+              <option value="detay_sol">Detay sayfası – sol (3 panel)</option>
+              <option value="detay_sag">Detay sayfası – sağ (3 panel)</option>
             </select>
           </div>
           <div>
