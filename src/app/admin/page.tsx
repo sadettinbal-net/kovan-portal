@@ -508,7 +508,7 @@ function SiteKullanimiYonetimi() {
 }
 
 // ─── Reklam Yönetimi ─────────────────────────────────────────────────────────
-type ReklamKonumu = 'video' | 'sidebar' | 'popup' | 'anasayfa_ust' | 'anasayfa_sol' | 'anasayfa_sag' | 'detay_sol' | 'detay_sag';
+type ReklamKonumu = 'video' | 'sidebar' | 'popup' | 'anasayfa_ust' | 'anasayfa_sol' | 'anasayfa_sag' | 'detay_sol' | 'detay_sag' | 'site_sol' | 'site_sag';
 const KONUM_ADLARI: Record<ReklamKonumu, string> = {
   video: 'Sayfa-içi video',
   popup: 'Popup',
@@ -518,6 +518,8 @@ const KONUM_ADLARI: Record<ReklamKonumu, string> = {
   anasayfa_sag: 'Ana sayfa – sağ menü panelleri',
   detay_sol: 'Detay sayfası – sol',
   detay_sag: 'Detay sayfası – sağ',
+  site_sol: 'Sanayi sitesi sayfası – sol',
+  site_sag: 'Sanayi sitesi sayfası – sağ',
 };
 type Reklam = {
   id: number;
@@ -545,7 +547,7 @@ type Reklam = {
 };
 
 // Birden çok paneli olan alanlar ve panel sayıları (sayfalardaki panel sayısıyla aynı olmalı)
-const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 3, detay_sol: 3, detay_sag: 3 };
+const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 3, detay_sol: 3, detay_sag: 3, site_sol: 3, site_sag: 3 };
 // Panel adları panel sayısına göre: 2 panelde üst/alt, 3 panelde üst/orta/alt
 const panelAdi = (no: number, sayi: number) =>
   no === 0 ? 'Fark etmez' : no === 1 ? 'Üstteki panel' : no === sayi ? 'Alttaki panel' : 'Ortadaki panel';
@@ -565,10 +567,32 @@ function ReklamYeriSemasi({ konum, panel }: { konum: ReklamKonumu; panel: number
     </div>
   );
   const detay = konum === 'detay_sol' || konum === 'detay_sag' || konum === 'popup';
+  const sitePanel = konum === 'site_sol' || konum === 'site_sag';
   return (
     <div className="relative w-56 shrink-0 rounded-lg border border-gray-300 bg-gray-50 p-1.5 text-[9px] text-gray-500">
       <div className="h-3 rounded-sm bg-[#1a3a6b] mb-1" />
-      {detay ? (
+      {sitePanel ? (
+        <>
+          <p className="mb-1 text-center">Sanayi sitesi sayfası</p>
+          <div className="flex gap-1">
+            <div className="w-10 space-y-1">
+              {menu}
+              <div className={`h-7 ${yan(panelAktif('site_sol', 1))}`} />
+              <div className={`h-7 ${yan(panelAktif('site_sol', 2))}`} />
+              <div className={`h-7 ${yan(panelAktif('site_sol', 3))}`} />
+            </div>
+            <div className="flex-1 space-y-1">
+              {[0, 1, 2, 3, 4].map(i => <div key={i} className="h-4 rounded-sm bg-gray-200" />)}
+            </div>
+            <div className="w-10 space-y-1">
+              {menu}
+              <div className={`h-7 ${yan(panelAktif('site_sag', 1))}`} />
+              <div className={`h-7 ${yan(panelAktif('site_sag', 2))}`} />
+              <div className={`h-7 ${yan(panelAktif('site_sag', 3))}`} />
+            </div>
+          </div>
+        </>
+      ) : detay ? (
         <>
           <p className="mb-1 text-center">Detay sayfası</p>
           <div className="flex gap-1">
@@ -884,6 +908,8 @@ function ReklamYonetimi({ varsayilanBaslik = '', onFirmaYonetimi, onFirmaDuzenle
               <option value="anasayfa_sag">Ana sayfa – sağ menü panelleri (3 panel)</option>
               <option value="detay_sol">Detay sayfası – sol (3 panel)</option>
               <option value="detay_sag">Detay sayfası – sağ (3 panel)</option>
+              <option value="site_sol">Sanayi sitesi sayfası – sol (3 panel)</option>
+              <option value="site_sag">Sanayi sitesi sayfası – sağ (3 panel)</option>
             </select>
           </div>
           <div>

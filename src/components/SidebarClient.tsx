@@ -32,9 +32,10 @@ interface Props {
   tumKategoriler: string[];
   siteFirmaSayisi: number; // sadece bir sanayi sitesinde kayıtlı firmalar
   ekReklamSayisi?: number; // mevcut reklamın altındaki ek reklam paneli sayısı
+  ekReklamKonumu?: "anasayfa_sol" | "site_sol"; // site sayfasında genel reklam kutusu yerine "Site sayfası – sol" panelleri
 }
 
-export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, siteFirmaSayisi, ekReklamSayisi = 0 }: Props) {
+export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, siteFirmaSayisi, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sol" }: Props) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -87,9 +88,10 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
 
   // Yöneticinin tanımladığı kenar çubuğu reklamı (varsa Google yerine bu gösterilir)
   const { reklam: sbReklam, yuklendi: sbYuklendi } = useOzelReklam("sidebar", activeKategori || undefined);
+  const sitePanelleri = ekReklamKonumu === "site_sol"; // sanayi sitesi sayfası: genel kutu gizli, 3 site paneli var
   const sbPushed = useRef(false);
   useEffect(() => {
-    if (!sbYuklendi || sbReklam) return;
+    if (sitePanelleri || !sbYuklendi || sbReklam) return;
     if (sbPushed.current) return;
     sbPushed.current = true;
     try {
@@ -97,7 +99,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
     } catch {
       // AdSense scripti henüz yüklenmedi
     }
-  }, [sbYuklendi, sbReklam]);
+  }, [sitePanelleri, sbYuklendi, sbReklam]);
 
   const kategoriSayilari = activeSite ? (kategoriSayilariPerSite[activeSite] || {}) : {};
   const gorunurKategoriler = activeSite
@@ -261,7 +263,8 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
 
       {/* Reklamlar kaydırırken ekranda sabit kalır */}
       <SabitReklamAlani>
-      {/* Reklam Alanı (özel reklam varsa Google yerine o gösterilir) */}
+      {/* Reklam Alanı (özel reklam varsa Google yerine o gösterilir); sanayi sitesi sayfasında yerine site panelleri çıkar */}
+      {!sitePanelleri && (
       <div className="bg-white rounded-lg border border-[#dde3ec] overflow-hidden">
         <div className="bg-gray-100 text-gray-500 px-3 py-1.5 font-semibold text-xs text-center border-b border-[#dde3ec]">
           Reklam
@@ -292,9 +295,13 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
           ) : null}
         </div>
       </div>
+      )}
 
-      {/* Ek reklam panelleri (Reklam Yönetimi → "Ana sayfa – sol menü"); reklam yoksa "Reklam Ver" görünür */}
-      {ekReklamSayisi > 0 && <ReklamPanelleri konum="anasayfa_sol" adet={ekReklamSayisi} />}
+      {/* Ek reklam panelleri (Reklam Yönetimi → "Ana sayfa – sol menü" ya da "Sanayi sitesi sayfası – sol");
+          reklam yoksa Google, o da yoksa "Reklam Ver" görünür */}
+      {ekReklamSayisi > 0 && (
+        <ReklamPanelleri konum={ekReklamKonumu} adet={ekReklamSayisi} kategori={sitePanelleri ? activeKategori || undefined : undefined} />
+      )}
       </SabitReklamAlani>
     </aside>
   );

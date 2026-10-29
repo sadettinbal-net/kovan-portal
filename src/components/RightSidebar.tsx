@@ -19,9 +19,11 @@ interface Props {
   kurumsalKategoriler?: KategoriSayisi[];
   toplamKurumsal?: number;
   ekReklamSayisi?: number; // menünün altındaki ek reklam paneli sayısı
+  ekReklamKonumu?: "anasayfa_sag" | "site_sag"; // ana sayfa ya da sanayi sitesi sayfası
+  kategori?: string; // site sayfasında seçili kategori (o kategoriye özel reklam varsa o çıkar)
 }
 
-export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0, ekReklamSayisi = 0 }: Props) {
+export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori }: Props) {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -320,10 +322,10 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
         )}
       </div>
 
-      {/* Ek reklam panelleri (Reklam Yönetimi → "Ana sayfa – sağ menü"); reklam yoksa "Reklam Ver" görünür */}
+      {/* Ek reklam panelleri (Reklam Yönetimi → "Ana sayfa – sağ menü" ya da "Sanayi sitesi sayfası – sağ"); reklam yoksa Google, o da yoksa "Reklam Ver" görünür */}
       {ekReklamSayisi > 0 && (
         <SabitReklamAlani className="mt-3">
-          <ReklamPanelleri konum="anasayfa_sag" adet={ekReklamSayisi} />
+          <ReklamPanelleri konum={ekReklamKonumu} adet={ekReklamSayisi} kategori={kategori} />
         </SabitReklamAlani>
       )}
     </aside>

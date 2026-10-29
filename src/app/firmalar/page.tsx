@@ -270,7 +270,8 @@ export default async function FirmalarPage(props: PageProps) {
     <div className="max-w-[1600px] mx-auto px-4 py-6">
       <div className="flex flex-col md:flex-row gap-4">
         <Suspense fallback={<div className="w-64 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-          <Sidebar il={il} />
+          {/* Bir sanayi sitesi seçiliyken sağda ve solda 3'er reklam paneli (Reklam Yönetimi → "Sanayi sitesi sayfası") */}
+          <Sidebar il={il} {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sol" as const } : {})} />
         </Suspense>
 
         <div className="flex-1 min-w-0">
@@ -468,7 +469,7 @@ export default async function FirmalarPage(props: PageProps) {
 
         {/* Sağ menü: ana sayfadaki gibi Sanayi Dışı / Kurumsal kategoriler */}
         <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-          <RightSidebarWrapper />
+          <RightSidebarWrapper {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sag" as const, kategori: kategori || undefined } : {})} />
         </Suspense>
       </div>
     </div>
