@@ -12,7 +12,7 @@ import SabitReklamAlani from "@/components/SabitReklamAlani";
 
 
 // baslik: grup başlığı satırı (ör. Anadolu Yakası); girintili: bir üst sitenin içindeki site
-// ust: içinde bulunduğu sitenin adı (o site ya da kardeşlerinden biri seçiliyken görünür); altSayisi: içindeki site sayısı
+// ust: içinde bulunduğu sitenin adı; altSayisi: içindeki site sayısı (alt siteler hep açık listelenir)
 type SanayiSitesi = {
   id: number;
   name: string;
@@ -196,12 +196,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
               );
             }
             const isActive = activeSite === site.name;
-            // Alt site: sadece üst sitesi ya da aynı üstün başka bir alt sitesi seçiliyken göster
-            const acikUst =
-              activeSite !== "" &&
-              (activeSite === site.ust || sanayiSiteleri.some((s) => s.name === activeSite && s.ust === site.ust));
-            if (site.girintili && !acikUst) return null;
-            const acik = !!site.altSayisi && (isActive || sanayiSiteleri.some((s) => s.name === activeSite && s.ust === site.name));
+            // Çatı sitelerin (ör. Ümraniye Oto Sanayi Sitesi, İkitelli OSB) alt siteleri her zaman altında açık görünür
             return (
               <li key={site.id}>
                 <Link
@@ -210,7 +205,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
                 >
                   <span className="leading-tight">
                     {site.girintili && <span className="text-gray-300 mr-1">└</span>}
-                    {!!site.altSayisi && <span className="text-[#e8a020] mr-1">{acik ? "▾" : "▸"}</span>}
+                    {!!site.altSayisi && <span className="text-[#e8a020] mr-1">▾</span>}
                     {site.name}
                     {site.alt && <span className="text-xs text-gray-500 font-normal ml-1">({site.alt})</span>}
                   </span>
