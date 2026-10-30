@@ -1,3 +1,8 @@
+"use client";
+
+import { useRef } from "react";
+import { useReklamGorunme } from "@/lib/reklamIzleme";
+
 // Reklam görseli + (varsa) üstüne ya da yanına şerit olarak yazılan yazı.
 // Sitedeki bütün özel reklam alanları ve yönetici panelindeki önizleme bunu kullanır.
 
@@ -111,12 +116,15 @@ export default function ReklamGorseli({
   className = "",
   suruklenebilir = false,
 }: {
-  reklam: { gorsel_url: string; baslik?: string | null } & ReklamYazisi;
+  reklam: { id?: number | null; gorsel_url: string; baslik?: string | null } & ReklamYazisi;
   imgClassName?: string;
   className?: string;
   // Yönetici önizlemesi: yazı bandı tutulup sürüklenebilir görünür (sürükleme işini önizleme yapar)
   suruklenebilir?: boolean;
 }) {
+  // Ziyaretçi izleme: reklamın ekranda kaldığı süre (yönetim panelindeki önizlemede sayılmaz)
+  const resimRef = useRef<HTMLImageElement>(null);
+  useReklamGorunme(resimRef, reklam.id);
   const yazi = (reklam.yazi || "").trim();
   const konum = (reklam.yazi_konum as YaziKonumu) || "alt";
   const renk = (reklam.yazi_renk as YaziRengi) || "beyaz";
@@ -162,7 +170,7 @@ export default function ReklamGorseli({
 
   const gorsel = (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={reklam.gorsel_url} alt={reklam.baslik || "Reklam"} className={`block ${imgClassName}`} loading="lazy" draggable={false} data-reklam-resmi="" />
+    <img ref={resimRef} src={reklam.gorsel_url} alt={reklam.baslik || "Reklam"} className={`block ${imgClassName}`} loading="lazy" draggable={false} data-reklam-resmi="" data-reklam-id={reklam.id ?? undefined} />
   );
 
   if (!yaziKutusu) return <div className={className}>{gorsel}</div>;

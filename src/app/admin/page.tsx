@@ -14,6 +14,7 @@ import FirmaSilPenceresi from '@/components/FirmaSilPenceresi';
 import { AdminYeniYorumlar, AdminSikayetler } from '@/components/AdminYorumSekmeleri';
 import AdminMesajlar from '@/components/AdminMesajlar';
 import AdminTelefonTalepleri from '@/components/AdminTelefonTalepleri';
+import AdminZiyaretciler from '@/components/AdminZiyaretciler';
 import { gunBaslangici, gunSonu, musteriFavorisiMi, ozelDurum, tarihKutusu, type OzelDurum } from '@/lib/ozelFirma';
 
 // Özel Firma (sponsorlu) durumunu yönetici paneli için kısa yazıya çevirir
@@ -2083,7 +2084,7 @@ function AdminFirmaYorumlari({ firmaId }: { firmaId: number }) {
 
 // ─── Admin Panel ─────────────────────────────────────────────────────────────
 function AdminPanel() {
-  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri' | 'kategoriler' | 'firma-ekle' | 'yeni-yorumlar' | 'sikayetler' | 'reklam-mesajlari' | 'telefon-talepleri'>('bekleyen');
+  const [aktifSekme, setAktifSekme] = useState<'bekleyen' | 'ilanlar' | 'firmalar' | 'ilan-yonetimi' | 'uyeler' | 'istatistikler' | 'guncelleme-talepleri' | 'site-kullanimi' | 'reklamlar' | 'sanayi-siteleri' | 'kategoriler' | 'firma-ekle' | 'yeni-yorumlar' | 'sikayetler' | 'reklam-mesajlari' | 'telefon-talepleri' | 'ziyaretciler'>('bekleyen');
   const [bekleyenSayi, setBekleyenSayi] = useState(0);
   const [bekleyenIlanSayi, setBekleyenIlanSayi] = useState(0);
   const [bekleyenGuncellemeSayi, setBekleyenGuncellemeSayi] = useState(0);
@@ -2518,6 +2519,10 @@ function AdminPanel() {
           <button onClick={() => setAktifSekme('istatistikler')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'istatistikler' ? 'bg-[#e8a020] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
             📊 İstatistikler
+          </button>
+          <button onClick={() => setAktifSekme('ziyaretciler')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'ziyaretciler' ? 'bg-[#e8a020] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+            👣 Ziyaretçiler
           </button>
           <button onClick={() => setAktifSekme('site-kullanimi')}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${aktifSekme === 'site-kullanimi' ? 'bg-[#1a3a6b] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
@@ -3029,6 +3034,8 @@ function AdminPanel() {
       {aktifSekme === 'uyeler' && <UyeListesi />}
 
       {aktifSekme === 'istatistikler' && <Istatistikler />}
+
+      {aktifSekme === 'ziyaretciler' && <AdminZiyaretciler />}
 
       {aktifSekme === 'site-kullanimi' && <SiteKullanimiYonetimi />}
 

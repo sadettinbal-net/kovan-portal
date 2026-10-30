@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import CookieBanner from "@/components/CookieBanner";
 import AdSenseYukle from "@/components/AdSenseYukle";
 import ZiyaretTakip from "@/components/ZiyaretTakip";
+import ZiyaretciIzleme from "@/components/ZiyaretciIzleme";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { OnlineProvider } from "@/contexts/OnlineContext";
 import type { Lang } from "@/lib/translations";
@@ -53,6 +54,8 @@ export default async function RootLayout({
         <LanguageProvider initial={lang}>
           <OnlineProvider>
           <ZiyaretTakip />
+          {/* Yönetim Paneli → Ziyaretçiler: IP, konum, cihaz, süre, gezilen sayfalar ve tıklamalar */}
+          <ZiyaretciIzleme />
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer lang={lang} />
