@@ -24,7 +24,7 @@ function adminClient() {
   );
 }
 
-const KONUMLAR = ['video', 'sidebar', 'popup', 'anasayfa_ust', 'anasayfa_sol', 'anasayfa_sag', 'detay_sol', 'detay_sag', 'site_sol', 'site_sag'];
+const KONUMLAR = ['video', 'sidebar', 'popup', 'anasayfa_ust', 'anasayfa_sol', 'anasayfa_sag', 'detay_sol', 'detay_sag', 'site_sol', 'site_sag', 'tip_sol', 'tip_sag'];
 
 // Public: bir alandaki (konum) yayında olan özel reklamları döndürür.
 // "Yayında" = aktif + (başlangıç tarihi geçmiş/boş) + (bitiş tarihi gelmemiş/boş)

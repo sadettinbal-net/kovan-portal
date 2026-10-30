@@ -32,7 +32,7 @@ interface Props {
   tumKategoriler: string[];
   siteFirmaSayisi: number; // sadece bir sanayi sitesinde kayıtlı firmalar
   ekReklamSayisi?: number; // mevcut reklamın altındaki ek reklam paneli sayısı
-  ekReklamKonumu?: "anasayfa_sol" | "site_sol"; // site sayfasında genel reklam kutusu yerine "Site sayfası – sol" panelleri
+  ekReklamKonumu?: "anasayfa_sol" | "site_sol" | "tip_sol"; // site sayfasında genel reklam kutusu yerine "Site sayfası – sol" panelleri
 }
 
 export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariPerSite, tumKategoriler, siteFirmaSayisi, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sol" }: Props) {
@@ -88,7 +88,7 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
 
   // Yöneticinin tanımladığı kenar çubuğu reklamı (varsa Google yerine bu gösterilir)
   const { reklam: sbReklam, yuklendi: sbYuklendi } = useOzelReklam("sidebar", activeKategori || undefined);
-  const sitePanelleri = ekReklamKonumu === "site_sol"; // sanayi sitesi sayfası: genel kutu gizli, 3 site paneli var
+  const sitePanelleri = ekReklamKonumu === "site_sol" || ekReklamKonumu === "tip_sol"; // sanayi sitesi / Sanayi Dışı / Kurumsal sayfası: genel kutu gizli, 3 panel var
   const sbPushed = useRef(false);
   useEffect(() => {
     if (sitePanelleri || !sbYuklendi || sbReklam) return;

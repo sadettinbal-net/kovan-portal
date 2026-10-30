@@ -50,7 +50,7 @@ function grupla(kategoriler: FirmaKategorisi[], tip: KategoriTipi, sayi: Map<num
 
 // ekReklamSayisi: menünün altına eklenecek ek reklam paneli sayısı
 // ekReklamKonumu: ana sayfada "anasayfa_sag", sanayi sitesi sayfasında "site_sag"
-export default async function RightSidebarWrapper({ ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori }: { ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sag" | "site_sag"; kategori?: string }) {
+export default async function RightSidebarWrapper({ ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori }: { ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sag" | "site_sag" | "tip_sag"; kategori?: string }) {
   const [kategoriler, sayilar, toplamSanayiDisi, toplamKurumsal] = await Promise.all([
     aktifKategoriler(supabase),
     kategoriSayilari(),

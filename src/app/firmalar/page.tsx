@@ -66,6 +66,8 @@ export default async function FirmalarPage(props: PageProps) {
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
   const t = translations[lang];
   const { il, ilce, mahalle, sokak, site, sanayi_sitesi, firma_tipi, kategori, ara } = searchParams;
+  // Sağ menüden Sanayi Dışı ya da Kurumsal firmalar açıldıysa (sağda ve solda 3'er reklam paneli çıkar)
+  const tipSayfasi = !site && (firma_tipi === "sitesiz" || firma_tipi === "kurumsal" || sanayi_sitesi === "yok");
   const mahalleId = parseInt(mahalle || "") || null;
   const sokakId = parseInt(sokak || "") || null;
   const rawLimit = parseInt(searchParams.limit || "") || DEFAULT_LIMIT;
@@ -270,8 +272,9 @@ export default async function FirmalarPage(props: PageProps) {
     <div className="max-w-[1600px] mx-auto px-4 py-6">
       <div className="flex flex-col md:flex-row gap-4">
         <Suspense fallback={<div className="w-64 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-          {/* Bir sanayi sitesi seçiliyken sağda ve solda 3'er reklam paneli (Reklam Yönetimi → "Sanayi sitesi sayfası") */}
-          <Sidebar il={il} {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sol" as const } : {})} />
+          {/* Bir sanayi sitesi seçiliyken sağda ve solda 3'er reklam paneli (Reklam Yönetimi → "Sanayi sitesi sayfası");
+              Sanayi Dışı / Kurumsal firmalar listelenirken de 3'er panel (Reklam Yönetimi → "Sanayi dışı / Kurumsal sayfası") */}
+          <Sidebar il={il} {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sol" as const } : tipSayfasi ? { ekReklamSayisi: 3, ekReklamKonumu: "tip_sol" as const } : {})} />
         </Suspense>
 
         <div className="flex-1 min-w-0">
@@ -469,7 +472,7 @@ export default async function FirmalarPage(props: PageProps) {
 
         {/* Sağ menü: ana sayfadaki gibi Sanayi Dışı / Kurumsal kategoriler */}
         <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-          <RightSidebarWrapper {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sag" as const, kategori: kategori || undefined } : {})} />
+          <RightSidebarWrapper {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sag" as const, kategori: kategori || undefined } : tipSayfasi ? { ekReklamSayisi: 3, ekReklamKonumu: "tip_sag" as const, kategori: kategori || undefined } : {})} />
         </Suspense>
       </div>
     </div>
