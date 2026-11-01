@@ -21,9 +21,13 @@ interface Props {
   ekReklamSayisi?: number; // menünün altındaki ek reklam paneli sayısı
   ekReklamKonumu?: "anasayfa_sag" | "site_sag" | "tip_sag"; // ana sayfa ya da sanayi sitesi sayfası
   kategori?: string; // site sayfasında seçili kategori (o kategoriye özel reklam varsa o çıkar)
+  il?: string; // seçili il (Konuma Göre Ara): bağlantılar o ilin firmalarını açar
+  ilce?: string; // seçili ilçe: bağlantılar o ilçenin firmalarını açar
 }
 
-export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori }: Props) {
+export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori, il, ilce }: Props) {
+  // Firmalar sayfası bağlantılarına seçili il (ve ilçe) eklenir
+  const ilEki = (il ? `&il=${encodeURIComponent(il)}` : "") + (il && ilce ? `&ilce=${encodeURIComponent(ilce)}` : "");
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -217,7 +221,7 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
           <ul className={`${menuOpen ? "block" : "hidden"} lg:block max-h-[28rem] overflow-y-auto`}>
             <li>
               <Link
-                href="/firmalar?firma_tipi=sitesiz"
+                href={`/firmalar?firma_tipi=sitesiz${ilEki}`}
                 className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-yellow-50 transition-colors ${!activeKategori ? "bg-yellow-50 text-[#e8a020] font-semibold" : "text-gray-700"}`}
               >
                 <span>Tümü</span>
@@ -249,7 +253,7 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
                     return (
                       <Link
                         key={altKat.kategori}
-                        href={`/firmalar?firma_tipi=sitesiz&kategori=${encodeURIComponent(altKat.kategori)}`}
+                        href={`/firmalar?firma_tipi=sitesiz&kategori=${encodeURIComponent(altKat.kategori)}${ilEki}`}
                         className={`flex justify-between items-center pl-8 pr-3 py-1.5 text-xs border-b border-gray-50 hover:bg-yellow-50 transition-colors ${isActive ? "bg-yellow-50 text-[#e8a020] font-bold" : "text-gray-700"}`}
                       >
                         <span>{altKat.kategori}</span>
@@ -273,7 +277,7 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
           <ul className={`${menuOpen ? "block" : "hidden"} lg:block max-h-[28rem] overflow-y-auto`}>
             <li>
               <Link
-                href="/firmalar?firma_tipi=kurumsal"
+                href={`/firmalar?firma_tipi=kurumsal${ilEki}`}
                 className={`flex justify-between items-center px-3 py-2 text-sm font-semibold border-b border-gray-100 hover:bg-blue-50 transition-colors ${!activeKategori ? "bg-blue-50 text-[#1a3a6b] font-semibold" : "text-gray-700"}`}
               >
                 <span>Tümü</span>
@@ -305,7 +309,7 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
                     return (
                       <Link
                         key={altKat.kategori}
-                        href={`/firmalar?firma_tipi=kurumsal&kategori=${encodeURIComponent(altKat.kategori)}`}
+                        href={`/firmalar?firma_tipi=kurumsal&kategori=${encodeURIComponent(altKat.kategori)}${ilEki}`}
                         className={`flex justify-between items-center pl-8 pr-3 py-1.5 text-xs border-b border-gray-50 hover:bg-blue-50 transition-colors ${isActive ? "bg-blue-50 text-[#1a3a6b] font-bold" : "text-gray-700"}`}
                       >
                         <span>{altKat.kategori}</span>

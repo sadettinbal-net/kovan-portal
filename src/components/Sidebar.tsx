@@ -4,7 +4,8 @@ import { onayliFirmaOzetleri, sanayiSiteleriOzeti, siteSatirlari } from "@/lib/s
 // ekReklamSayisi: mevcut reklam alanının altına eklenecek ek reklam paneli sayısı
 // ekReklamKonumu: ana sayfada "anasayfa_sol"; bir sanayi sitesi seçiliyken "site_sol"; Sanayi Dışı / Kurumsal listesinde "tip_sol"
 // (site_sol ve tip_sol'de genel sol menü reklamı yerine bu 3 panel çıkar)
-export default async function Sidebar({ il, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sol" }: { il?: string; ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sol" | "site_sol" | "tip_sol" }) {
+// ilce: Konuma Göre Ara'da ilçe seçiliyken yalnızca o ilçedeki sanayi siteleri ve firma sayıları gösterilir
+export default async function Sidebar({ il, ilce, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sol" }: { il?: string; ilce?: string; ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sol" | "site_sol" | "tip_sol" }) {
   const tumFirmalar = await onayliFirmaOzetleri();
   const tumSiteler = await sanayiSiteleriOzeti(tumFirmalar);
 
@@ -28,7 +29,10 @@ export default async function Sidebar({ il, ekReklamSayisi = 0, ekReklamKonumu =
 
   // İl seçildiyse sadece o ilin siteleri ve firmaları
   const firmalar = il ? tumFirmalar.filter((f) => f.il_adi === il) : tumFirmalar;
-  const siteler = il ? tumSiteler.filter((s) => s.il === il) : tumSiteler;
+  const buyuk = (s: string) => s.toLocaleUpperCase("tr-TR");
+  const siteler = tumSiteler.filter(
+    (s) => (!il || s.il === il) && (!ilce || buyuk(s.ilce || "") === buyuk(ilce))
+  );
 
   // Kategori sayıları; alt sitelerin firmaları üst siteye de sayılır
   const idAdi = new Map(tumSiteler.filter((s) => s.id !== null).map((s) => [s.id, s.name]));
@@ -71,7 +75,11 @@ export default async function Sidebar({ il, ekReklamSayisi = 0, ekReklamKonumu =
       tumKategoriler={tumKategoriler}
       ekReklamSayisi={ekReklamSayisi}
       ekReklamKonumu={ekReklamKonumu}
-      siteFirmaSayisi={firmalar.reduce((t, f) => t + (f.sanayi_sitesi ? f.adet : 0), 0)}
+      siteFirmaSayisi={
+        ilce
+          ? siteler.reduce((t, s) => t + s.firmCount, 0)
+          : firmalar.reduce((t, f) => t + (f.sanayi_sitesi ? f.adet : 0), 0)
+      }
     />
   );
 }

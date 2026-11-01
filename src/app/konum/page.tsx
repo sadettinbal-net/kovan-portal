@@ -6,6 +6,9 @@ import { aktifSponsorlar, OZEL_ALANLAR } from "@/lib/ozelFirma";
 import KonumFiltre from "./KonumFiltre";
 import { onayliFirmaOzetleri, sanayiSiteleriOzeti, siteSatirlari, type SiteOzeti } from "@/lib/sanayiSiteleri";
 import BolgeHaritasi, { type HaritaSorgusu } from "@/components/BolgeHaritasi";
+import Sidebar from "@/components/Sidebar";
+import RightSidebarWrapper from "@/components/RightSidebarWrapper";
+import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -111,7 +114,14 @@ export default async function KonumPage(props: PageProps) {
   const haritaEtiketi = [sokakAdi, mahalleAdi, ilce, il].filter(Boolean).join(", ");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    // Ana sayfadaki gibi: solda sanayi siteleri, sağda Sanayi Dışı / Kurumsal menüsü ve reklamları
+    <div className="max-w-[1600px] mx-auto px-4 py-6">
+      <div className="flex flex-col md:flex-row gap-4">
+      <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
+        {/* İl seçiliyken yan menüler yalnızca o ilin sanayi sitelerini ve firmalarını gösterir */}
+        <Sidebar il={il || undefined} ilce={ilce || undefined} ekReklamSayisi={2} />
+      </Suspense>
+      <div className="flex-1 min-w-0">
       <nav className="text-sm text-gray-500 mb-4">
         <Link href="/" className="hover:text-[#1a3a6b]">Anasayfa</Link>
         <span className="mx-2">›</span>
@@ -133,7 +143,7 @@ export default async function KonumPage(props: PageProps) {
             🏭 İllere Göre Sanayi Siteleri{" "}
             <span className="text-sm font-normal text-gray-500">({ilOzetleri.reduce((t, i) => t + i.siteCount, 0)} site)</span>
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {ilOzetleri.map((i) => (
               <Link
                 key={i.il}
@@ -235,6 +245,11 @@ export default async function KonumPage(props: PageProps) {
           </section>
         </div>
       )}
+      </div>
+      <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
+        <RightSidebarWrapper il={il || undefined} ilce={ilce || undefined} ekReklamSayisi={3} />
+      </Suspense>
+      </div>
     </div>
   );
 }

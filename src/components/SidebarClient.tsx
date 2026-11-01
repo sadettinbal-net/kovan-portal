@@ -40,12 +40,13 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeIl = searchParams.get("il") || "";
+  const activeIlce = searchParams.get("ilce") || "";
   const activeSite = searchParams.get("site") || "";
   const activeKategori = searchParams.get("kategori") || "";
 
-  // Firmalar sayfası bağlantısı; seçili il korunur
+  // Firmalar sayfası bağlantısı; seçili il (ve ilçe) korunur
   const firmalarUrl = (extra: Record<string, string> = {}) => {
-    const q = new URLSearchParams({ ...(activeIl ? { il: activeIl } : {}), ...extra });
+    const q = new URLSearchParams({ ...(activeIl ? { il: activeIl } : {}), ...(activeIl && activeIlce ? { ilce: activeIlce } : {}), ...extra });
     const s = q.toString();
     return `/firmalar${s ? `?${s}` : ""}`;
   };

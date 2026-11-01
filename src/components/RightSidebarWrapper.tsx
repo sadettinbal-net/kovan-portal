@@ -8,12 +8,15 @@ import { aktifKategoriler, kategoriGruplari, type FirmaKategorisi, type Kategori
 type Grup = "sitesiz" | "kurumsal";
 
 // Toplam rozet sayısı: gerçek sayım (count: exact), süzgeçler eskisiyle aynı
-async function onayliFirmaSayisi(firmaTipi: Grup) {
+// il / ilce verilirse (Konuma Göre Ara'da seçiliyken) yalnızca o il / ilçenin firmaları sayılır
+async function onayliFirmaSayisi(firmaTipi: Grup, il?: string, ilce?: string) {
   let query = supabase
     .from("firmalar")
     .select("id", { count: "exact", head: true })
     .not("ad", "ilike", "(Firma%")
     .eq("onay_durumu", "onaylandi");
+  if (il) query = query.eq("il_adi", il);
+  if (il && ilce) query = query.eq("ilce_adi", ilce);
   query =
     firmaTipi === "sitesiz"
       ? query.or("firma_tipi.eq.sitesiz,and(firma_tipi.is.null,or(sanayi_sitesi.is.null,sanayi_sitesi.eq.))")
@@ -23,8 +26,11 @@ async function onayliFirmaSayisi(firmaTipi: Grup) {
 }
 
 // Kategori başına sayılar tek RPC ile (supabase/migrations/20261009010000_firma_kategori_sayilari.sql)
-async function kategoriSayilari() {
-  const { data } = await supabase.rpc("firma_kategori_sayilari");
+// il verilirse firma_kategori_sayilari_ilce (supabase/migrations/20261101010000_firma_kategori_sayilari_ilce.sql)
+async function kategoriSayilari(il?: string, ilce?: string) {
+  const { data } = il
+    ? await supabase.rpc("firma_kategori_sayilari_ilce", { p_il: il, p_ilce: ilce || null })
+    : await supabase.rpc("firma_kategori_sayilari");
   const sayilar: Record<Grup, Map<number, number>> = { sitesiz: new Map(), kurumsal: new Map() };
   for (const r of (data || []) as { grup: Grup; kategori_id: number | null; sayi: number }[]) {
     if (r.kategori_id) sayilar[r.grup]?.set(Number(r.kategori_id), Number(r.sayi));
@@ -50,12 +56,13 @@ function grupla(kategoriler: FirmaKategorisi[], tip: KategoriTipi, sayi: Map<num
 
 // ekReklamSayisi: menünün altına eklenecek ek reklam paneli sayısı
 // ekReklamKonumu: ana sayfada "anasayfa_sag", sanayi sitesi sayfasında "site_sag"
-export default async function RightSidebarWrapper({ ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori }: { ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sag" | "site_sag" | "tip_sag"; kategori?: string }) {
+// il / ilce: verilirse menüdeki sayılar ve bağlantılar yalnızca o il / ilçenin firmaları içindir (Konuma Göre Ara)
+export default async function RightSidebarWrapper({ ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori, il, ilce }: { ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sag" | "site_sag" | "tip_sag"; kategori?: string; il?: string; ilce?: string }) {
   const [kategoriler, sayilar, toplamSanayiDisi, toplamKurumsal] = await Promise.all([
     aktifKategoriler(supabase),
-    kategoriSayilari(),
-    onayliFirmaSayisi("sitesiz"),
-    onayliFirmaSayisi("kurumsal"),
+    kategoriSayilari(il, ilce),
+    onayliFirmaSayisi("sitesiz", il, ilce),
+    onayliFirmaSayisi("kurumsal", il, ilce),
   ]);
 
   return (
@@ -67,6 +74,8 @@ export default async function RightSidebarWrapper({ ekReklamSayisi = 0, ekReklam
       ekReklamSayisi={ekReklamSayisi}
       ekReklamKonumu={ekReklamKonumu}
       kategori={kategori}
+      il={il}
+      ilce={il ? ilce : undefined}
     />
   );
 }
