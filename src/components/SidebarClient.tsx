@@ -68,13 +68,20 @@ export default function SidebarClient({ iller, sanayiSiteleri, kategoriSayilariP
       return;
     }
     const timeout = setTimeout(async () => {
-      const res = await fetch(`/api/arama-sanayi-siteleri?q=${encodeURIComponent(aramaMetni)}`);
+      // Seçili il / ilçe / mahalle / sokak aramaya eklenir: yalnızca o bölgedeki siteler ve firmalar gelir
+      const p = new URLSearchParams({ q: aramaMetni });
+      for (const k of ["il", "ilce", "mahalle", "sokak"]) {
+        const v = searchParams.get(k);
+        if (v) p.set(k, v);
+      }
+      const res = await fetch(`/api/arama-sanayi-siteleri?${p.toString()}`);
       const data = await res.json();
       setAramaSonuclari(data.sonuclar || []);
       setAramaAcik(true);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [aramaMetni]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aramaMetni, searchParams.toString()]);
 
   // Click outside
   useEffect(() => {

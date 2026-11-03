@@ -70,7 +70,8 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
 
   const aramaGetir = async (bas: number) => {
     const apiUrl = sekme === 'sitesiz' ? '/api/arama-sitesiz' : '/api/arama-kurumsal';
-    const res = await fetch(`${apiUrl}?q=${encodeURIComponent(aramaMetni)}&bas=${bas}`);
+    // Seçili il / ilçe / mahalle / sokak varsa yalnızca o bölgenin firmaları aranır (ilEki menüdeki bağlantılarla aynı)
+    const res = await fetch(`${apiUrl}?q=${encodeURIComponent(aramaMetni)}&bas=${bas}${ilEki}`);
     return res.json();
   };
 
@@ -92,7 +93,7 @@ export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiD
     }, 300);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aramaMetni, sekme]);
+  }, [aramaMetni, sekme, ilEki]);
 
   // Sonsuz kaydırma: kutunun sonuna yaklaşınca sıradaki sonuçlar eklenir
   const sonucKaydirildi = async (e: React.UIEvent<HTMLDivElement>) => {
