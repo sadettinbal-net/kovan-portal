@@ -23,11 +23,17 @@ interface Props {
   kategori?: string; // site sayfasında seçili kategori (o kategoriye özel reklam varsa o çıkar)
   il?: string; // seçili il (Konuma Göre Ara): bağlantılar o ilin firmalarını açar
   ilce?: string; // seçili ilçe: bağlantılar o ilçenin firmalarını açar
+  mahalle?: string; // seçili mahalle numarası
+  sokak?: string; // seçili sokak numarası
 }
 
-export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori, il, ilce }: Props) {
+export default function RightSidebar({ sanayiDisiKategoriler = [], toplamSanayiDisi = 0, kurumsalKategoriler = [], toplamKurumsal = 0, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori, il, ilce, mahalle, sokak }: Props) {
   // Firmalar sayfası bağlantılarına seçili il (ve ilçe) eklenir
-  const ilEki = (il ? `&il=${encodeURIComponent(il)}` : "") + (il && ilce ? `&ilce=${encodeURIComponent(ilce)}` : "");
+  const ilEki =
+    (il ? `&il=${encodeURIComponent(il)}` : "") +
+    (il && ilce ? `&ilce=${encodeURIComponent(ilce)}` : "") +
+    (il && ilce && mahalle ? `&mahalle=${encodeURIComponent(mahalle)}` : "") +
+    (il && ilce && mahalle && sokak ? `&sokak=${encodeURIComponent(sokak)}` : "");
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();

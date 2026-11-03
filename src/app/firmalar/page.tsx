@@ -472,7 +472,14 @@ export default async function FirmalarPage(props: PageProps) {
 
         {/* Sağ menü: ana sayfadaki gibi Sanayi Dışı / Kurumsal kategoriler */}
         <Suspense fallback={<div className="w-72 animate-pulse bg-gray-200 rounded-lg h-96" />}>
-          <RightSidebarWrapper {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sag" as const, kategori: kategori || undefined } : tipSayfasi ? { ekReklamSayisi: 3, ekReklamKonumu: "tip_sag" as const, kategori: kategori || undefined } : {})} />
+          {/* Seçili il / ilçe / mahalle / sokak varsa sağ menüdeki sayılar ve bağlantılar da o bölgeye göre */}
+          <RightSidebarWrapper
+            il={il || undefined}
+            ilce={ilce || undefined}
+            mahalle={mahalle || undefined}
+            sokak={sokak || undefined}
+            {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sag" as const, kategori: kategori || undefined } : tipSayfasi ? { ekReklamSayisi: 3, ekReklamKonumu: "tip_sag" as const, kategori: kategori || undefined } : {})}
+          />
         </Suspense>
       </div>
     </div>
