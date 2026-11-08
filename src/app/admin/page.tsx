@@ -509,7 +509,7 @@ function SiteKullanimiYonetimi() {
 }
 
 // ─── Reklam Yönetimi ─────────────────────────────────────────────────────────
-type ReklamKonumu = 'video' | 'sidebar' | 'popup' | 'anasayfa_ust' | 'anasayfa_sol' | 'anasayfa_sag' | 'detay_sol' | 'detay_sag' | 'site_sol' | 'site_sag' | 'tip_sol' | 'tip_sag';
+type ReklamKonumu = 'video' | 'sidebar' | 'popup' | 'anasayfa_ust' | 'anasayfa_sol' | 'anasayfa_sag' | 'detay_sol' | 'detay_sag' | 'site_sol' | 'site_sag' | 'tip_sol' | 'tip_sag' | 'firmalar_sol' | 'firmalar_sag' | 'ozel_sol' | 'ozel_sag';
 const KONUM_ADLARI: Record<ReklamKonumu, string> = {
   video: 'Sayfa-içi video',
   popup: 'Popup',
@@ -523,6 +523,10 @@ const KONUM_ADLARI: Record<ReklamKonumu, string> = {
   site_sag: 'Sanayi sitesi sayfası – sağ',
   tip_sol: 'Sanayi dışı / Kurumsal sayfası – sol',
   tip_sag: 'Sanayi dışı / Kurumsal sayfası – sağ',
+  firmalar_sol: 'Firmalar sayfası – sol',
+  firmalar_sag: 'Firmalar sayfası – sağ',
+  ozel_sol: 'Özel Firmalar sayfası – sol',
+  ozel_sag: 'Özel Firmalar sayfası – sağ',
 };
 type Reklam = {
   id: number;
@@ -550,7 +554,7 @@ type Reklam = {
 };
 
 // Birden çok paneli olan alanlar ve panel sayıları (sayfalardaki panel sayısıyla aynı olmalı)
-const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 3, detay_sol: 3, detay_sag: 3, site_sol: 3, site_sag: 3, tip_sol: 3, tip_sag: 3 };
+const PANEL_SAYISI: Partial<Record<ReklamKonumu, number>> = { anasayfa_sol: 2, anasayfa_sag: 3, detay_sol: 3, detay_sag: 3, site_sol: 3, site_sag: 3, tip_sol: 3, tip_sag: 3, firmalar_sol: 3, firmalar_sag: 3, ozel_sol: 3, ozel_sag: 3 };
 // Panel adları panel sayısına göre: 2 panelde üst/alt, 3 panelde üst/orta/alt
 const panelAdi = (no: number, sayi: number) =>
   no === 0 ? 'Fark etmez' : no === 1 ? 'Üstteki panel' : no === sayi ? 'Alttaki panel' : 'Ortadaki panel';
@@ -570,16 +574,21 @@ function ReklamYeriSemasi({ konum, panel }: { konum: ReklamKonumu; panel: number
     </div>
   );
   const detay = konum === 'detay_sol' || konum === 'detay_sag' || konum === 'popup';
-  const sitePanel = konum === 'site_sol' || konum === 'site_sag' || konum === 'tip_sol' || konum === 'tip_sag';
-  const tipPanel = konum === 'tip_sol' || konum === 'tip_sag';
-  const sol: ReklamKonumu = tipPanel ? 'tip_sol' : 'site_sol';
-  const sag: ReklamKonumu = tipPanel ? 'tip_sag' : 'site_sag';
+  // Sağda ve solda 3'er panel olan sayfalar: şemada sayfa adı ve sol / sağ alan
+  const UC_PANELLI: Partial<Record<ReklamKonumu, [string, ReklamKonumu, ReklamKonumu]>> = {
+    site_sol: ['Sanayi sitesi sayfası', 'site_sol', 'site_sag'], site_sag: ['Sanayi sitesi sayfası', 'site_sol', 'site_sag'],
+    tip_sol: ['Sanayi dışı / Kurumsal sayfası', 'tip_sol', 'tip_sag'], tip_sag: ['Sanayi dışı / Kurumsal sayfası', 'tip_sol', 'tip_sag'],
+    firmalar_sol: ['Firmalar sayfası', 'firmalar_sol', 'firmalar_sag'], firmalar_sag: ['Firmalar sayfası', 'firmalar_sol', 'firmalar_sag'],
+    ozel_sol: ['Özel Firmalar sayfası', 'ozel_sol', 'ozel_sag'], ozel_sag: ['Özel Firmalar sayfası', 'ozel_sol', 'ozel_sag'],
+  };
+  const sitePanel = !!UC_PANELLI[konum];
+  const [sayfaAdi, sol, sag] = UC_PANELLI[konum] || ['', 'site_sol', 'site_sag'];
   return (
     <div className="relative w-56 shrink-0 rounded-lg border border-gray-300 bg-gray-50 p-1.5 text-[9px] text-gray-500">
       <div className="h-3 rounded-sm bg-[#1a3a6b] mb-1" />
       {sitePanel ? (
         <>
-          <p className="mb-1 text-center">{tipPanel ? 'Sanayi dışı / Kurumsal sayfası' : 'Sanayi sitesi sayfası'}</p>
+          <p className="mb-1 text-center">{sayfaAdi}</p>
           <div className="flex gap-1">
             <div className="w-10 space-y-1">
               {menu}
@@ -908,7 +917,7 @@ function ReklamYonetimi({ varsayilanBaslik = '', onFirmaYonetimi, onFirmaDuzenle
             <select value={konum} onChange={e => { const k = e.target.value as ReklamKonumu; setKonum(k); if (panel > (PANEL_SAYISI[k] || 0)) setPanel(0); }} className={inputCls}>
               <option value="video">Sayfa-içi video (sayfa gövdesi)</option>
               <option value="popup">Popup (detay sayfası açılınca)</option>
-              <option value="sidebar">Sol menü reklam kutusu (ana sayfa ve firmalar sayfası)</option>
+              <option value="sidebar">Sol menü reklam kutusu (ana sayfa)</option>
               <option value="anasayfa_ust">Ana sayfa üst şerit (arama kutusunun altı)</option>
               <option value="anasayfa_sol">Ana sayfa – sol menü panelleri (2 panel)</option>
               <option value="anasayfa_sag">Ana sayfa – sağ menü panelleri (3 panel)</option>
@@ -918,6 +927,10 @@ function ReklamYonetimi({ varsayilanBaslik = '', onFirmaYonetimi, onFirmaDuzenle
               <option value="site_sag">Sanayi sitesi sayfası – sağ (3 panel)</option>
               <option value="tip_sol">Sanayi dışı / Kurumsal sayfası – sol (3 panel)</option>
               <option value="tip_sag">Sanayi dışı / Kurumsal sayfası – sağ (3 panel)</option>
+              <option value="firmalar_sol">Firmalar sayfası – sol (3 panel)</option>
+              <option value="firmalar_sag">Firmalar sayfası – sağ (3 panel)</option>
+              <option value="ozel_sol">Özel Firmalar sayfası – sol (3 panel)</option>
+              <option value="ozel_sag">Özel Firmalar sayfası – sağ (3 panel)</option>
             </select>
           </div>
           <div>

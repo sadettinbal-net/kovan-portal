@@ -3,9 +3,10 @@ import { onayliFirmaOzetleri, sanayiSiteleriOzeti, siteSatirlari } from "@/lib/s
 
 // ekReklamSayisi: mevcut reklam alanının altına eklenecek ek reklam paneli sayısı
 // ekReklamKonumu: ana sayfada "anasayfa_sol"; bir sanayi sitesi seçiliyken "site_sol"; Sanayi Dışı / Kurumsal listesinde "tip_sol"
-// (site_sol ve tip_sol'de genel sol menü reklamı yerine bu 3 panel çıkar)
+// Firmalar sayfasında (site / tip seçili değilken) "firmalar_sol"
+// (site_sol, tip_sol ve firmalar_sol'de genel sol menü reklamı yerine bu 3 panel çıkar)
 // ilce: Konuma Göre Ara'da ilçe seçiliyken yalnızca o ilçedeki sanayi siteleri ve firma sayıları gösterilir
-export default async function Sidebar({ il, ilce, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sol" }: { il?: string; ilce?: string; ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sol" | "site_sol" | "tip_sol" }) {
+export default async function Sidebar({ il, ilce, ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sol" }: { il?: string; ilce?: string; ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sol" | "site_sol" | "tip_sol" | "firmalar_sol" }) {
   const tumFirmalar = await onayliFirmaOzetleri();
   const tumSiteler = await sanayiSiteleriOzeti(tumFirmalar);
 

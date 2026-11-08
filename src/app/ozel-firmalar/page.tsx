@@ -1,5 +1,6 @@
 import Link from "next/link";
 import FirmaKart from "@/components/FirmaKart";
+import YanReklamCercevesi from "@/components/YanReklamCercevesi";
 import { supabase } from "@/lib/supabase";
 import { cookies } from "next/headers";
 import { translations } from "@/lib/translations";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 const SECIM_SELECT =
   `id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ${OZEL_ALANLAR}`;
 
+// Sağda ve solda 3'er reklam paneli (Reklam Yönetimi → "Özel Firmalar sayfası – sol / sağ"); kartlar ana sayfadaki boyutta kalır.
 // İki bölüm: 💎 Özel Firmalar (yönetici verir, süreli, sponsorlu) ve ⭐ Müşteri Favorileri (puanla, otomatik).
 export default async function OzelFirmalarPage() {
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
@@ -29,7 +31,8 @@ export default async function OzelFirmalarPage() {
   ]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
+    <YanReklamCercevesi solKonum="ozel_sol" sagKonum="ozel_sag">
+    <div className="px-4 lg:px-0 py-6">
       <nav className="text-sm text-gray-500 mb-4">
         <Link href="/" className="hover:text-[#1a3a6b]">
           {t.breadHome}
@@ -84,5 +87,6 @@ export default async function OzelFirmalarPage() {
         )}
       </section>
     </div>
+    </YanReklamCercevesi>
   );
 }

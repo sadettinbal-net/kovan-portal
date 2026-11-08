@@ -44,7 +44,7 @@ function grupla(kategoriler: FirmaKategorisi[], tip: KategoriTipi, sayi: Map<num
 // ekReklamSayisi: menünün altına eklenecek ek reklam paneli sayısı
 // ekReklamKonumu: ana sayfada "anasayfa_sag", sanayi sitesi sayfasında "site_sag"
 // il / ilce: verilirse menüdeki sayılar ve bağlantılar yalnızca o il / ilçenin firmaları içindir (Konuma Göre Ara)
-export default async function RightSidebarWrapper({ ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori, il, ilce, mahalle, sokak }: { ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sag" | "site_sag" | "tip_sag"; kategori?: string; il?: string; ilce?: string; mahalle?: string; sokak?: string }) {
+export default async function RightSidebarWrapper({ ekReklamSayisi = 0, ekReklamKonumu = "anasayfa_sag", kategori, il, ilce, mahalle, sokak }: { ekReklamSayisi?: number; ekReklamKonumu?: "anasayfa_sag" | "site_sag" | "tip_sag" | "firmalar_sag"; kategori?: string; il?: string; ilce?: string; mahalle?: string; sokak?: string }) {
   // Mahalle / sokak yalnızca il ve ilçe ile birlikte anlamlı (numarayla gelir)
   const ilceSecili = il && ilce ? ilce : undefined;
   const mahalleNo = ilceSecili ? parseInt(mahalle || "") || undefined : undefined;

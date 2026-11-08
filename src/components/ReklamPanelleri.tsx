@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import YanReklam from "@/components/YanReklam";
 import type { SlotReklam } from "@/lib/useOzelReklam";
 
-export type YanReklamKonumu = "anasayfa_sol" | "anasayfa_sag" | "detay_sol" | "detay_sag" | "site_sol" | "site_sag" | "tip_sol" | "tip_sag";
+export type YanReklamKonumu = "anasayfa_sol" | "anasayfa_sag" | "detay_sol" | "detay_sag" | "site_sol" | "site_sag" | "tip_sol" | "tip_sag" | "firmalar_sol" | "firmalar_sag" | "ozel_sol" | "ozel_sag";
 
 type PanelliReklam = SlotReklam & { panel?: number | null };
 

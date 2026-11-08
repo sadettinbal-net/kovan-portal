@@ -19,7 +19,7 @@ interface Props {
   kurumsalKategoriler?: KategoriSayisi[];
   toplamKurumsal?: number;
   ekReklamSayisi?: number; // menünün altındaki ek reklam paneli sayısı
-  ekReklamKonumu?: "anasayfa_sag" | "site_sag" | "tip_sag"; // ana sayfa ya da sanayi sitesi sayfası
+  ekReklamKonumu?: "anasayfa_sag" | "site_sag" | "tip_sag" | "firmalar_sag"; // ana sayfa ya da sanayi sitesi sayfası
   kategori?: string; // site sayfasında seçili kategori (o kategoriye özel reklam varsa o çıkar)
   il?: string; // seçili il (Konuma Göre Ara): bağlantılar o ilin firmalarını açar
   ilce?: string; // seçili ilçe: bağlantılar o ilçenin firmalarını açar

@@ -273,8 +273,9 @@ export default async function FirmalarPage(props: PageProps) {
       <div className="flex flex-col md:flex-row gap-4">
         <Suspense fallback={<div className="w-64 animate-pulse bg-gray-200 rounded-lg h-96" />}>
           {/* Bir sanayi sitesi seçiliyken sağda ve solda 3'er reklam paneli (Reklam Yönetimi → "Sanayi sitesi sayfası");
-              Sanayi Dışı / Kurumsal firmalar listelenirken de 3'er panel (Reklam Yönetimi → "Sanayi dışı / Kurumsal sayfası") */}
-          <Sidebar il={il} {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sol" as const } : tipSayfasi ? { ekReklamSayisi: 3, ekReklamKonumu: "tip_sol" as const } : {})} />
+              Sanayi Dışı / Kurumsal firmalar listelenirken de 3'er panel (Reklam Yönetimi → "Sanayi dışı / Kurumsal sayfası");
+              diğer durumlarda (Firmalar sayfası) yine 3'er panel (Reklam Yönetimi → "Firmalar sayfası") */}
+          <Sidebar il={il} {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sol" as const } : tipSayfasi ? { ekReklamSayisi: 3, ekReklamKonumu: "tip_sol" as const } : { ekReklamSayisi: 3, ekReklamKonumu: "firmalar_sol" as const })} />
         </Suspense>
 
         <div className="flex-1 min-w-0">
@@ -478,7 +479,7 @@ export default async function FirmalarPage(props: PageProps) {
             ilce={ilce || undefined}
             mahalle={mahalle || undefined}
             sokak={sokak || undefined}
-            {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sag" as const, kategori: kategori || undefined } : tipSayfasi ? { ekReklamSayisi: 3, ekReklamKonumu: "tip_sag" as const, kategori: kategori || undefined } : {})}
+            {...(site ? { ekReklamSayisi: 3, ekReklamKonumu: "site_sag" as const, kategori: kategori || undefined } : tipSayfasi ? { ekReklamSayisi: 3, ekReklamKonumu: "tip_sag" as const, kategori: kategori || undefined } : { ekReklamSayisi: 3, ekReklamKonumu: "firmalar_sag" as const, kategori: kategori || undefined })}
           />
         </Suspense>
       </div>
