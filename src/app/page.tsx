@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 import Sidebar from "@/components/Sidebar";
 import RightSidebarWrapper from "@/components/RightSidebarWrapper";
 import AnasayfaBanner from "@/components/AnasayfaBanner";
-import FirmaKart from "@/components/FirmaKart";
+import FirmaKart, { type FirmaKartData } from "@/components/FirmaKart";
 import VideoReklam from "@/components/VideoReklam";
 import { supabase } from "@/lib/supabase";
 import { Suspense } from "react";
@@ -35,13 +35,12 @@ export default async function Home() {
       .from("firmalar")
       .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
       .eq("onay_durumu", "onaylandi")),
+    // Kayıtlı Firmalar: yalnızca sanayi sitesi firmaları; her açılışta farklı sitelerden karışık 21 firma
+    // (her siteden en fazla 1). Veritabanındaki anasayfa_site_firmalari() fonksiyonu seçer
+    // (supabase/migrations/20261108090000_anasayfa_site_firmalari.sql).
     supabase
-      .from("firmalar")
-      .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
-      .not("ad", "ilike", "(Firma%")
-      .eq("onay_durumu", "onaylandi")
-      .order("id", { ascending: false })
-      .limit(21),
+      .rpc("anasayfa_site_firmalari", { p_adet: 21 })
+      .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email"),
     supabase.from("firmalar").select("*", { count: "exact", head: true }).eq("onay_durumu", "onaylandi"),
   ]);
   // Sadece ana siteler (başka bir sitenin içinde olmayanlar); sayılarına alt siteler dahil
@@ -100,7 +99,7 @@ export default async function Home() {
                 </Link>
               </div>
               <div className="grid grid-cols-3 gap-1 phone:gap-2 sm:gap-4">
-                {(sonFirmalar || []).map((firma) => (
+                {((sonFirmalar || []) as unknown as FirmaKartData[]).map((firma) => (
                   <FirmaKart key={firma.id} firma={firma} />
                 ))}
               </div>
