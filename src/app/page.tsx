@@ -21,28 +21,33 @@ const ANASAYFA_SITE_SAYISI = 20;
 export default async function Home() {
   const lang = ((await cookies()).get("lang")?.value ?? "tr") as Lang;
   const t = translations[lang];
-  const tumSiteler = await sanayiSiteleriOzeti(await onayliFirmaOzetleri());
+  // Sorgular birbirini beklemeden aynı anda çalışır (eskiden sırayla bekleniyordu)
+  const [
+    tumSiteler,
+    { data: tumSponsorlar },
+    { data: sonFirmalar },
+    { count },
+  ] = await Promise.all([
+    onayliFirmaOzetleri().then(sanayiSiteleriOzeti),
+    // Özel Firmalar: sadece süresi devam eden sponsorlu firmalar. 6'dan fazlaysa her açılışta karışık 6 tanesi
+    // gösterilir; böylece ücret ödeyen her firma ana sayfada sırayla yer alır.
+    aktifSponsorlar(supabase
+      .from("firmalar")
+      .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
+      .eq("onay_durumu", "onaylandi")),
+    supabase
+      .from("firmalar")
+      .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
+      .not("ad", "ilike", "(Firma%")
+      .eq("onay_durumu", "onaylandi")
+      .order("id", { ascending: false })
+      .limit(21),
+    supabase.from("firmalar").select("*", { count: "exact", head: true }).eq("onay_durumu", "onaylandi"),
+  ]);
   // Sadece ana siteler (başka bir sitenin içinde olmayanlar); sayılarına alt siteler dahil
   // Henüz firması olmayan siteler anasayfada gösterilmez (hepsi "Tüm sanayi siteleri" sayfasında)
   const sanayiSiteleri = tumSiteler.filter((s) => s.ustId === null && s.toplamFirma > 0).slice(0, ANASAYFA_SITE_SAYISI);
-
-  // Özel Firmalar: sadece süresi devam eden sponsorlu firmalar. 6'dan fazlaysa her açılışta karışık 6 tanesi
-  // gösterilir; böylece ücret ödeyen her firma ana sayfada sırayla yer alır.
-  const { data: tumSponsorlar } = await aktifSponsorlar(supabase
-    .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
-    .eq("onay_durumu", "onaylandi"));
   const ozelFirmalar = [...(tumSponsorlar || [])].sort(() => Math.random() - 0.5).slice(0, 6);
-
-  const { data: sonFirmalar } = await supabase
-    .from("firmalar")
-    .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email")
-    .not("ad", "ilike", "(Firma%")
-    .eq("onay_durumu", "onaylandi")
-    .order("id", { ascending: false })
-    .limit(21);
-
-  const { count } = await supabase.from("firmalar").select("*", { count: "exact", head: true }).eq("onay_durumu", "onaylandi");
 
   return (
     <>
