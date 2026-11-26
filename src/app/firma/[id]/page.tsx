@@ -77,6 +77,9 @@ export default async function FirmaDetay({ params }: PageProps) {
     ...(firma.sanayi_sitesi ? [{ adres: ekle(firma.sanayi_sitesi), yakinlik: 16 }] : []),
     ...(firma.ilce_adi && firma.il_adi ? [{ adres: bolgeEki, yakinlik: 13 }] : []),
   ];
+  // Kesin koordinatı olan firmalarda (ör. ATM'ler, zincir mağazalar) harita doğrudan o noktayı gösterir
+  const kesinKonum =
+    firma.enlem != null && firma.boylam != null ? { lat: Number(firma.enlem), lng: Number(firma.boylam) } : null;
 
   return (
     <YanReklamCercevesi kategori={firma.sektor || undefined}>
@@ -398,9 +401,9 @@ export default async function FirmaDetay({ params }: PageProps) {
             </div>
           )}
 
-          {haritaSorgulari.length > 0 && (
+          {(haritaSorgulari.length > 0 || kesinKonum) && (
             <div className="mt-5">
-              <BolgeHaritasi sorgular={haritaSorgulari} etiket={firma.ad} yukseklik={260} />
+              <BolgeHaritasi sorgular={haritaSorgulari} etiket={firma.ad} yukseklik={260} konum={kesinKonum} />
             </div>
           )}
         </div>

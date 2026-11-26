@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 
-// Bir yeri OpenStreetMap'te (Nominatim) arayıp haritada gösterir. Veritabanında koordinat olmadığı için
-// en ayrıntılı adresten başlayıp bulunana kadar daha genel adreslere iner (sokak → mahalle → ilçe → il).
+// Bir yeri haritada gösterir. Kesin koordinat (konum) verilirse doğrudan o nokta kullanılır.
+// Verilmezse yer OpenStreetMap'te (Nominatim) aranır: en ayrıntılı adresten başlayıp bulunana kadar
+// daha genel adreslere iner (sokak → mahalle → ilçe → il).
 export type HaritaSorgusu = { adres: string; yakinlik: number };
+export type KesinKonum = { lat: number; lng: number };
 
 const ONBELLEK = new Map<string, { lat: number; lng: number } | null>();
 
@@ -25,14 +27,17 @@ export default function BolgeHaritasi({
   sorgular,
   etiket,
   yukseklik = 320,
+  konum,
 }: {
   sorgular: HaritaSorgusu[];
   etiket: string;
   yukseklik?: number;
+  konum?: KesinKonum | null;
 }) {
   const kutu = useRef<HTMLDivElement>(null);
   const [durum, setDurum] = useState<'yukleniyor' | 'hazir' | 'bulunamadi'>('yukleniyor');
-  const anahtar = sorgular.map((s) => s.adres).join('|');
+  const kesin = konum && Number.isFinite(konum.lat) && Number.isFinite(konum.lng) ? konum : null;
+  const anahtar = (kesin ? `${kesin.lat},${kesin.lng}|` : '') + sorgular.map((s) => s.adres).join('|');
 
   useEffect(() => {
     let iptal = false;
@@ -42,8 +47,8 @@ export default function BolgeHaritasi({
       setDurum('yukleniyor');
       const L = (await import('leaflet')).default;
 
-      let bulunan: { lat: number; lng: number; yakinlik: number } | null = null;
-      for (const s of sorgular) {
+      let bulunan: { lat: number; lng: number; yakinlik: number } | null = kesin ? { ...kesin, yakinlik: 17 } : null;
+      for (const s of bulunan ? [] : sorgular) {
         try {
           const konum = await adresBul(s.adres);
           if (konum) {
@@ -83,7 +88,9 @@ export default function BolgeHaritasi({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anahtar, etiket]);
 
-  const haritaLinki = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sorgular[0]?.adres || '')}`;
+  const haritaLinki = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    kesin ? `${kesin.lat},${kesin.lng}` : sorgular[0]?.adres || ''
+  )}`;
 
   return (
     <div className="bg-white rounded-xl border border-[#dde3ec] overflow-hidden">
@@ -96,7 +103,7 @@ export default function BolgeHaritasi({
         )}
       </div>
       <div className="flex items-center justify-between gap-3 px-4 py-2 text-xs text-gray-500 border-t border-[#dde3ec]">
-        <span>Konum yaklaşıktır.</span>
+        <span>{kesin ? 'Konum firmanın bildirdiği noktadır.' : 'Konum yaklaşıktır.'}</span>
         <a href={haritaLinki} target="_blank" rel="noopener noreferrer" className="text-[#2554a0] font-semibold hover:underline">
           Google Haritalar&apos;da aç →
         </a>
