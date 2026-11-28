@@ -26,7 +26,7 @@ export default async function Home() {
     tumSiteler,
     { data: tumSponsorlar },
     { data: sonFirmalar },
-    { count },
+    { data: count },
   ] = await Promise.all([
     onayliFirmaOzetleri().then(sanayiSiteleriOzeti),
     // Özel Firmalar: sadece süresi devam eden sponsorlu firmalar. 6'dan fazlaysa her açılışta karışık 6 tanesi
@@ -41,7 +41,10 @@ export default async function Home() {
     supabase
       .rpc("anasayfa_site_firmalari", { p_adet: 21 })
       .select("id, ad, sahip, sektor, sanayi_sitesi, adres, telefon, hizmetler, ozel_firma, fotograf_url, yorum_sayisi, ortalama_puan, olumlu_yuzde, ozel_baslangic, ozel_bitis, kullanici_email"),
-    supabase.from("firmalar").select("*", { count: "exact", head: true }).eq("onay_durumu", "onaylandi"),
+    // Toplam onaylı işletme sayısı. Doğrudan count, ziyaretçi (anon) rolünde RLS yüzünden tüm tabloyu
+    // tarayıp zaman aşımına uğruyor ve sayaç 0 görünüyordu; bu fonksiyon indeksle hızlı sayar
+    // (supabase/migrations/20261127020000_onayli_firma_sayisi.sql).
+    supabase.rpc("onayli_firma_sayisi"),
   ]);
   // Sadece ana siteler (başka bir sitenin içinde olmayanlar); sayılarına alt siteler dahil
   // Henüz firması olmayan siteler anasayfada gösterilmez (hepsi "Tüm sanayi siteleri" sayfasında)
